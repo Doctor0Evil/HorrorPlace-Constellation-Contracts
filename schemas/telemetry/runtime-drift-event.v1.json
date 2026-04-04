@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/runtime-drift-event.v1.json",
+  "title": "Runtime Drift Event v1.0.0",
+  "description": "Structured report of an invariant or metric value drifting from its expected canonical range or contract binding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "driftId",
+    "timestamp",
+    "targetId",
+    "targetType",
+    "fieldPath",
+    "observedValue",
+    "expectedRange",
+    "severity"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version of the drift event."
+    },
+    "driftId": {
+      "type": "string",
+      "pattern": "^DRF-[a-z0-9\\-]+$",
+      "description": "Unique identifier for this drift occurrence."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when drift was detected."
+    },
+    "targetId": {
+      "type": "string",
+      "pattern": "^[A-Z]{3,4}-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "ID of the entity exhibiting drift (e.g., region, event, persona)."
+    },
+    "targetType": {
+      "type": "string",
+      "enum": ["region", "event", "persona", "style", "policy", "contract"],
+      "description": "Category of the drifting entity."
+    },
+    "fieldPath": {
+      "type": "string",
+      "description": "JSON path to the drifting field (e.g., invariantBindings.CIC, metrics.UEC)."
+    },
+    "observedValue": {
+      "type": ["number", "string", "object", "array"],
+      "description": "The actual value observed at runtime."
+    },
+    "expectedRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number", "description": "Minimum allowed value per contract." },
+        "max": { "type": "number", "description": "Maximum allowed value per contract." }
+      },
+      "description": "Canonical range the value should have respected."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Impact level of the drift. Critical drifts may trigger contract review or region lockdown."
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Additional runtime context (e.g., player state, active events) to aid debugging."
+    }
+  }
+}
