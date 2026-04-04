@@ -1,0 +1,147 @@
+{
+  "$id": "https://horror.place/constellation/schemas/prismMeta.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "prismMeta",
+  "description": "Prism metadata for a single contract-card artifact: provenance, dependencies, and validation state.",
+  "type": "object",
+  "required": [
+    "prismId",
+    "schemaVersion",
+    "sessionId",
+    "agentId",
+    "agentProfileId",
+    "targetRepo",
+    "path",
+    "tier",
+    "hash",
+    "dependencies",
+    "validation",
+    "signedDelta"
+  ],
+  "properties": {
+    "prismId": {
+      "type": "string",
+      "description": "Stable identifier for this prism artifact (often == contract-card id)."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of the prismMeta schema (e.g., prismMeta.v1)."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Opaque session or conversation id for this generation step."
+    },
+    "agentId": {
+      "type": "string",
+      "description": "Logical id of the AI/chat agent or tool that produced this file."
+    },
+    "agentProfileId": {
+      "type": "string",
+      "description": "Reference to an agentProfile card defining rights (e.g., clamp permission)."
+    },
+    "targetRepo": {
+      "type": "string",
+      "description": "Repository this artifact is intended for (org/repo or git URI)."
+    },
+    "path": {
+      "type": "string",
+      "description": "Path within the target repo where this file should live."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Tier label (e.g., standard, mature, research)."
+    },
+    "hash": {
+      "type": "string",
+      "description": "Content hash of this file (e.g., sha256:<hex>)."
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Upstream contracts and proofs this file depends on.",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Upstream contract id (e.g., regionContractCard id, policyEnvelope id, proofEnvelope id)."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Type of dependency (e.g., policy, region, seed, proof, style)."
+          },
+          "repo": {
+            "type": "string",
+            "description": "Optional: repository where the dependency lives."
+          },
+          "path": {
+            "type": "string",
+            "description": "Optional: file path of the dependency."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Result of last validation run at generation time.",
+      "required": ["schemaValidated", "subsetValidated", "ledgerValidated", "clamped"],
+      "properties": {
+        "schemaValidated": {
+          "type": "boolean",
+          "description": "True if JSON Schema validation passed."
+        },
+        "subsetValidated": {
+          "type": "boolean",
+          "description": "True if invariant/metric subset rules passed."
+        },
+        "ledgerValidated": {
+          "type": "boolean",
+          "description": "True if deadledgerref and related proofs resolved and validated."
+        },
+        "clamped": {
+          "type": "boolean",
+          "description": "True if any values were clamped during validation."
+        },
+        "clampReasons": {
+          "type": "array",
+          "description": "Optional list of clamp reasons (per field/metric).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the validation pass that produced this metadata."
+        }
+      },
+      "additionalProperties": false
+    },
+    "signedDelta": {
+      "type": "object",
+      "description": "Cryptographic signature over (file content + dependencies).",
+      "required": ["algorithm", "signature", "publicKeyRef"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "Signature algorithm identifier (e.g., ed25519)."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Signature bytes (e.g., base64url)."
+        },
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Opaque reference to the public key (e.g., Dead-Ledger verifier id)."
+        },
+        "proofEnvelopeId": {
+          "type": "string",
+          "description": "Optional: id of a zkpproof envelope that attests this delta."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
