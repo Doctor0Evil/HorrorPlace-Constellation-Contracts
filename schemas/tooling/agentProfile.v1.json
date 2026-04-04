@@ -1,0 +1,99 @@
+{
+  "$id": "https://horror.place/constellation/schemas/agentProfile.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "agentProfile",
+  "description": "Profile for an AI/chat agent or tool, including clamp rights and tier permissions.",
+  "type": "object",
+  "required": [
+    "id",
+    "schemaVersion",
+    "displayName",
+    "kind",
+    "tiers",
+    "permissions",
+    "allowedSchemas"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable agent profile id (referenced by prismMeta.agentProfileId)."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this agentProfile schema (e.g., agentProfile.v1)."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name for this agent/profile."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Category of agent (e.g., generator, refactor, auditor, orchestrator)."
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Tiers this agent may operate in (e.g., standard, mature, research).",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Fine-grained rights for clamping, migrations, and registry edits.",
+      "required": [
+        "allowsClamp",
+        "allowsSchemaUpgrade",
+        "allowsRegistryWrite",
+        "allowsPolicyEdit"
+      ],
+      "properties": {
+        "allowsClamp": {
+          "type": "boolean",
+          "description": "If true, validator may clamp invariants/metrics on behalf of this agent."
+        },
+        "allowsSchemaUpgrade": {
+          "type": "boolean",
+          "description": "If true, agent may propose upgrades to schemaVersion fields."
+        },
+        "allowsRegistryWrite": {
+          "type": "boolean",
+          "description": "If true, agent may write or modify registry entries."
+        },
+        "allowsPolicyEdit": {
+          "type": "boolean",
+          "description": "If true, agent may edit policyEnvelope and regionContractCard caps/bounds."
+        }
+      },
+      "additionalProperties": false
+    },
+    "allowedSchemas": {
+      "type": "array",
+      "description": "List of schema ids/types this agent is allowed to generate or edit (e.g., seedContractCard.v1).",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "rateLimits": {
+      "type": "object",
+      "description": "Optional rate limit and scope controls.",
+      "properties": {
+        "maxContractsPerHour": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxSeedsPerRegion": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "meta": {
+      "type": "object",
+      "description": "Freeform metadata (labels, owning team, notes)."
+    }
+  },
+  "additionalProperties": false
+}
