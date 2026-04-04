@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/registry/registry-events.v1.json",
+  "title": "Registry Events Schema v1.0.0",
+  "description": "Schema for interactive scenarios, encounters, or narrative beats within regions.",
+  "allOf": [
+    { "$ref": "./registry-entry-base.v1.json" }
+  ],
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "eventType",
+    "regionIds",
+    "triggerConditions",
+    "invariantRequirements"
+  ],
+  "properties": {
+    "eventType": {
+      "type": "string",
+      "enum": ["ambient", "encounter", "narrative-beat", "environmental-hazard", "spectral-manifestation"],
+      "description": "Classification of event behavior and intensity."
+    },
+    "regionIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^REG-[A-Z0-9]{3,6}-\\d{4}$"
+      },
+      "minItems": 1,
+      "description": "List of region IDs where this event is valid."
+    },
+    "triggerConditions": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Predicates for event activation (e.g., timeOfDay, playerSanity, regionTags, previousEvents)."
+    },
+    "invariantRequirements": {
+      "type": "object",
+      "patternProperties": {
+        "^(CIC|AOS|DET|SHCI)$": {
+          "anyOf": [
+            { "type": "number" },
+            {
+              "type": "object",
+              "properties": {
+                "min": { "type": "number" },
+                "max": { "type": "number" },
+                "<": { "type": "number" },
+                "<=": { "type": "number" },
+                ">": { "type": "number" },
+                ">=": { "type": "number" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "Required invariant ranges for this event to be historically plausible."
+    },
+    "spectralAnchor": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, event may manifest spectral presence tied to historical trauma."
+    },
+    "mythicDensityThreshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Minimum MDI required for this event to feel plausible."
+    },
+    "archivalOpacityBonus": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Amount to increase AOS if event resolves ambiguously."
+    },
+    "telemetryHooks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"]
+      },
+      "description": "Metrics this event emits telemetry for at runtime."
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "pattern": "^prism:[a-z0-9\\-]+$",
+      "description": "Reference to a prismMeta document describing linkage and dependency graph."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "spectralAnchor": { "const": true } },
+        "required": ["spectralAnchor"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "enum": ["vault", "lab"] }
+        },
+        "required": ["tier", "deadledgerref"]
+      }
+    }
+  ]
+}
