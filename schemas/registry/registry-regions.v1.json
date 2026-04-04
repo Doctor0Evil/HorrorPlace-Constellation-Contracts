@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/registry/registry-regions.v1.json",
+  "title": "Registry Regions Schema v1.0.0",
+  "description": "Schema for geographic or conceptual tiles serving as primary spatial units.",
+  "allOf": [
+    { "$ref": "./registry-entry-base.v1.json" }
+  ],
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "regionType",
+    "coordinates",
+    "invariantProfile",
+    "biomeTags"
+  ],
+  "properties": {
+    "regionType": {
+      "type": "string",
+      "enum": ["geographic", "conceptual", "liminal", "industrial", "natural"],
+      "description": "Classification of region for engine-specific handling."
+    },
+    "coordinates": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lat", "lon", "radiusKm"],
+          "properties": {
+            "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+            "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+            "radiusKm": { "type": "number", "minimum": 0.1, "maximum": 1000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gridX", "gridY", "gridSize"],
+          "properties": {
+            "gridX": { "type": "integer", "minimum": 0 },
+            "gridY": { "type": "integer", "minimum": 0 },
+            "gridSize": { "type": "string", "enum": ["100m", "500m", "1km", "5km", "10km"] }
+          }
+        }
+      ],
+      "description": "Spatial definition: lat/lon/radius or grid-based coordinates."
+    },
+    "invariantProfile": {
+      "type": "object",
+      "patternProperties": {
+        "^(CIC|AOS|DET|SHCI)$": {
+          "anyOf": [
+            { "type": "number" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number" },
+                "max": { "type": "number" }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "Canonical invariant values or ranges for this region."
+    },
+    "biomeTags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "minItems": 1,
+      "description": "Lowercase, hyphenated tags describing environment."
+    },
+    "historicalFootprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "disasters": { "type": "array", "items": { "type": "string" } },
+        "events": { "type": "array", "items": { "type": "string" } },
+        "myths": { "type": "array", "items": { "type": "string" } }
+      },
+      "description": "Structured real or in-universe history tied to the region."
+    },
+    "liminalStressGradient": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "LSG value for threshold-based event placement."
+    },
+    "spectralProbabilityIndex": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "SPI for grounding apparitions in historical plausibility."
+    },
+    "ritualResidueMap": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Opaque references to RRM layers for occult mechanics."
+    },
+    "folkloricConvergenceFactor": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "FCF for narrative pressure and boss-zone designation."
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "pattern": "^prism:[a-z0-9\\-]+$",
+      "description": "Reference to a prismMeta document describing linkage and dependency graph."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "spectralProbabilityIndex": { "minimum": 0.7 } },
+        "required": ["spectralProbabilityIndex"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "enum": ["vault", "lab"] }
+        },
+        "required": ["tier"]
+      }
+    }
+  ]
+}
