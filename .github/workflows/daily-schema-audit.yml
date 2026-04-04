@@ -1,0 +1,261 @@
+name: Daily Schema Drift Audit
+
+on:
+  schedule:
+    - cron: "0 6 * * *"          # 06:00 UTC = 11:00 PM MST
+  push:
+    paths:
+      - "core/schemas/**"
+      - "scripts/drift-audit/**"
+      - ".github/workflows/daily-schema-audit.yml"
+  workflow_dispatch:
+    inputs:
+      tier_filter:
+        description: "Scan only repos of this tier (tier-1, tier-2, tier-3, or all)"
+        required: false
+        default: "all"
+      repo_override:
+        description: "Scan a single repo by name (overrides tier filter)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────
+  # JOB 1: PREPARE — Build scan matrix from manifest
+  # ────────────────────────────────────────────────────────────────
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+      repo_count: ${{ steps.build-matrix.outputs.repo_count }}
+    steps:
+      - name: Checkout audit suite
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/drift-audit
+          sparse-checkout-cone-mode: false
+
+      - name: Build scan matrix
+        id: build-matrix
+        run: |
+          cd scripts/drift-audit
+          python3 -c "
+          import json, sys
+
+          manifest = json.load(open('repos-manifest.json'))
+          repos = manifest['repos']
+
+          tier = '${{ github.event.inputs.tier_filter || 'all' }}'
+          override = '${{ github.event.inputs.repo_override || '' }}'
+
+          if override:
+              repos = [r for r in repos if r['name'] == override]
+          elif tier != 'all':
+              repos = [r for r in repos if r['tier'] == tier]
+
+          if not repos:
+              print('::error::No repos matched the filter criteria.')
+              sys.exit(1)
+
+          matrix = {'include': repos}
+          print(f'repo_count={len(repos)}')
+
+          with open('$GITHUB_OUTPUT', 'a') as f:
+              f.write(f'matrix={json.dumps(matrix)}\n')
+              f.write(f'repo_count={len(repos)}\n')
+
+          print(f'Will scan {len(repos)} repo(s): {[r[\"name\"] for r in repos]}')
+          "
+
+  # ────────────────────────────────────────────────────────────────
+  # JOB 2: SCAN — Run all scanners per repo (matrix strategy)
+  # ────────────────────────────────────────────────────────────────
+  scan:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Checkout audit suite
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/drift-audit
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.ref }}
+          token: ${{ secrets.CONSTELLATION_PAT }}
+          path: target-repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run Schema Drift Detector
+        id: drift
+        working-directory: scripts/drift-audit
+        continue-on-error: true
+        run: |
+          python schema_drift_detector.py ../../target-repo --json \
+            > ../../drift-results.json 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Run Charter Compliance Scanner
+        id: charter
+        working-directory: scripts/drift-audit
+        continue-on-error: true
+        run: |
+          python charter_compliance.py ../../target-repo --json \
+            > ../../charter-results.json 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Run NDJSON Linter
+        id: ndjson
+        working-directory: scripts/drift-audit
+        continue-on-error: true
+        run: |
+          python ndjson_lint.py ../../target-repo --json \
+            > ../../ndjson-results.json 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Package findings
+        run: |
+          python3 -c "
+          import json
+
+          drift = json.load(open('drift-results.json'))   if open('drift-results.json').read().strip() else []
+          charter = json.load(open('charter-results.json')) if open('charter-results.json').read().strip() else []
+          ndjson = json.load(open('ndjson-results.json'))   if open('ndjson-results.json').read().strip() else []
+
+          package = {
+              'repo': '${{ matrix.name }}',
+              'tier': '${{ matrix.tier }}',
+              'drift': drift,
+              'charter': charter,
+              'ndjson': ndjson,
+              'exit_codes': {
+                  'drift': int('${{ steps.drift.outputs.exit_code || 0 }}'),
+                  'charter': int('${{ steps.charter.outputs.exit_code || 0 }}'),
+                  'ndjson': int('${{ steps.ndjson.outputs.exit_code || 0 }}'),
+              },
+          }
+          with open('scan-${{ matrix.name }}.json', 'w') as f:
+              json.dump(package, f, indent=2)
+          "
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-${{ matrix.name }}
+          path: scan-${{ matrix.name }}.json
+          retention-days: 30
+
+  # ────────────────────────────────────────────────────────────────
+  # JOB 3: REPORT — Aggregate findings and publish
+  # ────────────────────────────────────────────────────────────────
+  report:
+    needs: [prepare, scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout audit suite
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/drift-audit
+          sparse-checkout-cone-mode: false
+
+      - name: Download all scan artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scan-*
+          path: scan-results
+          merge-multiple: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate compliance report
+        id: report
+        run: |
+          cd scripts/drift-audit
+          python3 -c "
+          import json, glob
+          from pathlib import Path
+          from report_generator import generate_report
+
+          results = {}
+          for fp in sorted(glob.glob('../../scan-results/scan-*.json')):
+              data = json.load(open(fp))
+              results[data['repo']] = {
+                  'drift': data.get('drift', []),
+                  'charter': data.get('charter', []),
+                  'ndjson': data.get('ndjson', []),
+              }
+
+          report = generate_report(results, '../../compliance-report.md')
+
+          # Write to job summary
+          with open('$GITHUB_STEP_SUMMARY', 'w') as f:
+              f.write(report)
+
+          # Determine if critical
+          has_critical = any(
+              any(f.get('severity') in ('critical', 'charter') for f in findings)
+              for r in results.values()
+              for findings in r.values()
+              if isinstance(findings, list)
+          )
+          with open('$GITHUB_OUTPUT', 'a') as f:
+              f.write(f'has_critical={str(has_critical).lower()}\n')
+
+          print(f'Report generated: {len(results)} repos analyzed.')
+          "
+
+      - name: Upload compliance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report
+          path: compliance-report.md
+          retention-days: 90
+
+      - name: Create GitHub Issue on critical findings
+        if: steps.report.outputs.has_critical == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('compliance-report.md', 'utf8');
+
+            // Truncate for issue body (64 KB limit)
+            const maxLen = 60000;
+            const body = report.length > maxLen
+              ? report.substring(0, maxLen) + '\n\n---\n*Report truncated. See full artifact.*'
+              : report;
+
+            const today = new Date().toISOString().split('T')[0];
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `\u{1F534} Schema Drift Audit — Critical Findings (${today})`,
+              body: body,
+              labels: ['schema-drift', 'audit', 'critical'],
+            });
