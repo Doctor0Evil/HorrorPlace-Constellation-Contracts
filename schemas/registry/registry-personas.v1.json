@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/registry/registry-personas.v1.json",
+  "title": "Registry Personas Schema v1.0.0",
+  "description": "Schema for AI-driven characters, spectral entities, or narrative agents.",
+  "allOf": [
+    { "$ref": "./registry-entry-base.v1.json" }
+  ],
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "personaType",
+    "historicalAnchor",
+    "behaviorProfile",
+    "invariantCoupling"
+  ],
+  "properties": {
+    "personaType": {
+      "type": "string",
+      "enum": ["npc", "spectral-entity", "environmental-agent", "narrative-voice"],
+      "description": "Classification of persona behavior and interaction model."
+    },
+    "historicalAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventRef", "role", "reliabilityWeight"],
+      "properties": {
+        "eventRef": {
+          "type": "string",
+          "pattern": "^EVT-[A-Z0-9]{3,6}-\\d{4}$",
+          "description": "Reference to an event ID that anchors this persona's origin."
+        },
+        "role": {
+          "type": "string",
+          "description": "Narrative or historical role (e.g., vanished-researcher, local-guide)."
+        },
+        "reliabilityWeight": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Source credibility rating (RWF)."
+        },
+        "archivalSources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Opaque references to source documents or testimonies."
+        }
+      }
+    },
+    "behaviorProfile": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Runtime behavior parameters (e.g., stalk, dialogue, manifest, patrol)."
+    },
+    "invariantCoupling": {
+      "type": "object",
+      "patternProperties": {
+        "^(CIC|AOS|DET|SHCI)$": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "multiplier": { "type": "number" },
+            "threshold": { "type": "string" },
+            "responseType": { "type": "string", "enum": ["linear-scale", "stepwise", "clamp", "binary"] }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "How persona behavior adapts to invariant values."
+    },
+    "spectralConsistencyIndex": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "SHCI for grounding entity behavior in historical source material."
+    },
+    "metricInfluence": {
+      "type": "object",
+      "patternProperties": {
+        "^(UEC|EMD|STCI|CDL|ARR)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "+": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+            "-": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "Expected impact on player metrics during encounters."
+    },
+    "experimentalFlags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "description": "Tags for research-grade personas. Only valid in lab tier."
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "pattern": "^prism:[a-z0-9\\-]+$",
+      "description": "Reference to a prismMeta document describing linkage and dependency graph."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "spectralConsistencyIndex": { "minimum": 0.7 } },
+        "required": ["spectralConsistencyIndex"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "enum": ["vault", "lab"] }
+        },
+        "required": ["tier"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "experimentalFlags": { "minItems": 1 } },
+        "required": ["experimentalFlags"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "const": "lab" }
+        },
+        "required": ["tier"]
+      }
+    }
+  ]
+}
