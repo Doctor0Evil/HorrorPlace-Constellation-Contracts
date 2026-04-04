@@ -1,0 +1,86 @@
+# Workflow: Validate AI-Generated Contract Cards
+# Purpose: Ensure any AI-authored file (policyEnvelope, regionContractCard, seedContractCard) meets prismMeta, agentProfile, and schema requirements
+# Triggers: pull_request (on changed contract cards), workflow_dispatch
+# Usage: Enforces one-file-per-request rule and cross-field constraints
+
+name: AI Authoring Validation
+
+on:
+  pull_request:
+    paths:
+      - "**/*ContractCard*.json"
+      - "**/policyEnvelope*.json"
+      - "schemas/core/*.json"
+      - "schemas/tooling/*.json"
+      - "tooling/python/**/*.py"
+      - ".github/workflows/ai-authoring-validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ai-authored:
+    name: Validate AI Contract Cards
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need history for diff
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema typing-extensions
+
+      - name: Detect changed contract card files
+        id: changed-files
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E '(ContractCard|policyEnvelope)\.json$' || true)
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          if [ -n "$CHANGED" ]; then
+            echo "Found changed contract cards: $CHANGED"
+          else
+            echo "No contract card changes detected; skipping validation"
+          fi
+
+      - name: Run AI authoring validator on changed files
+        if: steps.changed-files.outputs.changed != ''
+        run: |
+          for f in ${{ steps.changed-files.outputs.changed }}; do
+            echo "Validating: $f"
+            python tooling/python/cli/hpc-validate-schema.py \
+              --mode ai-authoring \
+              --file "$f" \
+              --strict \
+              --report ai-authoring-report.json
+          done
+
+      - name: Upload validation report (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-authoring-validation-errors
+          path: ai-authoring-report.json
+          retention-days: 7
+
+      - name: Fail if any contract card is invalid
+        if: steps.changed-files.outputs.changed != ''
+        run: |
+          if [ -f ai-authoring-report.json ]; then
+            if grep -q '"valid": false' ai-authoring-report.json; then
+              echo "::error::AI authoring validation failed. See ai-authoring-report.json for details."
+              exit 1
+            fi
+          fi
