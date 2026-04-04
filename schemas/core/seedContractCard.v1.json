@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/seedContractCard.v1.json",
+  "title": "Seed Contract Card v1.0.0",
+  "description": "Contract providing PCG seeds, invariant bundles, and event hooks that drive procedural generation. Must embed prismMeta for bidirectional validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prismMeta",
+    "id",
+    "schemaVersion",
+    "targetRepo",
+    "path",
+    "tier",
+    "seedBundle",
+    "deadledgerref"
+  ],
+  "properties": {
+    "prismMeta": {
+      "$ref": "../tooling/prismMeta.v1.json"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^SED-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "Globally unique seed ID following TYPE-CODE-SEQ convention."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^v1\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this contract schema."
+    },
+    "targetRepo": {
+      "type": "string",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network",
+        "HorrorPlace-Constellation-Contracts"
+      ],
+      "description": "Target repository for this seed contract."
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9/_\\-\\.]+\\.json$",
+      "description": "Relative path within targetRepo where this file should be placed."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["public", "vault", "lab"],
+      "description": "Access tier governing validation rigor and content policies."
+    },
+    "seedBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pcgSeed", "invariantWeights", "eventHooks"],
+      "properties": {
+        "pcgSeed": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash used as deterministic seed for procedural generation."
+        },
+        "invariantWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+            "DET": { "type": "number", "minimum": 0, "maximum": 10 },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "description": "Weighting factors for invariants during PCG; values need not sum to 1."
+        },
+        "eventHooks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^EVT-[A-Z0-9]{3,6}-\\d{4}$"
+          },
+          "description": "List of event IDs this seed may trigger during generation."
+        },
+        "metricBiases": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "type": "number", "minimum": -50, "maximum": 50 },
+            "EMD": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+            "CDL": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+          },
+          "description": "Optional biases to apply to entertainment metrics during seed evaluation."
+        }
+      }
+    },
+    "deadledgerref": {
+      "type": "string",
+      "pattern": "^zkp:sha256:[a-f0-9]{64}(:sig:ed25519:[a-f0-9]{128})?(:tier:(public|vault|lab))?$",
+      "description": "Cryptographic attestation reference for provenance and tier validation."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "vault" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:vault$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "lab" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:lab$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "seedBundle": {
+            "properties": {
+              "invariantWeights": {
+                "properties": { "CIC": { "minimum": 0.85 } },
+                "required": ["CIC"]
+              }
+            },
+            "required": ["invariantWeights"]
+          }
+        },
+        "required": ["seedBundle"]
+      },
+      "then": {
+        "properties": {
+          "seedBundle": {
+            "properties": {
+              "invariantWeights": {
+                "properties": { "AOS": { "minimum": 6.0 } },
+                "required": ["AOS"]
+              }
+            }
+          }
+        },
+        "description": "Seeds with high CIC weight must also weight AOS to maintain historical plausibility."
+      }
+    }
+  ]
+}
