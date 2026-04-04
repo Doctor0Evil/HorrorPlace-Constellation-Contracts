@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/registry/registry-entry-base.v1.json",
+  "title": "Registry Entry Base Schema v1.0.0",
+  "description": "Base definition for all NDJSON registry entries. Establishes required identity, reference, and governance fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaref",
+    "deadledgerref",
+    "artifactid",
+    "createdAt",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "Globally unique entity ID. Format: TYPE-CODE-SEQUENCE (e.g., REG-ARAL-0001)."
+    },
+    "schemaref": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical JSON Schema $id this entry conforms to."
+    },
+    "deadledgerref": {
+      "type": "string",
+      "pattern": "^zkp:sha256:[a-f0-9]{64}(:sig:ed25519:[a-f0-9]{128})?(:tier:(public|vault|lab))?$",
+      "description": "Cryptographic attestation reference for provenance and tier validation."
+    },
+    "artifactid": {
+      "type": "string",
+      "description": "Content-addressable or implementation-agnostic reference (e.g., ipfs:bafy..., cid:sha256:...)."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp of entry creation."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "deprecated", "archived", "draft"],
+      "description": "Lifecycle state of the registry entry."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "description": "Lowercase, hyphenated keywords for filtering and categorization."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["public", "vault", "lab"],
+      "default": "public",
+      "description": "Access tier governing validation rigor and content policies."
+    }
+  }
+}
