@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/regionContractCard.v1.json",
+  "title": "Region Contract Card v1.0.0",
+  "description": "Contract binding a geographic or conceptual tile to invariants, metrics, and style contracts. Must embed prismMeta for bidirectional validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prismMeta",
+    "id",
+    "schemaVersion",
+    "targetRepo",
+    "path",
+    "tier",
+    "regionType",
+    "coordinates",
+    "invariantBindings",
+    "biomeTags",
+    "deadledgerref"
+  ],
+  "properties": {
+    "prismMeta": {
+      "$ref": "../tooling/prismMeta.v1.json"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^REG-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "Globally unique region ID following TYPE-CODE-SEQ convention."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^v1\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this contract schema."
+    },
+    "targetRepo": {
+      "type": "string",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network",
+        "HorrorPlace-Constellation-Contracts"
+      ],
+      "description": "Target repository for this region contract."
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9/_\\-\\.]+\\.ndjson$",
+      "description": "Relative path within targetRepo where this registry entry should be appended."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["public", "vault", "lab"],
+      "description": "Access tier governing validation rigor and content policies."
+    },
+    "regionType": {
+      "type": "string",
+      "enum": ["geographic", "conceptual", "liminal", "industrial", "natural"],
+      "description": "Classification of region for engine-specific handling."
+    },
+    "coordinates": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lat", "lon", "radiusKm"],
+          "properties": {
+            "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+            "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+            "radiusKm": { "type": "number", "minimum": 0.1, "maximum": 1000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gridX", "gridY", "gridSize"],
+          "properties": {
+            "gridX": { "type": "integer", "minimum": 0 },
+            "gridY": { "type": "integer", "minimum": 0 },
+            "gridSize": { "type": "string", "enum": ["100m", "500m", "1km", "5km", "10km"] }
+          }
+        }
+      ],
+      "description": "Spatial definition: either lat/lon/radius or grid-based coordinates."
+    },
+    "invariantBindings": {
+      "$ref": "./invariants-spine.v1.json",
+      "description": "Canonical invariant values or ranges for this region."
+    },
+    "biomeTags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "description": "Lowercase, hyphenated tags describing environment (e.g., salt-flat, abandoned-industrial).",
+      "examples": [["salt-flat", "abandoned-industrial", "post-soviet"], ["dense-forest", "liminal"]]
+    },
+    "deadledgerref": {
+      "type": "string",
+      "pattern": "^zkp:sha256:[a-f0-9]{64}(:sig:ed25519:[a-f0-9]{128})?(:tier:(public|vault|lab))?$",
+      "description": "Cryptographic attestation reference for provenance and tier validation."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "vault" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:vault$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "lab" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:lab$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "invariantBindings": {
+            "properties": { "CIC": { "minimum": 0.85 } },
+            "required": ["CIC"]
+          }
+        },
+        "required": ["invariantBindings"]
+      },
+      "then": {
+        "properties": {
+          "invariantBindings": {
+            "properties": { "AOS": { "minimum": 6.0 } },
+            "required": ["AOS"]
+          }
+        },
+        "description": "High-CIC regions must have elevated AOS to maintain historical plausibility."
+      }
+    }
+  ]
+}
