@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# Node / npm (if introduced later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Tool outputs
+*.log
+output/
+dist/
+build/
+schema-spine-index.json
+*.ndjson.generated
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.temp
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Local config (optional, not committed)
+config.local.json
+.env
+*.local.yaml
