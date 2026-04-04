@@ -1,26 +1,32 @@
 {
-  "$id": "https://horror.place/constellation/schemas/agentProfile.v1.json",
+  "$id": "https://horrorplace.constellation/schemas/tooling/agentProfile.v1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "agentProfile",
-  "description": "Profile for an AI/chat agent or tool, including clamp rights and tier permissions.",
+  "title": "Agent Profile v1.0.0",
+  "description": "Capabilities, constraints, permissions, and behavioral rules for an AI agent generating constellation artifacts.",
   "type": "object",
+  "additionalProperties": false,
   "required": [
-    "id",
-    "schemaVersion",
+    "version",
+    "agentId",
     "displayName",
     "kind",
     "tiers",
     "permissions",
-    "allowedSchemas"
+    "allowedSchemas",
+    "capabilities",
+    "constraints",
+    "promptTemplates",
+    "validationHooks"
   ],
   "properties": {
-    "id": {
+    "version": {
       "type": "string",
-      "description": "Stable agent profile id (referenced by prismMeta.agentProfileId)."
+      "const": "1.0.0",
+      "description": "agentProfile schema version."
     },
-    "schemaVersion": {
+    "agentId": {
       "type": "string",
-      "description": "Version of this agentProfile schema (e.g., agentProfile.v1)."
+      "description": "Unique identifier for this AI agent or tool instance (referenced by prismMeta.agentProfileId)."
     },
     "displayName": {
       "type": "string",
@@ -32,7 +38,7 @@
     },
     "tiers": {
       "type": "array",
-      "description": "Tiers this agent may operate in (e.g., standard, mature, research).",
+      "description": "Tiers this agent may operate in (e.g., public, vault, lab, research).",
       "items": {
         "type": "string"
       },
@@ -69,7 +75,7 @@
     },
     "allowedSchemas": {
       "type": "array",
-      "description": "List of schema ids/types this agent is allowed to generate or edit (e.g., seedContractCard.v1).",
+      "description": "List of schema IDs/types this agent is allowed to generate or edit (e.g., seedContractCard.v1).",
       "items": {
         "type": "string"
       },
@@ -93,7 +99,130 @@
     "meta": {
       "type": "object",
       "description": "Freeform metadata (labels, owning team, notes)."
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generates",
+        "validatesSchemas",
+        "queriesRegistries",
+        "emitsTelemetry",
+        "supportsBatchTransactions"
+      ],
+      "properties": {
+        "generates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "regionContractCard",
+              "seedContractCard",
+              "policyEnvelope",
+              "registryEntry"
+            ]
+          },
+          "description": "List of artifact types this agent can produce."
+        },
+        "validatesSchemas": {
+          "type": "boolean",
+          "description": "Whether the agent can validate outputs against JSON Schema before emitting."
+        },
+        "queriesRegistries": {
+          "type": "boolean",
+          "description": "Whether the agent can query NDJSON registries for ID resolution."
+        },
+        "emitsTelemetry": {
+          "type": "boolean",
+          "description": "Whether the agent produces telemetry envelopes during generation."
+        },
+        "supportsBatchTransactions": {
+          "type": "boolean",
+          "description": "Whether the agent can generate atomic multi-file batch manifests."
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oneFilePerRequest",
+        "requirePrismMeta",
+        "enforceTierGating",
+        "maxInvariantDrift",
+        "allowedTiers"
+      ],
+      "properties": {
+        "oneFilePerRequest": {
+          "type": "boolean",
+          "description": "Enforces the baseline rule: one generation step produces one file."
+        },
+        "requirePrismMeta": {
+          "type": "boolean",
+          "description": "Mandates embedding prismMeta in every generated artifact."
+        },
+        "enforceTierGating": {
+          "type": "boolean",
+          "description": "Prevents generation of vault/lab content without proper deadledgerref."
+        },
+        "maxInvariantDrift": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed deviation from canonical invariant ranges."
+        },
+        "allowedTiers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "public",
+              "vault",
+              "lab"
+            ]
+          },
+          "description": "Tiers this agent is permitted to generate content for."
+        }
+      }
+    },
+    "promptTemplates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Mapping of artifact type to documentation file with prompt examples (e.g., 'regionContractCard': 'docs/ai-chat-flows/generate-region.md')."
+    },
+    "validationHooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preGenerate",
+        "postGenerate",
+        "onError"
+      ],
+      "properties": {
+        "preGenerate": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions before generation (e.g., schema-lookup, registry-query)."
+        },
+        "postGenerate": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions after generation (e.g., prismMeta-embed, hash-compute)."
+        },
+        "onError": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recovery actions on validation failure (e.g., fallback-to-minimal, log-and-notify)."
+        }
+      }
     }
-  },
-  "additionalProperties": false
+  }
 }
