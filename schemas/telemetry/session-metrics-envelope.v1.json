@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/session-metrics-envelope.v1.json",
+  "title": "Session Metrics Envelope v1.0.0",
+  "description": "Standard telemetry envelope capturing runtime entertainment metrics (UEC, EMD, STCI, CDL, ARR) for analysis and spine index updates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "sessionId",
+    "regionId",
+    "timestamp",
+    "metrics",
+    "context"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version of this telemetry envelope."
+    },
+    "sessionId": {
+      "type": "string",
+      "pattern": "^sess-[a-z0-9\\-]+$",
+      "description": "Unique identifier for the play session."
+    },
+    "regionId": {
+      "type": "string",
+      "pattern": "^REG-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "ID of the region where these metrics were captured."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp of telemetry capture."
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "description": "User Engagement Continuity: session-level engagement stability."
+        },
+        "EMD": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0,
+          "description": "Experience Modulation Delta: rate of change in emotional valence."
+        },
+        "STCI": {
+          "$ref": "../core/entertainment-metrics-spine.v1.json#/properties/STCI",
+          "description": "Spectral Threat Confidence Interval: statistical threat uncertainty."
+        },
+        "CDL": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Cognitive Dissonance Level: narrative/mechanical contradiction intensity."
+        },
+        "ARR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Adaptive Resonance Ratio: player-system synchrony."
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeEventIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^EVT-[A-Z0-9]{3,6}-\\d{4}$" },
+          "description": "List of events active during this capture window."
+        },
+        "activePersonaIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^PER-[A-Z0-9]{3,6}-\\d{4}$" },
+          "description": "List of personas currently interacting with the player."
+        },
+        "styleIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^STY-[A-Z0-9]{3,6}-\\d{4}$" },
+          "description": "List of styles influencing the current presentation."
+        }
+      }
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "pattern": "^prism:[a-z0-9\\-]+$",
+      "description": "Optional reference to the prismMeta governing this session's data linkage."
+    }
+  }
+}
