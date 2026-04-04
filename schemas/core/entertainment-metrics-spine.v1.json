@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/entertainment-metrics-spine.v1.json",
+  "title": "Entertainment Metrics Spine Schema v1.0.0",
+  "description": "Canonical definitions for horror constellation entertainment metrics: quantitative measures of player experience, system performance, and narrative efficacy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+  "properties": {
+    "UEC": {
+      "title": "User Engagement Continuity",
+      "description": "Session-level measure of engagement stability. High UEC indicates sustained immersion; low UEC signals disengagement or confusion.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "examples": [45.2, 78.9, 92.1]
+    },
+    "EMD": {
+      "title": "Experience Modulation Delta",
+      "description": "Rate of change in player emotional valence. Positive = increasing tension/engagement; negative = release/boredom.",
+      "type": "number",
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "examples": [-0.3, 0.0, 0.65]
+    },
+    "STCI": {
+      "title": "Spectral Threat Confidence Interval",
+      "description": "Statistical confidence interval for perceived threat level from spectral entities. Wider intervals indicate uncertainty in threat modeling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper", "confidence"],
+      "properties": {
+        "lower": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Lower bound of threat confidence interval."
+        },
+        "upper": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Upper bound of threat confidence interval."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence level for the interval estimate."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "lower": {},
+              "upper": {}
+            },
+            "required": ["lower", "upper"]
+          },
+          "then": {
+            "properties": {
+              "lower": { "$data": "1/upper", "maximum": { "$data": "1/upper" } }
+            }
+          }
+        }
+      ]
+    },
+    "CDL": {
+      "title": "Cognitive Dissonance Level",
+      "description": "Measure of narrative or mechanical contradiction experienced by the player. High CDL can enhance horror but risks confusion.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 10.0,
+      "examples": [1.2, 4.5, 8.9]
+    },
+    "ARR": {
+      "title": "Adaptive Resonance Ratio",
+      "description": "Ratio of player adaptation to system adaptation. ARR≈1.0 indicates perfect synchrony; ARR≈0.0 indicates mismatch.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "examples": [0.23, 0.67, 0.98]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "CDL": { "minimum": 7.0 }
+        },
+        "required": ["CDL"]
+      },
+      "then": {
+        "properties": {
+          "STCI": {
+            "properties": {
+              "upper": { "maximum": 0.7 }
+            }
+          }
+        },
+        "description": "High cognitive dissonance should correlate with lower threat certainty to avoid overwhelming the player."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ARR": { "minimum": 0.8 }
+        },
+        "required": ["ARR"]
+      },
+      "then": {
+        "properties": {
+          "UEC": { "minimum": 60.0 }
+        },
+        "description": "High adaptive resonance should correlate with sustained engagement."
+      }
+    }
+  ]
+}
