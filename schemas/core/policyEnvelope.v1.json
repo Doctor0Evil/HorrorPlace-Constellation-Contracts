@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/policyEnvelope.v1.json",
+  "title": "Policy Envelope Contract Card v1.0.0",
+  "description": "Top-level contract declaring global constraints, tier gating, and entitlement hints for a constellation segment. Must embed prismMeta for bidirectional validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prismMeta",
+    "id",
+    "schemaVersion",
+    "targetRepo",
+    "path",
+    "tier",
+    "policyBounds",
+    "deadledgerref"
+  ],
+  "properties": {
+    "prismMeta": {
+      "$ref": "../tooling/prismMeta.v1.json"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^POL-[A-Z0-9]{3,6}-\\d{4}$",
+      "description": "Globally unique policy ID following TYPE-CODE-SEQ convention."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^v1\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this contract schema."
+    },
+    "targetRepo": {
+      "type": "string",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network",
+        "HorrorPlace-Constellation-Contracts"
+      ],
+      "description": "Target repository for this policy envelope."
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9/_\\-\\.]+\\.json$",
+      "description": "Relative path within targetRepo where this file should be placed."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["public", "vault", "lab"],
+      "description": "Access tier governing validation rigor and content policies."
+    },
+    "policyBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariantCaps", "metricTargets"],
+      "properties": {
+        "invariantCaps": {
+          "$ref": "./invariants-spine.v1.json",
+          "description": "Maximum allowable values for invariants in this policy scope."
+        },
+        "metricTargets": {
+          "$ref": "./entertainment-metrics-spine.v1.json",
+          "description": "Expected ranges for entertainment metrics under this policy."
+        },
+        "entitlementHints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["age-gate", "contributor-only", "research-access", "public"]
+          },
+          "description": "Access control hints for downstream entitlement systems."
+        }
+      }
+    },
+    "deadledgerref": {
+      "type": "string",
+      "pattern": "^zkp:sha256:[a-f0-9]{64}(:sig:ed25519:[a-f0-9]{128})?(:tier:(public|vault|lab))?$",
+      "description": "Cryptographic attestation reference for provenance and tier validation."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "vault" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:vault$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": { "const": "lab" }
+        },
+        "required": ["tier"]
+      },
+      "then": {
+        "required": ["deadledgerref"],
+        "properties": {
+          "deadledgerref": {
+            "pattern": "^zkp:sha256:[a-f0-9]{64}:sig:ed25519:[a-f0-9]{128}:tier:lab$"
+          }
+        }
+      }
+    }
+  ]
+}
