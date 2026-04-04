@@ -1,0 +1,126 @@
+# Workflow: Constellation Pre-Commit Pack (Reusable)
+# Purpose: Demonstrate how other repos can include this repo's validation tools as a reusable workflow
+# Triggers: workflow_call (for reuse), workflow_dispatch (for testing)
+# Usage: Other repos call this via uses: Doctor0Evil/HorrorPlace-Constellation-Contracts/.github/workflows/constellation-precommit-pack.yml@main
+
+name: Constellation Pre-Commit Pack
+
+on:
+  workflow_call:
+    inputs:
+      validate_schemas:
+        description: "Run schema validation"
+        required: false
+        type: boolean
+        default: true
+      lint_registries:
+        description: "Run registry linting"
+        required: false
+        type: boolean
+        default: true
+      validate_ai_authored:
+        description: "Validate AI-generated contract cards"
+        required: false
+        type: boolean
+        default: true
+      python_version:
+        description: "Python version to use"
+        required: false
+        type: string
+        default: "3.11"
+  workflow_dispatch:
+    inputs:
+      validate_schemas:
+        description: "Run schema validation"
+        required: false
+        type: boolean
+        default: true
+      lint_registries:
+        description: "Run registry linting"
+        required: false
+        type: boolean
+        default: true
+      validate_ai_authored:
+        description: "Validate AI-generated contract cards"
+        required: false
+        type: boolean
+        default: true
+      python_version:
+        description: "Python version to use"
+        required: false
+        type: string
+        default: "3.11"
+
+permissions:
+  contents: read
+
+jobs:
+  precommit-pack:
+    name: Run Pre-Commit Validation Pack
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [${{ inputs.python_version }}]
+
+    steps:
+      - name: Checkout repository (caller or this repo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema typing-extensions
+
+      - name: Schema validation (optional)
+        if: inputs.validate_schemas
+        run: |
+          python tooling/python/cli/hpc-validate-schema.py \
+            --mode batch \
+            --root schemas/ \
+            --strict \
+            --report precommit-schema-report.json || exit 1
+
+      - name: Registry linting (optional)
+        if: inputs.lint_registries
+        run: |
+          python tooling/python/cli/hpc-lint-registry.py \
+            --mode batch \
+            --root registry/ \
+            --strict \
+            --report precommit-registry-report.json || exit 1
+
+      - name: AI authoring validation (optional)
+        if: inputs.validate_ai_authored
+        run: |
+          # Find any contract card files in the repo
+          CONTRACT_CARDS=$(find . -type f \( -name "*ContractCard*.json" -o -name "policyEnvelope*.json" \) -not -path "./.git/*" || true)
+          if [ -n "$CONTRACT_CARDS" ]; then
+            for f in $CONTRACT_CARDS; do
+              python tooling/python/cli/hpc-validate-schema.py \
+                --mode ai-authoring \
+                --file "$f" \
+                --strict \
+                --report precommit-ai-report.json || exit 1
+            done
+          else
+            echo "No contract card files found; skipping AI authoring validation"
+          fi
+
+      - name: Upload combined report (if any step failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: precommit-validation-errors
+          path: |
+            precommit-schema-report.json
+            precommit-registry-report.json
+            precommit-ai-report.json
+          retention-days: 7
