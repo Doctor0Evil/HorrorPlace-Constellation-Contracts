@@ -1,0 +1,103 @@
+{
+  "indexVersion": "1.0.0",
+  "generatedAt": "2026-01-15T03:00:00Z",
+  "schemas": {
+    "https://horrorplace.constellation/schemas/core/invariants-spine.v1.json": {
+      "title": "Invariants Spine Schema v1.0.0",
+      "version": "1.0.0",
+      "tier": "public",
+      "fields": {
+        "CIC": {
+          "type": "number",
+          "range": [0, 1],
+          "requiredIn": ["regionContractCard", "seedContractCard"]
+        },
+        "AOS": {
+          "type": "number",
+          "range": [0, 10],
+          "requiredIn": ["regionContractCard"]
+        },
+        "DET": {
+          "type": "number",
+          "range": [0, 10],
+          "requiredIn": ["regionContractCard"]
+        }
+      },
+      "consumedBy": ["HorrorPlace-Black-Archivum", "HorrorPlace-Atrocity-Seeds"]
+    },
+    "https://horrorplace.constellation/schemas/core/entertainment-metrics-spine.v1.json": {
+      "title": "Entertainment Metrics Spine Schema v1.0.0",
+      "version": "1.0.0",
+      "tier": "public",
+      "fields": {
+        "UEC": { "type": "number", "range": [0, 100] },
+        "EMD": { "type": "number", "range": [-1, 1] },
+        "ARR": { "type": "number", "range": [0, 1] }
+      },
+      "consumedBy": ["Horror.Place-Orchestrator"]
+    }
+  },
+  "invariants": {
+    "CIC": {
+      "definedIn": "https://horrorplace.constellation/schemas/core/invariants-spine.v1.json",
+      "type": "number",
+      "range": [0, 1],
+      "semantics": "Collective Invariant of Consequence",
+      "usedInContracts": ["regionContractCard", "seedContractCard"],
+      "usedInRegistries": ["regions", "events"]
+    },
+    "AOS": {
+      "definedIn": "https://horrorplace.constellation/schemas/core/invariants-spine.v1.json",
+      "type": "number",
+      "range": [0, 10],
+      "semantics": "Actualized Omission Severity",
+      "usedInContracts": ["regionContractCard"],
+      "usedInRegistries": ["regions"]
+    }
+  },
+  "metrics": {
+    "UEC": {
+      "definedIn": "https://horrorplace.constellation/schemas/core/entertainment-metrics-spine.v1.json",
+      "type": "number",
+      "range": [0, 100],
+      "semantics": "User Engagement Continuity",
+      "telemetryEnvelope": "session-metrics-envelope.v1.json",
+      "usedInContracts": ["policyEnvelope", "regionContractCard"]
+    }
+  },
+  "contracts": {
+    "regionContractCard": {
+      "schemaRef": "https://horrorplace.constellation/schemas/core/regionContractCard.v1.json",
+      "version": "1.0.0",
+      "requiredFields": ["id", "targetRepo", "path", "tier", "regionType", "coordinates", "invariantBindings"],
+      "consumedBy": ["HorrorPlace-Black-Archivum"]
+    }
+  },
+  "registries": {
+    "regions": {
+      "schemaRef": "https://horrorplace.constellation/schemas/registry/registry-regions.v1.json",
+      "idPattern": "^REG-[A-Z0-9]{3,6}-\\d{4}$",
+      "requiredRefs": ["deadledgerref", "artifactid"],
+      "maintainedBy": ["HorrorPlace-Black-Archivum"]
+    },
+    "events": {
+      "schemaRef": "https://horrorplace.constellation/schemas/registry/registry-events.v1.json",
+      "idPattern": "^EVT-[A-Z0-9]{3,6}-\\d{4}$",
+      "requiredRefs": ["deadledgerref", "artifactid"],
+      "maintainedBy": ["HorrorPlace-Black-Archivum"]
+    }
+  },
+  "consumers": {
+    "HorrorPlace-Black-Archivum": {
+      "type": "vault-repo",
+      "tier": "vault",
+      "usesSchemas": [
+        "https://horrorplace.constellation/schemas/core/invariants-spine.v1.json",
+        "https://horrorplace.constellation/schemas/registry/registry-regions.v1.json"
+      ],
+      "usesInvariants": ["CIC", "AOS"],
+      "usesMetrics": ["UEC"],
+      "producesRegistries": ["regions", "events"]
+    }
+  }
+}
