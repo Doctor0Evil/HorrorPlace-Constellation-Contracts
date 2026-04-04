@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/registry/registry-styles.v1.json",
+  "title": "Registry Styles Schema v1.0.0",
+  "description": "Schema for aesthetic and presentation contracts governing visual, audio, and narrative tone.",
+  "allOf": [
+    { "$ref": "./registry-entry-base.v1.json" }
+  ],
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "styleCategory",
+    "targetTier",
+    "aestheticDescriptors",
+    "invariantAlignment"
+  ],
+  "properties": {
+    "styleCategory": {
+      "type": "string",
+      "enum": ["visual", "audio", "narrative", "haptic", "mixed"],
+      "description": "Classification of aesthetic control domain."
+    },
+    "targetTier": {
+      "type": "string",
+      "enum": ["public", "vault", "lab"],
+      "description": "Access tier this style is valid for."
+    },
+    "aestheticDescriptors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "minItems": 1,
+      "description": "Lowercase, hyphenated tags describing the style's feel."
+    },
+    "invariantAlignment": {
+      "type": "object",
+      "patternProperties": {
+        "^(CIC|AOS|DET|SHCI)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "threshold": { "type": "string", "pattern": "^[><=]+\\d+(\\.\\d+)?$" },
+            "response": { "type": "string", "enum": ["linear-scale", "stepwise", "clamp", "invert"] },
+            "multiplier": { "type": "number" }
+          },
+          "required": ["response"]
+        }
+      },
+      "additionalProperties": false,
+      "description": "How the style adapts to invariant values at runtime."
+    },
+    "metricTargets": {
+      "type": "object",
+      "patternProperties": {
+        "^(UEC|EMD|STCI|CDL|ARR)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "+": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+            "-": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "Expected impact ranges for entertainment metrics."
+    },
+    "engineHints": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Non-binding engine-specific rendering or audio hints (e.g., unreal, godot, unity)."
+    },
+    "experimentalFlags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9\\-]*$"
+      },
+      "description": "Tags for research-grade styles. Only valid in lab tier."
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "pattern": "^prism:[a-z0-9\\-]+$",
+      "description": "Reference to a prismMeta document describing linkage and dependency graph."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "experimentalFlags": { "minItems": 1 } },
+        "required": ["experimentalFlags"]
+      },
+      "then": {
+        "properties": {
+          "tier": { "const": "lab" }
+        },
+        "required": ["tier"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "targetTier": { "const": "public" } },
+        "required": ["targetTier"]
+      },
+      "then": {
+        "properties": { "tier": { "const": "public" } },
+        "required": ["tier"]
+      }
+    }
+  ]
+}
