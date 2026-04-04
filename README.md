@@ -26,17 +26,14 @@ Planned high‑level layout (subject to evolution):
   - `schemas/invariants/` – Safety and history invariants for regions, events, and entities.
   - `schemas/metrics/` – Entertainment and telemetry metrics for sessions and encounters.
   - `schemas/contracts/` – Style, event, persona, entitlement, and routing contracts.
-
 - `registry/` – Registry formats and example NDJSON registries.
   - `registry/regions/` – Region IDs and opaque references.
   - `registry/events/` – Event IDs and opaque references.
   - `registry/styles/` – Style IDs and opaque references.
   - `registry/personas/` – Persona IDs and opaque references.
-
 - `workflows/` – Reusable CI and automation patterns.
   - GitHub Actions workflows for schema validation, registry linting, and drift detection.
   - Templates for cross‑repo signaling and VM‑constellation orchestration.
-
 - `docs/` – Human‑readable specifications and guidelines.
   - Contract descriptions, field semantics, and versioning rules.
   - AI‑chat authoring rules and integration notes.
@@ -71,7 +68,7 @@ By centralizing IDs and references, registries keep large constellations navigab
 
 ### Pre‑Commit and CI Contracts
 
-This repository will define:
+This repository defines:
 
 - Schema validation jobs to ensure all JSON and NDJSON conform to the canonical schemas.
 - Registry linting rules that require required fields, reference types, and prefixes.
@@ -98,6 +95,64 @@ HorrorPlace‑Constellation‑Contracts assumes AI‑chat agents and tools act a
   - Lean on CI and lints defined here for validation.
 
 This repository provides the contracts and templates, not the chat logic itself.
+
+---
+
+## Contract‑First Governance Layer
+
+Contract‑first governance is the practical application of these schemas and registries to real VM‑constellations. This repository defines schemas, registry formats, and reusable CI patterns that let AI agents and tools safely generate, wire, and validate multi‑repo artifacts—without chaotic file placement or raw horror content.
+
+### Core Governance Concepts
+
+- **Schema Spine**: Canonical JSON Schemas for invariants, metrics, contracts, and registries; single source of truth for structure and validation.
+- **Contract Cards**: Typed artifacts (for example, `policyEnvelope`, `regionContractCard`, `seedContractCard`) that declare target repo, path, schema version, and invariant bindings.
+- **prismMeta / agentProfile**: Machine‑readable metadata that guides AI‑chat generation and enables bidirectional validation propagation.
+- **NDJSON Registries**: Newline‑delimited JSON indexes for regions, events, styles, and personas, with opaque references only and no raw assets.
+- **One‑File‑Per‑Request**: Baseline rule for AI‑chat: each generation step emits exactly one validated file plus registry updates.
+
+---
+
+## What Lives Here
+
+```text
+├─ docs/          # Human‑aimed design guides and integration notes
+├─ schemas/       # JSON Schemas (core, registry, telemetry, tooling)
+├─ registry/      # NDJSON format specs and minimal examples
+├─ tooling/       # Python CLI utilities and Lua helpers
+├─ examples/      # Worked minimal constellation and AI‑chat flows
+└─ research/      # Non‑binding design notes and open questions
+```
+
+This layout is intended to be stable enough for downstream repos to depend on, while still allowing incremental refinement as the constellation matures.
+
+---
+
+## Who Should Use This
+
+- Engine authors integrating Horror.Place‑style contracts into Unity, Unreal, Godot, or custom engines.
+- AI‑chat tool builders who need structured output schemas and validation hooks for deterministic file generation.
+- CI integrators adding pre‑commit guards, schema validation, and registry linting to multi‑repo workflows.
+
+---
+
+## Quick Start
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/Doctor0Evil/HorrorPlace-Constellation-Contracts.git
+   cd HorrorPlace-Constellation-Contracts
+   ```
+
+2. Validate an example contract card using the provided Python tool:
+
+   ```bash
+   python tooling/python/cli/hpc-validate-schema.py \
+     --schema schemas/core/regionContractCard.v1.json \
+     --instance examples/minimal-constellation/registry/regions.minimal.ndjson
+   ```
+
+3. Explore the minimal constellation example in `examples/minimal-constellation/` to see a fully wired, CI‑ready scaffold.
 
 ---
 
@@ -148,3 +203,9 @@ This repository is in early design and scaffolding. Initial work focuses on:
 - Documenting AI‑chat authoring and integration expectations.
 
 Expect changes, additions, and refinements as the contracts are tested against real VM‑constellations and AI‑driven workflows.
+
+---
+
+## License
+
+MIT. See `LICENSE` for details.
