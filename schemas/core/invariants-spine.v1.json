@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/invariants-spine.v1.json",
+  "title": "Invariants Spine Schema v1.0.0",
+  "description": "Canonical definitions for horror constellation invariants: unbreakable rules derived from historical, geographical, or metaphysical constraints.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["CIC", "AOS", "DET", "SHCI"],
+  "properties": {
+    "CIC": {
+      "title": "Collective Invariant of Consequence",
+      "description": "Probability-weighted measure of historical impact. Higher values indicate regions/events where collective trauma or consequence is more likely to manifest.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "examples": [0.45, 0.88, 1.0]
+    },
+    "AOS": {
+      "title": "Actualized Omission Severity",
+      "description": "Intensity of unresolved historical trauma or omission. Represents the 'pressure' of unacknowledged events seeking expression.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 10.0,
+      "examples": [3.2, 7.5, 9.8]
+    },
+    "DET": {
+      "title": "Dynamic Event Tension",
+      "description": "Real-time tension level for an event or encounter. Governs pacing, escalation, and player agency constraints. Integer steps preferred.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "examples": [2, 5, 9]
+    },
+    "SHCI": {
+      "title": "Spectral-Historical Consistency Index",
+      "description": "Measure of alignment between a spectral entity's behavior and its historical source material. SHCI≈1.0 indicates high-fidelity historical coupling.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "examples": [0.35, 0.72, 0.95]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "CIC": { "minimum": 0.85 }
+        },
+        "required": ["CIC"]
+      },
+      "then": {
+        "properties": {
+          "AOS": { "minimum": 6.0 }
+        },
+        "required": ["AOS"],
+        "description": "High-CIC regions must have elevated AOS to maintain historical plausibility."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "SHCI": { "minimum": 0.8 }
+        },
+        "required": ["SHCI"]
+      },
+      "then": {
+        "properties": {
+          "DET": { "maximum": 8 }
+        },
+        "description": "High-fidelity spectral entities should not exceed moderate tension to preserve historical grounding."
+      }
+    }
+  ]
+}
