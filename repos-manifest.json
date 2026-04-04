@@ -1,0 +1,159 @@
+{
+  "constellation": "Horror.Place",
+  "manifest_version": "1.0.0",
+  "updated": "2026-04-04T02:21:00Z",
+
+  "identity": {
+    "owner": "Doctor0Evil",
+    "maintainer": "HorrorPlace-Constellation-Contracts",
+    "description": "Top-level repository manifest for the HorrorPlace VM-constellation. Lists Tier-1 core, Tier-2 vaults, Tier-3 labs, and governance repos."
+  },
+
+  "governance": {
+    "policy_profile": "TIERED_STANDARD_MATURE_RESEARCH",
+    "safety_tiers": ["standard", "mature", "research"],
+    "requires_deadledger_ref": true,
+    "deadledger_repo": "Doctor0Evil/HorrorPlace-Dead-Ledger-Network"
+  },
+
+  "repos": [
+    {
+      "name": "horror-place-core",
+      "repo": "Doctor0Evil/Horror.Place",
+      "tier": "tier-1",
+      "role": "core",
+      "safety_tier": "standard",
+      "ref": "main",
+      "description": "Core schemas, invariants, entertainment metrics, style contracts, and public registries for the VM-constellation."
+    },
+    {
+      "name": "horror-place-api",
+      "repo": "Doctor0Evil/Horror.Place-API",
+      "tier": "tier-1",
+      "role": "core-api",
+      "safety_tier": "standard",
+      "ref": "main",
+      "description": "Public HTTP and Lua API specifications and stubs for HorrorPlace runtime integration."
+    },
+    {
+      "name": "horror-place-engine",
+      "repo": "Doctor0Evil/HorrorPlace-Codebase-of-Death",
+      "tier": "tier-2",
+      "role": "engine-implementations",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Underground persona and event implementations, runtime Lua state machines, and signed agent artifacts."
+    },
+    {
+      "name": "horror-place-orchestrator",
+      "repo": "Doctor0Evil/Horror.Place-Orchestrator",
+      "tier": "tier-1",
+      "role": "orchestrator",
+      "safety_tier": "standard",
+      "ref": "main",
+      "description": "Schema-first orchestrator service and CI workflows for validating descriptors and mutating Tier-1 registries."
+    },
+    {
+      "name": "horror-place-registries",
+      "repo": "Doctor0Evil/Horror.Place-Registries",
+      "tier": "tier-1",
+      "role": "core-registries",
+      "safety_tier": "standard",
+      "ref": "main",
+      "description": "Canonical NDJSON registries for events, regions, personas, styles, and invariant bundles, referencing underground implementations by descriptor."
+    },
+
+    {
+      "name": "horror-place-atrocity-seeds",
+      "repo": "Doctor0Evil/HorrorPlace-Atrocity-Seeds",
+      "tier": "tier-2",
+      "role": "vault-history-seeds",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Vault for invariant-bound history and event seeds, tied to Tier-1 schemas and Dead-Ledger attestation."
+    },
+    {
+      "name": "horror-place-black-archivum",
+      "repo": "Doctor0Evil/HorrorPlace-Black-Archivum",
+      "tier": "tier-2",
+      "role": "vault-archives",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Vault for normalized trauma archives and invariant bundles referenced from Tier-1 registries via deadledgerref."
+    },
+    {
+      "name": "horror-place-spectral-foundry",
+      "repo": "Doctor0Evil/HorrorPlace-Spectral-Foundry",
+      "tier": "tier-2",
+      "role": "vault-spectral-agents",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Vault for spectral persona and encounter templates, spectral seed contracts, and underground AI behavior definitions."
+    },
+    {
+      "name": "horror-place-obscura-nexus",
+      "repo": "Doctor0Evil/HorrorPlace-Obscura-Nexus",
+      "tier": "tier-2",
+      "role": "vault-styles",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Vault for experimental style contracts and event variants, expressed via the Style Contract DSL."
+    },
+    {
+      "name": "horror-place-liminal-continuum",
+      "repo": "Doctor0Evil/HorrorPlace-Liminal-Continuum",
+      "tier": "tier-2",
+      "role": "vault-agent-market",
+      "safety_tier": "mature",
+      "ref": "main",
+      "description": "Agent marketplace and ranking vault for signed agent artifacts and Dead-Ledger-linked performance summaries."
+    },
+
+    {
+      "name": "horror-place-neural-resonance-lab",
+      "repo": "Doctor0Evil/HorrorPlace-Neural-Resonance-Lab",
+      "tier": "tier-3",
+      "role": "lab-bci-haptics",
+      "safety_tier": "research",
+      "ref": "main",
+      "description": "Lab for BCI, haptics, and physiological telemetry; defines BCI metric mappings and haptic pattern contracts."
+    },
+    {
+      "name": "horror-place-redacted-chronicles",
+      "repo": "Doctor0Evil/HorrorPlace-Redacted-Chronicles",
+      "tier": "tier-3",
+      "role": "lab-telemetry-redaction",
+      "safety_tier": "research",
+      "ref": "main",
+      "description": "Lab for redaction and summarization of raw BCI and gameplay telemetry into Tier-1-safe metric bundles."
+    },
+    {
+      "name": "horror-place-process-gods-research",
+      "repo": "Doctor0Evil/HorrorPlace-Process-Gods-Research",
+      "tier": "tier-3",
+      "role": "lab-process-personas",
+      "safety_tier": "research",
+      "ref": "main",
+      "description": "Lab for Process-type personas and high-SHCI experiments under strict invariant and metric constraints."
+    },
+    {
+      "name": "horror-place-dead-ledger-network",
+      "repo": "Doctor0Evil/HorrorPlace-Dead-Ledger-Network",
+      "tier": "tier-3",
+      "role": "lab-zkp-entitlement",
+      "safety_tier": "research",
+      "ref": "main",
+      "description": "Dead-Ledger ZKP and entitlement nexus: proof envelopes, verifiers registry, spectral seed and agent attestations."
+    },
+
+    {
+      "name": "horror-place-constellation-contracts",
+      "repo": "Doctor0Evil/HorrorPlace-Constellation-Contracts",
+      "tier": "tier-1",
+      "role": "governance-contracts",
+      "safety_tier": "standard",
+      "ref": "main",
+      "description": "Constellation-wide contracts, ALN templates, and manifests (including this file) for VM-constellation governance."
+    }
+  ]
+}
