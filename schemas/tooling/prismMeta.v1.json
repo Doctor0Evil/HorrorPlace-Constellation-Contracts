@@ -1,147 +1,168 @@
 {
-  "$id": "https://horror.place/constellation/schemas/prismMeta.v1.json",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "prismMeta",
-  "description": "Prism metadata for a single contract-card artifact: provenance, dependencies, and validation state.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/tooling/prismMeta.v1.json",
+  "title": "Prism Metadata v1.0.0",
+  "description": "Machine-readable metadata for bidirectional validation, dependency tracking, and linkage in AI-generated artifacts.",
   "type": "object",
+  "additionalProperties": false,
   "required": [
-    "prismId",
-    "schemaVersion",
-    "sessionId",
-    "agentId",
-    "agentProfileId",
-    "targetRepo",
-    "path",
-    "tier",
-    "hash",
+    "version",
+    "generatedBy",
+    "linkage",
     "dependencies",
-    "validation",
-    "signedDelta"
+    "validationPropagation",
+    "prismHash"
   ],
   "properties": {
-    "prismId": {
+    "version": {
       "type": "string",
-      "description": "Stable identifier for this prism artifact (often == contract-card id)."
+      "const": "1.0.0",
+      "description": "prismMeta schema version."
     },
-    "schemaVersion": {
-      "type": "string",
-      "description": "Version of the prismMeta schema (e.g., prismMeta.v1)."
-    },
-    "sessionId": {
-      "type": "string",
-      "description": "Opaque session or conversation id for this generation step."
-    },
-    "agentId": {
-      "type": "string",
-      "description": "Logical id of the AI/chat agent or tool that produced this file."
-    },
-    "agentProfileId": {
-      "type": "string",
-      "description": "Reference to an agentProfile card defining rights (e.g., clamp permission)."
-    },
-    "targetRepo": {
-      "type": "string",
-      "description": "Repository this artifact is intended for (org/repo or git URI)."
-    },
-    "path": {
-      "type": "string",
-      "description": "Path within the target repo where this file should live."
-    },
-    "tier": {
-      "type": "string",
-      "description": "Tier label (e.g., standard, mature, research)."
-    },
-    "hash": {
-      "type": "string",
-      "description": "Content hash of this file (e.g., sha256:<hex>)."
-    },
-    "dependencies": {
-      "type": "array",
-      "description": "Upstream contracts and proofs this file depends on.",
-      "items": {
-        "type": "object",
-        "required": ["id", "kind"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Upstream contract id (e.g., regionContractCard id, policyEnvelope id, proofEnvelope id)."
-          },
-          "kind": {
-            "type": "string",
-            "description": "Type of dependency (e.g., policy, region, seed, proof, style)."
-          },
-          "repo": {
-            "type": "string",
-            "description": "Optional: repository where the dependency lives."
-          },
-          "path": {
-            "type": "string",
-            "description": "Optional: file path of the dependency."
-          }
-        },
-        "additionalProperties": false
-      }
-    },
-    "validation": {
+    "generatedBy": {
       "type": "object",
-      "description": "Result of last validation run at generation time.",
-      "required": ["schemaValidated", "subsetValidated", "ledgerValidated", "clamped"],
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "agentProfileRef",
+        "timestamp"
+      ],
       "properties": {
-        "schemaValidated": {
-          "type": "boolean",
-          "description": "True if JSON Schema validation passed."
+        "agentId": {
+          "type": "string",
+          "description": "Identifier of the AI agent or tool that created this artifact."
         },
-        "subsetValidated": {
-          "type": "boolean",
-          "description": "True if invariant/metric subset rules passed."
-        },
-        "ledgerValidated": {
-          "type": "boolean",
-          "description": "True if deadledgerref and related proofs resolved and validated."
-        },
-        "clamped": {
-          "type": "boolean",
-          "description": "True if any values were clamped during validation."
-        },
-        "clampReasons": {
-          "type": "array",
-          "description": "Optional list of clamp reasons (per field/metric).",
-          "items": {
-            "type": "string"
-          }
+        "agentProfileRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "Reference to the agentProfile schema governing the generating agent."
         },
         "timestamp": {
           "type": "string",
           "format": "date-time",
-          "description": "Timestamp of the validation pass that produced this metadata."
+          "description": "UTC timestamp of generation."
         }
-      },
-      "additionalProperties": false
+      }
     },
-    "signedDelta": {
+    "linkage": {
       "type": "object",
-      "description": "Cryptographic signature over (file content + dependencies).",
-      "required": ["algorithm", "signature", "publicKeyRef"],
+      "additionalProperties": false,
+      "required": [
+        "targetRepo",
+        "targetPath",
+        "schemaRef",
+        "tier"
+      ],
       "properties": {
-        "algorithm": {
+        "targetRepo": {
           "type": "string",
-          "description": "Signature algorithm identifier (e.g., ed25519)."
+          "description": "Exact repository where this artifact belongs."
         },
-        "signature": {
+        "targetPath": {
           "type": "string",
-          "description": "Signature bytes (e.g., base64url)."
+          "pattern": "^[a-zA-Z0-9/_\\-\\.]+\\.(json|ndjson|yml|md)$",
+          "description": "Exact file path within targetRepo."
         },
-        "publicKeyRef": {
+        "schemaRef": {
           "type": "string",
-          "description": "Opaque reference to the public key (e.g., Dead-Ledger verifier id)."
+          "format": "uri",
+          "description": "Canonical JSON Schema $id this artifact conforms to."
         },
-        "proofEnvelopeId": {
+        "tier": {
           "type": "string",
-          "description": "Optional: id of a zkpproof envelope that attests this delta."
+          "enum": [
+            "public",
+            "vault",
+            "lab"
+          ],
+          "description": "Access tier for this artifact."
         }
-      },
-      "additionalProperties": false
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "AOS",
+              "DET",
+              "SHCI"
+            ]
+          },
+          "description": "List of invariants this artifact depends on or affects."
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR"
+            ]
+          },
+          "description": "List of metrics this artifact monitors or targets."
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of other contract IDs this artifact relies upon."
+        },
+        "registryIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{3,4}-[A-Z0-9]{3,6}-\\d{4}$"
+          },
+          "description": "List of registry entry IDs referenced by this artifact."
+        }
+      }
+    },
+    "validationPropagation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onSchemaChange",
+        "onInvariantDrift",
+        "notifyRepos"
+      ],
+      "properties": {
+        "onSchemaChange": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "CI jobs or tools to trigger if the referenced schema changes."
+        },
+        "onInvariantDrift": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions to take if invariant values drift from canonical ranges."
+        },
+        "notifyRepos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Repositories to alert when this artifact is updated or invalidated."
+        }
+      }
+    },
+    "prismHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Cryptographic hash of the artifact content for integrity verification."
     }
-  },
-  "additionalProperties": false
+  }
 }
