@@ -1,0 +1,266 @@
+{
+  "checklist_id": "ai.authoring.checklist.atrocity_seeds.v1",
+  "version": "1.0.0",
+  "description": "Pre-CI AI authoring checklist for HorrorPlace-Atrocity-Seeds. Ensures seeds, docs, and scripts are schema-bound, implication-only, and correctly placed in the VM-constellation.",
+  "target_repo": "HorrorPlace-Atrocity-Seeds",
+  "applies_to": [
+    "events/*.json",
+    "regions/*.json",
+    "schemas/*.json",
+    "registry/*.json",
+    "scripts/*.py",
+    "docs/*.md",
+    "constellation/*.md",
+    ".github/workflows/*.yml",
+    ".circleci/config.yml"
+  ],
+
+  "required_context": {
+    "must_know_repos": [
+      "Horror.Place",
+      "Horror.Place-Orchestrator",
+      "HorrorPlace-Constellation-Contracts",
+      "HorrorPlace-Codebase-of-Death",
+      "HorrorPlace-Black-Archivum",
+      "HorrorPlace-Spectral-Foundry",
+      "HorrorPlace-Atrocity-Seeds",
+      "HorrorPlace-Obscura-Nexus",
+      "HorrorPlace-Liminal-Continuum",
+      "HorrorPlace-Process-Gods-Research",
+      "HorrorPlace-Redacted-Chronicles",
+      "HorrorPlace-Neural-Resonance-Lab",
+      "HorrorPlace-Dead-Ledger-Network"
+    ],
+    "canonical_schemas": [
+      "schema://Horror.Place/invariants_v1.json",
+      "schema://Horror.Place/entertainment_metrics_v1.json",
+      "schema://Horror.Place/eventcontract_v1.json",
+      "schema://Horror.Place/regioncontract_v1.json",
+      "schema://Horror.Place/persona_contract_v1.json",
+      "schema://Horror.Place/stylecontract_v1.json"
+    ],
+    "atrocity_seeds_local_schemas": [
+      "schemas/eventcontract_v1.json",
+      "schemas/regioncontract_v1.json",
+      "schemas/gore_assembly_style_v1.json"
+    ]
+  },
+
+  "global_rules": [
+    {
+      "id": "rule.one_file_per_request",
+      "severity": "ERROR",
+      "description": "Each authoring request must propose exactly one primary file plus optional registry edits. No multi-file dumps.",
+      "applies_to": ["*"],
+      "ai_action": "If the user asks for multiple artifacts, negotiate a sequence; do not return multiple unrelated files at once."
+    },
+    {
+      "id": "rule.no_raw_horror_content",
+      "severity": "ERROR",
+      "description": "Never embed raw horror content, explicit violence, or narrative description of harm in any Atrocity-Seeds artifact. Seeds and docs must remain implication-first.",
+      "applies_to": [
+        "events/*.json",
+        "regions/*.json",
+        "schemas/*.json",
+        "registry/*.json",
+        "docs/*.md",
+        "constellation/*.md"
+      ],
+      "ai_action": "Use IDs, hashes, invariant/metric bindings, and style references only. Replace any narrative idea with references to upstream archives and style contracts."
+    },
+    {
+      "id": "rule.no_runtime_reads",
+      "severity": "ERROR",
+      "description": "Atrocity-Seeds is a sealed vault. Engines and runtime systems MUST NOT query this repo directly in production.",
+      "applies_to": [
+        "scripts/*.py",
+        ".github/workflows/*.yml",
+        ".circleci/config.yml",
+        "docs/*.md",
+        "constellation/*.md"
+      ],
+      "ai_action": "When generating scripts or docs, always route runtime access through Horror.Place registries and Orchestrator descriptors, not direct git clone/HTTP fetch of Atrocity-Seeds in live builds."
+    }
+  ],
+
+  "seed_rules": {
+    "applies_to": [
+      "events/*.json",
+      "regions/*.json"
+    ],
+    "required_fields": [
+      "id",
+      "bundleref.id",
+      "invariants",
+      "metrics_intent",
+      "safetytier",
+      "intensityband",
+      "schemaref"
+    ],
+    "required_invariants": [
+      "CIC",
+      "MDI",
+      "AOS",
+      "RRM",
+      "FCF",
+      "SPR",
+      "RWF",
+      "DET",
+      "HVF",
+      "LSG",
+      "SHCI"
+    ],
+    "required_metrics_intent": [
+      "UEC",
+      "EMD",
+      "STCI",
+      "CDL",
+      "ARR"
+    ],
+    "ranges": {
+      "invariants": {
+        "min": 0.0,
+        "max": 1.0,
+        "special_cases": {
+          "DET": {
+            "min": 0.0,
+            "max": 10.0
+          }
+        }
+      },
+      "metrics_intent": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "intensityband": {
+        "min": 0,
+        "max": 10
+      }
+    },
+    "high_intensity_rule": {
+      "threshold": 8,
+      "required_field": "deadledgerref",
+      "deadledgerref_shape": {
+        "proof_envelope_id": "string",
+        "verifier_ref": "string",
+        "circuit_type": "string",
+        "required_proofs": "array"
+      },
+      "ai_action": "If intensityband >= 8, you MUST include a deadledgerref compatible with Dead-Ledger zkpproof and verifier conventions."
+    },
+    "forbidden_fields": [
+      "description",
+      "narrative",
+      "lore_text",
+      "dialogue",
+      "raw_asset_url",
+      "base64_data"
+    ],
+    "ai_actions": [
+      "Never invent new top-level fields. Conform exactly to eventcontract_v1.json / regioncontract_v1.json.",
+      "If the user describes story content, transform it into invariant and metrics bindings, not text fields.",
+      "Always set schemaref to the canonical Horror.Place schema URI."
+    ]
+  },
+
+  "registry_rules": {
+    "applies_to": [
+      "registry/events.json",
+      "registry/regions.json"
+    ],
+    "format": "json_or_ndjson",
+    "required_fields": [
+      "id",
+      "schemaref",
+      "path",
+      "invariant_bundle",
+      "hash",
+      "tier"
+    ],
+    "optional_fields": [
+      "story_spine_seeds",
+      "deadledgerref",
+      "tags"
+    ],
+    "path_rule": {
+      "description": "Registry entries must point to Atrocity-Seeds via git@ URIs with fragment paths.",
+      "pattern": "^git@github.com:Doctor0Evil/HorrorPlace-Atrocity-Seeds.git#(events|regions)/[a-z0-9._-]+\\.json$"
+    },
+    "invariant_bundle_rule": {
+      "description": "Must reference a Black-Archivum invariant bundle by git@ URI.",
+      "pattern": "^git@github.com:Doctor0Evil/HorrorPlace-Black-Archivum.git#contracts/invariant_bundles/[a-z0-9._-]+\\.json$"
+    },
+    "deadledgerref_policy": {
+      "require_for_tiers": [
+        "mature",
+        "adult"
+      ],
+      "require_for_intensityband_at_or_above": 8
+    },
+    "ai_actions": [
+      "Never hard-code HTTP URLs or raw paths; always use git@ URIs.",
+      "When adding a new seed, update the relevant registry only after the seed JSON is fully valid."
+    ]
+  },
+
+  "schema_rules": {
+    "applies_to": [
+      "schemas/*.json"
+    ],
+    "mirror_of": [
+      "schema://Horror.Place/eventcontract_v1.json",
+      "schema://Horror.Place/regioncontract_v1.json"
+    ],
+    "constraints": [
+      "Do not relax required fields.",
+      "Do not expand ranges of invariants or metrics beyond the canonical definitions.",
+      "Do not set additionalProperties: true on invariants or metrics blocks."
+    ],
+    "ai_actions": [
+      "Treat Atrocity-Seeds schemas as strict mirrors of Horror.Place; add only annotations or repo-local metadata, not structural changes."
+    ]
+  },
+
+  "script_rules": {
+    "applies_to": [
+      "scripts/*.py"
+    ],
+    "allowed_purposes": [
+      "schema_validation",
+      "hash_verification",
+      "seed_generation",
+      "descriptor_signing_integration"
+    ],
+    "forbidden_purposes": [
+      "runtime_director_logic",
+      "gameplay_ai_behavior",
+      "direct_integration_with_player-facing_engines"
+    ],
+    "ai_actions": [
+      "If implementing seed generation, ensure generated files conform to this checklist and canonical schemas.",
+      "Never embed API keys, private keys, or direct database connections."
+    ]
+  },
+
+  "doc_rules": {
+    "applies_to": [
+      "README.md",
+      "docs/*.md",
+      "constellation/*.md"
+    ],
+    "must_state": [
+      "Atrocity-Seeds is a Tier-2 PCG seed vault for invariant-bound horror, implication-only.",
+      "Engines must never query this vault at runtime in production.",
+      "All seeds are validated against Horror.Place schemas and hashed before signing and dispatch.",
+      "High-intensity seeds require Dead-Ledger attestation via deadledgerref."
+    ],
+    "forbidden": [
+      "Explicit descriptions of violence or suffering",
+      "Detailed narrative of real-world atrocities"
+    ],
+    "ai_actions": [
+      "Use architectural, schema, and pipeline language in docs.",
+      "Refer to history and trauma only via invariant bundles and IDs."
+    ]
+  }
+}
