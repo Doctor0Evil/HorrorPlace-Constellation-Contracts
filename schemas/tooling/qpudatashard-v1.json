@@ -20,7 +20,8 @@
     },
     "shardId": {
       "type": "string",
-      "description": "Stable identifier for this shard within its dataset."
+      "description": "Stable identifier for this shard within its dataset.",
+      "pattern": "^QPU-SHARD-[0-9]{8}-[0-9]{4}$"
     },
     "origin": {
       "type": "object",
