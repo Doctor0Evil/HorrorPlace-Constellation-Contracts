@@ -1,0 +1,114 @@
+name: "Schema Validation (Reusable)"
+description: "Validates JSON/NDJSON files against schemas loaded by $id. Intended for use across the constellation."
+
+on:
+  workflow_call:
+    inputs:
+      schema_dir:
+        description: "Directory containing JSON Schema files."
+        required: true
+        type: string
+        default: "schemas"
+      data_glob:
+        description: "Glob pattern for data files to validate."
+        required: true
+        type: string
+        default: "*.json"
+
+jobs:
+  validate-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Run Schema Validator
+        run: |
+          python - <<'PYCODE'
+          import json
+          import sys
+          import glob
+          from pathlib import Path
+          from jsonschema import validate, Draft202012Validator
+
+          schema_dir = Path("${{ inputs.schema_dir }}")
+          data_glob = "${{ inputs.data_glob }}"
+          
+          # Load all schemas by $id
+          schemas = {}
+          for schema_file in schema_dir.rglob("*.json"):
+              try:
+                  with schema_file.open("r", encoding="utf-8") as f:
+                      schema = json.load(f)
+                  if "$id" in schema:
+                      schemas[schema["$id"]] = schema
+              except Exception as e:
+                  print(f"WARNING: Failed to load schema {schema_file}: {e}", file=sys.stderr)
+
+          if not schemas:
+              print("ERROR: No schemas found. Aborting.", file=sys.stderr)
+              sys.exit(1)
+
+          errors_found = False
+          data_files = glob.glob(data_glob, recursive=True)
+          
+          for data_file in data_files:
+              p = Path(data_file)
+              if not p.is_file():
+                  continue
+                  
+              # Read content
+              content = p.read_text(encoding="utf-8").strip()
+              if not content:
+                  continue
+                  
+              lines = [content] if not data_file.endswith(".ndjson") else content.splitlines()
+              
+              for i, line in enumerate(lines):
+                  if not line.strip():
+                      continue
+                  try:
+                      data = json.loads(line)
+                  except json.JSONDecodeError as e:
+                      print(f"JSON PARSE ERROR in {data_file} line {i+1}: {e}", file=sys.stderr)
+                      errors_found = True
+                      continue
+                      
+                  schemaref = data.get("schemaref")
+                  if not schemaref or schemaref not in schemas:
+                      # If no schemaref, we can't validate against the spine.
+                      # Depending on policy, this might be an error or a warning.
+                      # For strict spine compliance, treat as error.
+                      print(f"SCHEMA REF ERROR in {data_file} line {i+1}: schemaref '{schemaref}' not found.", file=sys.stderr)
+                      errors_found = True
+                      continue
+                      
+                  schema = schemas[schemaref]
+                  validator = Draft202012Validator(schema)
+                  validation_errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
+                  
+                  if validation_errors:
+                      errors_found = True
+                      loc = f"line {i+1}"
+                      if "id" in data:
+                          loc = f"entry {data['id']}"
+                          
+                      for err in validation_errors:
+                          path_str = "/".join(str(p) for p in err.path)
+                          print(f"VALIDATION ERROR in {data_file} ({loc}) path '{path_str}': {err.message}", file=sys.stderr)
+
+          if errors_found:
+              sys.exit(1)
+          else:
+              print(f"Schema validation passed for {len(data_files)} files.")
+          PYCODE
