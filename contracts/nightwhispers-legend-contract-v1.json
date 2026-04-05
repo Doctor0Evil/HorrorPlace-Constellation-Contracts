@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/nightwhispers-legend-contract-v1.json",
+  "title": "NightWhispers UrbanLegendMetaQuest Contract v1",
+  "description": "Seed-like contract for UrbanLegendMetaQuest legends. Binds NightWhispers legend state machines to Atrocity-Seeds sequence seeds, persona hooks, and metric targets. Implication-only; no raw horror content.",
+  "type": "object",
+  "required": [
+    "legend_id",
+    "schemaref",
+    "seed_ids",
+    "persona_hooks",
+    "metric_targets",
+    "status_transitions",
+    "hazard_delta_rules",
+    "safetytier",
+    "intensityband"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "legend_id": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$",
+      "description": "Stable NightWhispers-internal legend identifier"
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "schema://HorrorPlace-Constellation-Contracts/nightwhispers-legend-contract-v1.json",
+      "description": "Canonical schema URI for validation"
+    },
+    "seed_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{2,63}$"
+      },
+      "minItems": 1,
+      "description": "References to Atrocity-Seeds sequence seeds that this legend can manifest"
+    },
+    "persona_hooks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^git@github\\.com:Doctor0Evil/HorrorPlace-Constellation-Contracts\\.git#contracts/persona_contract_v1\\.json#[A-Z][a-zA-Z0-9]*$"
+      },
+      "description": "Persona contracts that can trigger, resolve, or be affected by this legend"
+    },
+    "metric_targets": {
+      "type": "object",
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      },
+      "description": "Target bands for entertainment metrics when this legend is active"
+    },
+    "status_transitions": {
+      "type": "object",
+      "required": ["states", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Asleep", "Awakening", "Active", "Fulfilled", "Broken"]
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "action_tag", "intensity_threshold", "to", "hazard_delta"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string",
+                "enum": ["Asleep", "Awakening", "Active", "Fulfilled", "Broken"]
+              },
+              "action_tag": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{2,31}$"
+              },
+              "intensity_threshold": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "to": {
+                "type": "string",
+                "enum": ["Asleep", "Awakening", "Active", "Fulfilled", "Broken"]
+              },
+              "hazard_delta": {
+                "type": "number",
+                "minimum": -1.0,
+                "maximum": 1.0,
+                "description": "Adjustment to local hazard level; positive = escalation, negative = pacification"
+              }
+            }
+          }
+        }
+      },
+      "description": "Deterministic FSM for legend state transitions based on player actions"
+    },
+    "hazard_delta_rules": {
+      "type": "object",
+      "required": ["base_decay", "action_multipliers", "cap"],
+      "additionalProperties": false,
+      "properties": {
+        "base_decay": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 0.1,
+          "description": "Per-tick decay applied to hazard_delta when no actions occur"
+        },
+        "action_multipliers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 3.0
+          },
+          "description": "Action tags mapped to hazard adjustment multipliers"
+        },
+        "cap": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": -1.0, "maximum": 0.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "bci_target_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^git@github\\.com:Doctor0Evil/HorrorPlace-Neural-Resonance-Lab\\.git#calibrations/[a-z][a-z0-9_]{2,63}\\.json$"
+      },
+      "description": "Optional references to validated BCI calibration descriptors",
+      "default": []
+    },
+    "invariant_constraints": {
+      "type": "object",
+      "required": ["SPR_min", "DET_max"],
+      "additionalProperties": false,
+      "properties": {
+        "SPR_min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum Spectral Plausibility Rating required for this legend to manifest"
+        },
+        "DET_max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Maximum Dread Exposure Threshold allowed; legend escalations blocked if exceeded"
+        },
+        "CIC_band": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "description": "Optional CIC range filter for compatible zones"
+        },
+        "SHCI_min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum Synthetic Horror Coherence Index for persona coupling"
+        }
+      }
+    },
+    "safetytier": {
+      "type": "string",
+      "enum": ["public", "mature", "research", "restricted"],
+      "description": "Safety classification for entitlement and gating"
+    },
+    "intensityband": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Thematic intensity band; values >= 8 require deadledgerref"
+    },
+    "deadledgerref": {
+      "type": ["object", "null"],
+      "if": {
+        "properties": { "intensityband": { "minimum": 8 } }
+      },
+      "then": {
+        "type": "object",
+        "required": ["proof_envelope_id", "verifier_ref", "circuit_type"],
+        "additionalProperties": false,
+        "properties": {
+          "proof_envelope_id": {
+            "type": "string",
+            "pattern": "^dln\\.envelope\\.[a-z][a-z0-9_.-]*$"
+          },
+          "verifier_ref": {
+            "type": "string",
+            "pattern": "^dln\\.verifier\\.[a-z][a-z0-9_.-]*$"
+          },
+          "circuit_type": {
+            "type": "string",
+            "enum": ["charter_agreement_and_age_gate", "spectral_seed_attestation", "bundle_attestation"]
+          },
+          "required_proofs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["age_over_18", "charter_agreement_v1", "neurorights_ack", "consent_verified"]
+            }
+          }
+        }
+      },
+      "else": {
+        "type": "null"
+      },
+      "description": "Dead-Ledger reference required for high-intensity legends (band >= 8)"
+    }
+  }
+}
