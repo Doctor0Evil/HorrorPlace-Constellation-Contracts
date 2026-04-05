@@ -1,0 +1,146 @@
+name: "QPU Data Shard Lint (Reusable)"
+description: "Validates QPU Data Shards against schema and range constraints."
+
+on:
+  workflow_call:
+    inputs:
+      data_glob:
+        description: "Glob pattern for QPU shard NDJSON files."
+        required: true
+        type: string
+        default: "**/*.qpudatashard.ndjson"
+
+jobs:
+  lint-qpudatashard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run QPU Shard Linter
+        run: |
+          python - <<'PYCODE'
+          import json
+          import sys
+          import glob
+          import re
+          from pathlib import Path
+
+          data_glob = "${{ inputs.data_glob }}"
+          errors_found = False
+          total_files = 0
+          total_shards = 0
+
+          files = glob.glob(data_glob, recursive=True)
+          files = [f for f in files if not f.startswith('.')]
+
+          # Invariant Ranges
+          INVARIANTS_0_1 = ['CIC', 'MDI', 'AOS', 'RRM', 'FCF', 'SPR', 'RWF', 'HVF', 'LSG', 'SHCI']
+          INVARIANTS_0_10 = ['DET']
+          METRICS_0_1 = ['UEC', 'EMD', 'STCI', 'CDL', 'ARR']
+
+          for data_file in files:
+              total_files += 1
+              path = Path(data_file)
+              if not path.is_file():
+                  continue
+                  
+              content = path.read_text(encoding="utf-8").strip()
+              if not content:
+                  continue
+                  
+              lines = content.splitlines()
+              
+              for i, line in enumerate(lines):
+                  line = line.strip()
+                  if not line:
+                      continue
+                      
+                  try:
+                      shard = json.loads(line)
+                  except json.JSONDecodeError as e:
+                      print(f"::error file={data_file},line={i+1}:: Invalid JSON at line {i+1}: {e}")
+                      errors_found = True
+                      continue
+
+                  total_shards += 1
+                  
+                  shard_id = shard.get('shardId', f'Line {i+1}')
+
+                  # 1. Schemaref
+                  schemaref = shard.get('schemaref')
+                  if schemaref != 'schema:Horror.Place/constellation/qpudatashard-v1':
+                      print(f"::error file={data_file},line={i+1}:: Invalid schemaref '{schemaref}' in shard {shard_id}")
+                      errors_found = True
+
+                  # 2. Origin
+                  origin = shard.get('origin')
+                  if not isinstance(origin, dict):
+                      print(f"::error file={data_file},line={i+1}:: Missing 'origin' object in shard {shard_id}")
+                      errors_found = True
+                  else:
+                      if not origin.get('agentId'):
+                          print(f"::error file={data_file},line={i+1}:: Missing 'agentId' in origin in shard {shard_id}")
+                          errors_found = True
+                      if not origin.get('sourceRepo'):
+                          print(f"::error file={data_file},line={i+1}:: Missing 'sourceRepo' in origin in shard {shard_id}")
+                          errors_found = True
+
+                  # 3. Payload
+                  payload = shard.get('payload')
+                  if not isinstance(payload, dict):
+                      print(f"::error file={data_file},line={i+1}:: Missing 'payload' object in shard {shard_id}")
+                      errors_found = True
+                  else:
+                      p_type = payload.get('type')
+                      valid_types = ['region-metrics', 'persona-metrics', 'schema-impact', 'drift-alert', 'experiment-result']
+                      if p_type not in valid_types:
+                          print(f"::error file={data_file},line={i+1}:: Invalid payload.type '{p_type}' in shard {shard_id}")
+                          errors_found = True
+                          
+                      # Check Invariants
+                      invs = payload.get('invariants', {})
+                      if isinstance(invs, dict):
+                          for key, val in invs.items():
+                              if not isinstance(val, (int, float)):
+                                  print(f"::error file={data_file},line={i+1}:: Invariant '{key}' is not numeric in shard {shard_id}")
+                                  errors_found = True
+                              elif key in INVARIANTS_0_1:
+                                  if val < 0 or val > 1:
+                                      print(f"::error file={data_file},line={i+1}:: Invariant '{key}' ({val}) out of range [0,1] in shard {shard_id}")
+                                      errors_found = True
+                              elif key in INVARIANTS_0_10:
+                                  if val < 0 or val > 10:
+                                      print(f"::error file={data_file},line={i+1}:: Invariant '{key}' ({val}) out of range [0,10] in shard {shard_id}")
+                                      errors_found = True
+
+                      # Check Metrics
+                      mets = payload.get('metrics', {})
+                      if isinstance(mets, dict):
+                          for key, val in mets.items():
+                              if not isinstance(val, (int, float)):
+                                  print(f"::error file={data_file},line={i+1}:: Metric '{key}' is not numeric in shard {shard_id}")
+                                  errors_found = True
+                              elif key in METRICS_0_1:
+                                  if val < 0 or val > 1:
+                                      print(f"::error file={data_file},line={i+1}:: Metric '{key}' ({val}) out of range [0,1] in shard {shard_id}")
+                                      errors_found = True
+                      
+                      # Raw Content Check
+                      details = payload.get('details', {})
+                      if isinstance(details, dict):
+                          for k, v in details.items():
+                              if isinstance(v, str) and len(v) > 500:
+                                  print(f"::warning file={data_file},line={i+1}:: Potential raw content in payload.details.{k} (length > 500)")
+
+          if errors_found:
+              print("QPU shard lint failed.")
+              sys.exit(1)
+          else:
+              print(f"QPU shard lint passed. Checked {total_shards} shards in {total_files} files.")
+          PYCODE
