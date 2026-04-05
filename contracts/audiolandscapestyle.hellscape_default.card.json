@@ -1,0 +1,26 @@
+{
+  "card_id": "card.audio.hellscape_default.v1",
+  "type": "AudioLandscapeCard",
+  "category": "Style",
+  "tier_link": "Horror.Place/profiles/audio.hellscape_default.v1.json",
+  "doctrinal_definition": {
+    "title": "Hellscape Default Profile",
+    "core_concept": "Sensory Overload via Historical Echoes",
+    "description": "An audio mixing strategy for regions with high Catastrophic Imprint (CIC) and high Mythic Density (MDI). It replaces standard silence with a 'pressure-cooker' ambience layer composed of sub-bass trauma rumbles and fragmented archival noise."
+  },
+  "mixing_rules": {
+    "cic_response": {
+      "condition": "CIC > 0.75",
+      "action": "Activate 'Heavy_Layer'. Increase Low-Pass Filter (LPF) cutoff to 400Hz to simulate ear-ringing/tinnitus. Introduce random 3-5dB spikes in 'Industrial_Groan' stem."
+    },
+    "aos_response": {
+      "condition": "Archival Opacity (AOS) > 0.70",
+      "action": "Blend 'Redacted_Voices' stem at -18dB. Apply bit-crushing to environmental foley to simulate reality degradation."
+    },
+    "liminal_response": {
+      "condition": "Liminal Stress (LSG) > 0.80",
+      "action": "Enable 'Threshold_Sweeps'. When crossing zone boundaries, apply 100ms silence followed by re-verb spike (wet/dry > 80%)."
+    }
+  },
+  "usage_context": "Applied to 'No Man's Land' biomes, post-battle zones, and corrupted ritual sites."
+}
