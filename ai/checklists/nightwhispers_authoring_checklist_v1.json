@@ -1,0 +1,131 @@
+{
+  "checklist_id": "ai.authoring.checklist.nightwhispers.v1",
+  "version": "1.0.0",
+  "description": "Pre-CI AI authoring checklist for NightWhispers legend contracts. Ensures contracts are schema-bound, invariant-aware, and correctly integrated with Atrocity-Seeds and persona systems.",
+  "target_repo": "HorrorPlace-Constellation-Contracts",
+  "applies_to": [
+    "contracts/nightwhispers-legend-contract-v1.json",
+    "registry/legends.json",
+    "docs/nightwhispers-*.md"
+  ],
+
+  "required_context": {
+    "must_know_repos": [
+      "Horror.Place",
+      "Horror.Place-Orchestrator",
+      "HorrorPlace-Constellation-Contracts",
+      "HorrorPlace-Codebase-of-Death",
+      "HorrorPlace-Black-Archivum",
+      "HorrorPlace-Spectral-Foundry",
+      "HorrorPlace-Atrocity-Seeds",
+      "HorrorPlace-Obscura-Nexus",
+      "HorrorPlace-Liminal-Continuum",
+      "HorrorPlace-Process-Gods-Research",
+      "HorrorPlace-Redacted-Chronicles",
+      "HorrorPlace-Neural-Resonance-Lab",
+      "HorrorPlace-Dead-Ledger-Network"
+    ],
+    "canonical_schemas": [
+      "schema://Horror.Place/invariants_v1.json",
+      "schema://Horror.Place/entertainment_metrics_v1.json",
+      "schema://HorrorPlace-Constellation-Contracts/nightwhispers-legend-contract-v1.json",
+      "schema://HorrorPlace-Constellation-Contracts/persona_contract_v1.json"
+    ]
+  },
+
+  "global_rules": [
+    {
+      "id": "rule.one_file_per_request",
+      "severity": "ERROR",
+      "description": "Each authoring request must propose exactly one primary contract file plus optional registry edits. No multi-file dumps.",
+      "applies_to": ["*"],
+      "ai_action": "If the user asks for multiple artifacts, negotiate a sequence; do not return multiple unrelated files at once."
+    },
+    {
+      "id": "rule.no_raw_horror_content",
+      "severity": "ERROR",
+      "description": "Never embed raw horror content, explicit violence, or narrative description of harm in NightWhispers contracts. Use IDs, hashes, and invariant bindings only.",
+      "applies_to": ["contracts/*.json", "registry/*.json", "docs/*.md"],
+      "ai_action": "Replace any narrative idea with references to upstream archives, Seed IDs, and persona hooks."
+    },
+    {
+      "id": "rule.invariant_first",
+      "severity": "ERROR",
+      "description": "All legend contracts must query invariant bundles via H. API before manifestation logic. Contracts cannot contain hardcoded invariant values.",
+      "applies_to": ["contracts/nightwhispers-legend-contract-v1.json"],
+      "ai_action": "Ensure invariant_constraints reference canonical ranges; use H.zone_view() and H.bundle() patterns in any example code."
+    }
+  ],
+
+  "contract_rules": {
+    "applies_to": ["contracts/nightwhispers-legend-contract-v1.json"],
+    "required_fields": [
+      "legend_id",
+      "schemaref",
+      "seed_ids",
+      "persona_hooks",
+      "metric_targets",
+      "status_transitions",
+      "hazard_delta_rules",
+      "safetytier",
+      "intensityband"
+    ],
+    "required_invariants": ["SPR_min", "DET_max"],
+    "required_metrics": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+    "ranges": {
+      "metric_targets": { "min": 0.0, "max": 1.0 },
+      "intensityband": { "min": 0, "max": 10 },
+      "hazard_delta": { "min": -1.0, "max": 1.0 }
+    },
+    "high_intensity_rule": {
+      "threshold": 8,
+      "required_field": "deadledgerref",
+      "deadledgerref_shape": {
+        "proof_envelope_id": "string",
+        "verifier_ref": "string",
+        "circuit_type": "string",
+        "required_proofs": "array"
+      },
+      "ai_action": "If intensityband >= 8, you MUST include a deadledgerref compatible with Dead-Ledger zkpproof and verifier conventions."
+    },
+    "forbidden_fields": ["description", "narrative", "lore_text", "dialogue", "raw_asset_url", "base64_data"],
+    "ai_actions": [
+      "Never invent new top-level fields. Conform exactly to nightwhispers-legend-contract-v1.json.",
+      "If the user describes story content, transform it into invariant and metrics bindings, not text fields.",
+      "Always set schemaref to the canonical HorrorPlace-Constellation-Contracts schema URI.",
+      "Ensure status_transitions FSM has no unreachable states and all action_tags are lowercase snake_case."
+    ]
+  },
+
+  "registry_rules": {
+    "applies_to": ["registry/legends.json"],
+    "format": "json_or_ndjson",
+    "required_fields": ["legend_id", "schemaref", "path", "hash", "tier", "intensityband"],
+    "optional_fields": ["deadledgerref", "tags", "persona_hooks_summary"],
+    "path_rule": {
+      "description": "Registry entries must point to Constellation-Contracts via git@ URIs with fragment paths.",
+      "pattern": "^git@github.com:Doctor0Evil/HorrorPlace-Constellation-Contracts.git#contracts/nightwhispers-legend-contract-v1.json#[A-Z][a-zA-Z0-9]*$"
+    },
+    "ai_actions": [
+      "Never hard-code HTTP URLs or raw paths; always use git@ URIs.",
+      "When adding a new legend, update the relevant registry only after the contract JSON is fully valid.",
+      "Compute hash placeholder as 'sha256:TO_BE_FILLED_BY_CI'; CI will patch the real value."
+    ]
+  },
+
+  "doc_rules": {
+    "applies_to": ["docs/nightwhispers-*.md"],
+    "must_state": [
+      "NightWhispers legend contracts are Seed-like controllers, not content stores.",
+      "All manifestations query invariant bundles via H. API before execution.",
+      "High-intensity legends (band >= 8) require Dead-Ledger attestation.",
+      "No raw horror content appears in contracts; only IDs, hashes, and invariant bindings."
+    ],
+    "forbidden": ["Explicit descriptions of violence or suffering", "Detailed narrative of real-world atrocities"],
+    "ai_actions": [
+      "Use architectural, schema, and pipeline language in docs.",
+      "Refer to history and trauma only via invariant bundles and IDs.",
+      "Include example code snippets that demonstrate H. API usage patterns."
+    ]
+  }
+}
