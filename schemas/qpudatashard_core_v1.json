@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/qpudatashard_core_v1.json",
+  "title": "QPUdatashard Core Vocabulary v1",
+  "description": "Language-agnostic contract layer for cross-repo artifact representation in the Horror$Place VM-constellation. Defines the common envelope and shard kinds for persona implementations, invariant bundles, spectral seeds, BCI swings, and entitlement artifacts. All shards serialize as single-line NDJSON records with explicit schemaref, repo_tier, and deadledgerref linkage.",
+  "type": "object",
+  "required": ["qpudatashard"],
+  "additionalProperties": false,
+  "properties": {
+    "qpudatashard": {
+      "type": "object",
+      "description": "A self-contained, machine-checkable artifact descriptor for cross-repo orchestration.",
+      "required": [
+        "shard_id",
+        "shard_kind",
+        "schemaref",
+        "repo_id",
+        "repo_tier",
+        "deadledgerref",
+        "safetytier",
+        "intensity_band",
+        "invariants",
+        "metrics",
+        "entitlement_profile_id",
+        "prooftype",
+        "timestamp",
+        "function_kind",
+        "function_id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "shard_id": {
+          "type": "string",
+          "pattern": "^QPU\\.shard\\.[0-9]{6,}$",
+          "description": "Globally unique identifier for this shard instance."
+        },
+        "shard_kind": {
+          "type": "string",
+          "enum": [
+            "persona_contract_shard",
+            "persona_impl_shard",
+            "agent_attestation_shard",
+            "bundle_attestation_shard",
+            "region_invariant_shard",
+            "pcg_seed_shard",
+            "style_contract_shard",
+            "spectral_seed_shard",
+            "spectral_seed_attestation_shard",
+            "bci_swing_shard",
+            "experiment_descriptor_shard",
+            "telemetry_summary_shard",
+            "policy_profile_shard",
+            "bciseed_profile_shard",
+            "zkpproof_envelope_shard"
+          ],
+          "description": "Classification of the shard's primary function and domain."
+        },
+        "schemaref": {
+          "type": "string",
+          "pattern": "^schema://[A-Za-z0-9._\\-/:]+$",
+          "description": "Canonical URI pointing to the JSON Schema that defines this shard's payload structure."
+        },
+        "repo_id": {
+          "type": "string",
+          "enum": [
+            "Horror.Place",
+            "Horror.Place-Orchestrator",
+            "HorrorPlace-Constellation-Contracts",
+            "HorrorPlace-Codebase-of-Death",
+            "HorrorPlace-Black-Archivum",
+            "HorrorPlace-Spectral-Foundry",
+            "HorrorPlace-Atrocity-Seeds",
+            "HorrorPlace-Obscura-Nexus",
+            "HorrorPlace-Liminal-Continuum",
+            "HorrorPlace-Process-Gods-Research",
+            "HorrorPlace-Redacted-Chronicles",
+            "HorrorPlace-Neural-Resonance-Lab",
+            "HorrorPlace-Dead-Ledger-Network"
+          ],
+          "description": "Logical repository identifier where this shard originates or is consumed."
+        },
+        "repo_tier": {
+          "type": "string",
+          "enum": ["tier1_core", "tier2_vault", "tier3_lab"],
+          "description": "Tier classification governing access, validation, and entitlement rules."
+        },
+        "deadledgerref": {
+          "type": ["string", "null"],
+          "pattern": "^(DLN\\.[a-z0-9._\\-]+|PLACEHOLDER)$",
+          "description": "Opaque handle to a Dead-Ledger attestation entry; required for cross-tier artifacts."
+        },
+        "region_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]{2,63}$",
+          "description": "Optional identifier for the geographic or environmental context."
+        },
+        "safetytier": {
+          "type": "string",
+          "enum": ["standard", "mature", "research"],
+          "description": "Governing safety posture aligned with Dead-Ledger policy profiles."
+        },
+        "intensity_band": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Effective horror intensity after all policy caps are applied."
+        },
+        "invariants": {
+          "type": "object",
+          "description": "Normalized key-value pairs for dimensional horror metrics.",
+          "required": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Catastrophic Imprint Coefficient" },
+            "MDI": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Mythic Density Index" },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Archival Opacity Score" },
+            "RRM": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Ritual Residue Map" },
+            "FCF": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Folkloric Convergence Factor" },
+            "SPR": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Spectral Plausibility Rating" },
+            "RWF": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Reliability Weighting Factor" },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 10.0, "description": "Dread Exposure Threshold (0-10 scale)" },
+            "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Haunt Vector Field" },
+            "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Liminal Stress Gradient" },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Spectral-History Coupling Index" }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Normalized key-value pairs for entertainment experience metrics.",
+          "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Uncertainty Engagement Coefficient" },
+            "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Evidential Mystery Density" },
+            "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Safe-Threat Contrast Index" },
+            "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Cognitive Dissonance Load" },
+            "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Ambiguous Resolution Ratio" }
+          }
+        },
+        "entitlement_profile_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_\\-]{2,63}$",
+          "description": "ID of the Dead-Ledger entitlement or BCIseed profile governing this shard."
+        },
+        "prooftype": {
+          "type": "string",
+          "enum": [
+            "age_gating",
+            "charter_agreement",
+            "aln_membership",
+            "bcistate",
+            "sessionsafety",
+            "trauma_entitlement",
+            "none"
+          ],
+          "description": "Primary ZKP proof type relevant to this shard's entitlement decision."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of shard creation."
+        },
+        "function_kind": {
+          "type": "string",
+          "enum": [
+            "persona_contract",
+            "persona_impl",
+            "agent_attestation",
+            "bundle_attestation",
+            "region_invariant_profile",
+            "pcg_seed",
+            "style_contract",
+            "spectral_seed",
+            "spectral_seed_attestation",
+            "bci_swing",
+            "experiment_descriptor",
+            "telemetry_summary",
+            "policy_profile",
+            "bciseed_profile",
+            "zkpproof_envelope"
+          ],
+          "description": "Broader classification of the shard's semantic role for routing and validation."
+        },
+        "function_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_\\-]{2,63}$",
+          "description": "Stable identifier for a specific function or mapping instance."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of the shard definition."
+        },
+        "payload": {
+          "type": "object",
+          "description": "Shard-kind-specific payload; structure defined by schemaref.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
