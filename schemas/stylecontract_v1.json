@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/stylecontract_v1.json",
+  "title": "Style Contract v1",
+  "description": "Canonical schema for aesthetic and routing style contracts in the Horror$Place VM-constellation. Defines invariant bands, metric targets, and palette/routing constraints that govern how horror is expressed without embedding explicit content. Used by Obscura-Nexus, Spectral-Foundry, and Atrocity-Seeds.",
+  "type": "object",
+  "required": ["style_contract"],
+  "additionalProperties": false,
+  "properties": {
+    "style_contract": {
+      "type": "object",
+      "description": "A self-contained style definition for cross-repo orchestration.",
+      "required": [
+        "style_id",
+        "version",
+        "schemaref",
+        "invariant_constraints",
+        "metric_targets",
+        "routing_profile",
+        "safety_posture"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "style_id": {
+          "type": "string",
+          "pattern": "^style\\.[a-z][a-z0-9_\\.\\-]{2,63}$",
+          "description": "Globally unique identifier for this style contract."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of the style definition."
+        },
+        "schemaref": {
+          "type": "string",
+          "pattern": "^schema://Horror\\.Place/stylecontract_v1\\.json$",
+          "description": "Canonical schema reference; must point to Horror.Place spine."
+        },
+        "description": {
+          "type": ["string", "null"],
+          "minLength": 10,
+          "maxLength": 256,
+          "description": "Brief architectural description; no narrative or horror content."
+        },
+        "invariant_constraints": {
+          "type": "object",
+          "description": "Allowed ranges for horror invariants when this style is active.",
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "additionalProperties": false,
+          "properties": {
+            "CIC": {
+              "type": "object",
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "AOS": {
+              "type": "object",
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "DET": {
+              "type": "object",
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+              }
+            },
+            "SHCI": {
+              "type": "object",
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "HVF": {
+              "type": ["object", "null"],
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "LSG": {
+              "type": ["object", "null"],
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            }
+          }
+        },
+        "metric_targets": {
+          "type": "object",
+          "description": "Target bands for entertainment metrics when this style is active.",
+          "required": ["UEC", "ARR"],
+          "additionalProperties": false,
+          "properties": {
+            "UEC": {
+              "type": "object",
+              "required": ["target", "min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "target": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "ARR": {
+              "type": "object",
+              "required": ["target", "min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "target": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "EMD": {
+              "type": ["object", "null"],
+              "required": ["target", "min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "target": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "STCI": {
+              "type": ["object", "null"],
+              "required": ["target", "min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "target": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            },
+            "CDL": {
+              "type": ["object", "null"],
+              "required": ["target", "min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "target": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+              }
+            }
+          }
+        },
+        "routing_profile": {
+          "type": "object",
+          "description": "Constraints for routing and transition behavior under this style.",
+          "required": ["allowed_transitions", "priority_weights"],
+          "additionalProperties": false,
+          "properties": {
+            "allowed_transitions": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_\\.\\-]{2,63}$"
+              },
+              "description": "List of style IDs this style may transition to."
+            },
+            "priority_weights": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "description": "Optional weights for routing decisions keyed by transition ID."
+            },
+            "max_concurrent_styles": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3,
+              "default": 1,
+              "description": "Maximum number of styles that may be blended simultaneously."
+            }
+          }
+        },
+        "safety_posture": {
+          "type": "object",
+          "description": "Safety and entitlement constraints for this style.",
+          "required": ["safetytier", "intensity_cap", "requires_deadledger"],
+          "additionalProperties": false,
+          "properties": {
+            "safetytier": {
+              "type": "string",
+              "enum": ["standard", "mature", "research"],
+              "description": "Minimum safety tier required to activate this style."
+            },
+            "intensity_cap": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Maximum intensity band allowed when this style is active."
+            },
+            "requires_deadledger": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, style activation requires a valid Dead-Ledger proof."
+            },
+            "allowed_prooftypes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["age_gating", "charter_agreement", "aln_membership", "bcistate", "sessionsafety"]
+              },
+              "default": [],
+              "description": "Proof types that may satisfy the Dead-Ledger requirement."
+            }
+          }
+        },
+        "palette_ref": {
+          "type": ["string", "null"],
+          "pattern": "^palette\\.[a-z][a-z0-9_\\.\\-]{2,63}$",
+          "description": "Optional reference to a color/audio/haptic palette contract."
+        },
+        "cross_repo_links": {
+          "type": "array",
+          "description": "Explicit references to bundles, seeds, or configs in other repos.",
+          "items": {
+            "type": "object",
+            "required": ["type", "target_repo", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "type": "string" },
+              "target_repo": {
+                "type": "string",
+                "enum": [
+                  "Horror.Place",
+                  "Horror.Place-Orchestrator",
+                  "HorrorPlace-Constellation-Contracts",
+                  "HorrorPlace-Codebase-of-Death",
+                  "HorrorPlace-Black-Archivum",
+                  "HorrorPlace-Spectral-Foundry",
+                  "HorrorPlace-Atrocity-Seeds",
+                  "HorrorPlace-Obscura-Nexus",
+                  "HorrorPlace-Liminal-Continuum",
+                  "HorrorPlace-Process-Gods-Research",
+                  "HorrorPlace-Redacted-Chronicles",
+                  "HorrorPlace-Neural-Resonance-Lab",
+                  "HorrorPlace-Dead-Ledger-Network"
+                ]
+              },
+              "path": { "type": "string", "pattern": "^[A-Za-z0-9_.\\-\\/]+$" }
+            }
+          },
+          "default": []
+        },
+        "validation": {
+          "type": "object",
+          "description": "Optional validation metadata; populated by CI, not authoring tools.",
+          "additionalProperties": false,
+          "properties": {
+            "schema_validated": { "type": "boolean", "default": false },
+            "invariant_ranges_ok": { "type": "boolean", "default": false },
+            "charter_compliance_verified": { "type": "boolean", "default": false },
+            "canonical_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      }
+    }
+  }
+}
