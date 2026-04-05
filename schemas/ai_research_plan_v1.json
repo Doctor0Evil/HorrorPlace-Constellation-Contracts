@@ -1,49 +1,181 @@
 {
-  "ai_research_plan": {
-    "plan_id": "research.atrocity_seeds.new_event_seed.v1",
-    "target_repo": "HorrorPlace-Atrocity-Seeds",
-    "intended_artifact_type": "seed_event",
-    "requested_output_file": "events/TO_BE_DECIDED.json",
-    "status": "research_required",
-    "reason": "Insufficient invariant bundle details and missing target metrics bands for requested scenario.",
-    "required_actions": [
-      {
-        "id": "step.inspect_existing_bundles",
-        "description": "Identify an appropriate invariant bundle in HorrorPlace-Black-Archivum that matches the user's thematic request (e.g., industrial collapse, ritual, evacuation).",
-        "tools_or_sources": [
-          "HorrorPlace-Black-Archivum registry",
-          "Horror.Place schema spine index"
-        ],
-        "expected_output": "Candidate bundle ID and path, with CIC/AOS/RRM/SHCI values summarized."
-      },
-      {
-        "id": "step.map_user_intent_to_invariants",
-        "description": "Translate the user's narrative or design intent into target invariant and metric bands (CIC, AOS, UEC, EMD, etc.).",
-        "tools_or_sources": [
-          "Horror.Place documentation on invariants and metrics",
-          "Existing seeds in HorrorPlace-Atrocity-Seeds for comparison"
-        ],
-        "expected_output": "Proposed numeric ranges for invariants and metrics_intent, consistent with Charter and intensity constraints."
-      },
-      {
-        "id": "step.determine_intensity_and_safetytier",
-        "description": "Decide the appropriate safetytier and intensityband based on requested tone and platform rules.",
-        "tools_or_sources": [
-          "Atrocity-Seeds README",
-          "Charter and Rivers of Blood guidance"
-        ],
-        "expected_output": "Chosen safetytier and intensityband, with a decision on whether deadledgerref is required."
-      },
-      {
-        "id": "step.confirm_repo_and_path",
-        "description": "Confirm that the artifact belongs in HorrorPlace-Atrocity-Seeds and choose a specific, collision-safe filename.",
-        "tools_or_sources": [
-          "HorrorPlace-Atrocity-Seeds events/ directory listing",
-          "Constellation index for naming conventions"
-        ],
-        "expected_output": "Final target_path, e.g., events/industrial_dissolution_rumor_v1.json."
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/ai_research_plan_v1.json",
+  "title": "AI Research Plan v1",
+  "description": "Research-first planning envelope for AI/chat agents when more information is required before safely generating a file. Replaces refusals with structured redirection and explicit next steps.",
+  "type": "object",
+  "required": ["ai_research_plan"],
+  "additionalProperties": false,
+  "properties": {
+    "ai_research_plan": {
+      "type": "object",
+      "description": "Structured plan describing required research actions before artifact generation.",
+      "required": [
+        "plan_id",
+        "target_repo",
+        "intended_artifact_type",
+        "status",
+        "reason",
+        "required_actions",
+        "next_action_for_user"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "description": "Globally unique identifier for this research plan.",
+          "pattern": "^[a-z0-9_.\\-]+$"
+        },
+        "target_repo": {
+          "type": "string",
+          "description": "Repository where the eventual artifact will reside.",
+          "enum": [
+            "Horror.Place",
+            "Horror.Place-Orchestrator",
+            "HorrorPlace-Constellation-Contracts",
+            "HorrorPlace-Codebase-of-Death",
+            "HorrorPlace-Black-Archivum",
+            "HorrorPlace-Spectral-Foundry",
+            "HorrorPlace-Atrocity-Seeds",
+            "HorrorPlace-Obscura-Nexus",
+            "HorrorPlace-Liminal-Continuum",
+            "HorrorPlace-Process-Gods-Research",
+            "HorrorPlace-Redacted-Chronicles",
+            "HorrorPlace-Neural-Resonance-Lab",
+            "HorrorPlace-Dead-Ledger-Network"
+          ]
+        },
+        "intended_artifact_type": {
+          "type": "string",
+          "description": "High-level type of file the user ultimately wants.",
+          "enum": [
+            "schema",
+            "registry_entry",
+            "seed_event",
+            "seed_region",
+            "engine_code",
+            "spectral_style_contract",
+            "routing_config",
+            "zkp_schema",
+            "zkp_verifier_entry",
+            "orchestrator_workflow",
+            "doc",
+            "other"
+          ]
+        },
+        "requested_output_file": {
+          "type": ["string", "null"],
+          "description": "Optional planned file path, if known at planning time.",
+          "pattern": "^[A-Za-z0-9_.\\-\\/]+$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current state of the research plan.",
+          "enum": [
+            "research_required",
+            "in_progress",
+            "ready_for_generation"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "description": "Clear explanation of why research is needed before generation.",
+          "minLength": 10,
+          "maxLength": 1024
+        },
+        "required_actions": {
+          "type": "array",
+          "description": "Ordered list of research or clarification steps required.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "description", "expected_output"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable identifier for this action step.",
+                "pattern": "^[a-z0-9_.\\-]+$"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of the action to perform.",
+                "minLength": 10
+              },
+              "tools_or_sources": {
+                "type": "array",
+                "description": "Optional list of repositories, schemas, or documentation to consult.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "expected_output": {
+                "type": "string",
+                "description": "Description of the concrete output this action should produce.",
+                "minLength": 10
+              }
+            }
+          }
+        },
+        "next_action_for_user": {
+          "type": "string",
+          "description": "Natural-language prompt guiding the user to provide missing inputs or confirm parameters.",
+          "minLength": 10,
+          "maxLength": 1024
+        }
       }
-    ],
-    "next_action_for_user": "Please confirm the desired thematic focus (e.g., industrial collapse vs. evacuation drill) and the maximum acceptable intensity band (0–10). Once confirmed, I will execute the research steps and then generate a schema-valid seed file."
-  }
+    }
+  },
+  "examples": [
+    {
+      "ai_research_plan": {
+        "plan_id": "research.atrocity_seeds.new_event_seed.v1",
+        "target_repo": "HorrorPlace-Atrocity-Seeds",
+        "intended_artifact_type": "seed_event",
+        "requested_output_file": "events/TO_BE_DECIDED.json",
+        "status": "research_required",
+        "reason": "Insufficient invariant bundle details and missing target metrics bands for requested scenario.",
+        "required_actions": [
+          {
+            "id": "step.inspect_existing_bundles",
+            "description": "Identify an appropriate invariant bundle in HorrorPlace-Black-Archivum that matches the user's thematic request (e.g., industrial collapse, ritual, evacuation).",
+            "tools_or_sources": [
+              "HorrorPlace-Black-Archivum registry",
+              "Horror.Place schema spine index"
+            ],
+            "expected_output": "Candidate bundle ID and path, with CIC/AOS/RRM/SHCI values summarized."
+          },
+          {
+            "id": "step.map_user_intent_to_invariants",
+            "description": "Translate the user's narrative or design intent into target invariant and metric bands (CIC, AOS, UEC, EMD, etc.).",
+            "tools_or_sources": [
+              "Horror.Place documentation on invariants and metrics",
+              "Existing seeds in HorrorPlace-Atrocity-Seeds for comparison"
+            ],
+            "expected_output": "Proposed numeric ranges for invariants and metrics_intent, consistent with Charter and intensity constraints."
+          },
+          {
+            "id": "step.determine_intensity_and_safetytier",
+            "description": "Decide the appropriate safetytier and intensityband based on requested tone and platform rules.",
+            "tools_or_sources": [
+              "Atrocity-Seeds README",
+              "Charter and Rivers of Blood guidance"
+            ],
+            "expected_output": "Chosen safetytier and intensityband, with a decision on whether deadledgerref is required."
+          },
+          {
+            "id": "step.confirm_repo_and_path",
+            "description": "Confirm that the artifact belongs in HorrorPlace-Atrocity-Seeds and choose a specific, collision-safe filename.",
+            "tools_or_sources": [
+              "HorrorPlace-Atrocity-Seeds events/ directory listing",
+              "Constellation index for naming conventions"
+            ],
+            "expected_output": "Final target_path, e.g., events/industrial_dissolution_rumor_v1.json."
+          }
+        ],
+        "next_action_for_user": "Please confirm the desired thematic focus (e.g., industrial collapse vs. evacuation drill) and the maximum acceptable intensity band (0–10). Once confirmed, I will execute the research steps and then generate a schema-valid seed file."
+      }
+    }
+  ]
 }
