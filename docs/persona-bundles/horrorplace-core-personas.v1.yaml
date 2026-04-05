@@ -1,0 +1,12 @@
+# docs/persona-bundles/horrorplace-core-personas.v1.yaml
+personas:
+  - id: persona.archivist.v1
+    tiers: [ "public", "vault" ]
+    repos:
+      - Horror.Place
+      - HorrorPlace-Atrocity-Seeds
+  - id: persona.process_gods.v1
+    tiers: [ "lab", "research" ]
+    repos:
+      - Process-Gods-Research
+      - HorrorPlace-Dead-Ledger-Network
