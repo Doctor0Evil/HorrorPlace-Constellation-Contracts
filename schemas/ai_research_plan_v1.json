@@ -1,0 +1,49 @@
+{
+  "ai_research_plan": {
+    "plan_id": "research.atrocity_seeds.new_event_seed.v1",
+    "target_repo": "HorrorPlace-Atrocity-Seeds",
+    "intended_artifact_type": "seed_event",
+    "requested_output_file": "events/TO_BE_DECIDED.json",
+    "status": "research_required",
+    "reason": "Insufficient invariant bundle details and missing target metrics bands for requested scenario.",
+    "required_actions": [
+      {
+        "id": "step.inspect_existing_bundles",
+        "description": "Identify an appropriate invariant bundle in HorrorPlace-Black-Archivum that matches the user's thematic request (e.g., industrial collapse, ritual, evacuation).",
+        "tools_or_sources": [
+          "HorrorPlace-Black-Archivum registry",
+          "Horror.Place schema spine index"
+        ],
+        "expected_output": "Candidate bundle ID and path, with CIC/AOS/RRM/SHCI values summarized."
+      },
+      {
+        "id": "step.map_user_intent_to_invariants",
+        "description": "Translate the user's narrative or design intent into target invariant and metric bands (CIC, AOS, UEC, EMD, etc.).",
+        "tools_or_sources": [
+          "Horror.Place documentation on invariants and metrics",
+          "Existing seeds in HorrorPlace-Atrocity-Seeds for comparison"
+        ],
+        "expected_output": "Proposed numeric ranges for invariants and metrics_intent, consistent with Charter and intensity constraints."
+      },
+      {
+        "id": "step.determine_intensity_and_safetytier",
+        "description": "Decide the appropriate safetytier and intensityband based on requested tone and platform rules.",
+        "tools_or_sources": [
+          "Atrocity-Seeds README",
+          "Charter and Rivers of Blood guidance"
+        ],
+        "expected_output": "Chosen safetytier and intensityband, with a decision on whether deadledgerref is required."
+      },
+      {
+        "id": "step.confirm_repo_and_path",
+        "description": "Confirm that the artifact belongs in HorrorPlace-Atrocity-Seeds and choose a specific, collision-safe filename.",
+        "tools_or_sources": [
+          "HorrorPlace-Atrocity-Seeds events/ directory listing",
+          "Constellation index for naming conventions"
+        ],
+        "expected_output": "Final target_path, e.g., events/industrial_dissolution_rumor_v1.json."
+      }
+    ],
+    "next_action_for_user": "Please confirm the desired thematic focus (e.g., industrial collapse vs. evacuation drill) and the maximum acceptable intensity band (0–10). Once confirmed, I will execute the research steps and then generate a schema-valid seed file."
+  }
+}
