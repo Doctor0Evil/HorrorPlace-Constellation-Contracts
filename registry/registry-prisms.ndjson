@@ -1,0 +1,27 @@
+{
+  "id": "prism.schema.nature-seed.npc-behavior.lua.v1",
+  "kind": "schema-prism",
+  "schemaref": "schema:HorrorPlace.ConstellationContracts.prisms.prism-schema-mapping-v1.json",
+  "path": "schemas/prisms/nature-seed-npc-behavior-prism.v1.json",
+  "tier": "T1",
+  "prismMetaRef": "schema:HorrorPlace.ConstellationContracts.prisms.prism-schema-mapping-v1.json#nature-seed-npc-behavior",
+  "sourceSchema": "schema:HorrorPlace.AtrocitySeeds.nature-seed-contract-v1.json",
+  "targets": [
+    {
+      "language": "lua",
+      "projectionId": "nature-seed.npc-behavior.lua.v1"
+    }
+  ]
+}
+{
+  "id": "prism.runtime.H.events.v1",
+  "kind": "runtime-prism",
+  "schemaref": "schema:HorrorPlace.ConstellationContracts.prisms.prism-runtime-binding-v1.json",
+  "path": "schemas/prisms/h-runtime-events-prism.v1.json",
+  "tier": "T1",
+  "prismMetaRef": "schema:HorrorPlace.ConstellationContracts.prisms.prism-runtime-binding-v1.json#H.events",
+  "apiface": "H",
+  "sourceSchemas": [
+    "schema:HorrorPlace.Core.event-contract-v1.json"
+  ]
+}
