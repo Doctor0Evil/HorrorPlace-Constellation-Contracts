@@ -1,0 +1,121 @@
+{
+  "structure_id": "ai.tier2_vault_structure.v1",
+  "version": "1.0.0",
+  "description": "Canonical definition of the .ai/ directory structure and AI envelope requirements for all Tier-2 VM-constellation vaults.",
+  "general_rules": {
+    "directory_name": ".ai",
+    "file_extension": ".json",
+    "envelope_types": ["ai_file_envelope", "ai_research_plan"],
+    "presence_requirement": "Every PR containing AI-generated content in Tier-2 vaults must include at least one envelope in .ai/.",
+    "schema_authority": "HorrorPlace-Constellation-Contracts"
+  },
+  "vault_definitions": {
+    "HorrorPlace-Atrocity-Seeds": {
+      "tier": 2,
+      "envelope_patterns": {
+        "seed_event": {
+          "description": "Event seed generation",
+          "schema_ref": "schema://Horror.Place/eventcontract_v1.json",
+          "target_path_pattern": "events/.*\\.json",
+          "required_fields": ["invariants", "metrics_intent", "bundleref.id", "intensityband", "safetytier", "deadledgerref"]
+        },
+        "seed_region": {
+          "description": "Region seed generation",
+          "schema_ref": "schema://Horror.Place/regioncontract_v1.json",
+          "target_path_pattern": "regions/.*\\.json",
+          "required_fields": ["invariants", "metrics_intent", "bundleref.id", "intensityband", "safetytier", "deadledgerref"]
+        },
+        "registry_update": {
+          "description": "Registry entry updates",
+          "schema_ref": "schema://HorrorPlace-Atrocity-Seeds/registry_events_v1.json",
+          "target_path_pattern": "registry/.*\\.json",
+          "required_fields": ["id", "schemaref", "path", "invariant_bundle", "hash", "tier", "deadledgerref"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml",
+        "content_leak_scan": true,
+        "hash_verification": true
+      }
+    },
+    "HorrorPlace-Spectral-Foundry": {
+      "tier": 2,
+      "envelope_patterns": {
+        "spectral_style": {
+          "description": "Spectral style contract generation",
+          "schema_ref": "schema://Horror.Place/stylecontract_v1.json",
+          "target_path_pattern": "styles/.*\\.json",
+          "required_fields": ["style_id", "invariants", "metrics_intent", "engine_adapters", "safetytier", "intensityband"]
+        },
+        "entity_definition": {
+          "description": "Spectral entity definition",
+          "schema_ref": "schema://HorrorPlace-Spectral-Foundry/entity_v1.json",
+          "target_path_pattern": "entities/.*\\.json",
+          "required_fields": ["entity_id", "behavior_tree_ref", "invariants", "safetytier"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml",
+        "content_leak_scan": true
+      }
+    },
+    "HorrorPlace-Black-Archivum": {
+      "tier": 2,
+      "envelope_patterns": {
+        "invariant_bundle": {
+          "description": "Historical invariant bundle creation",
+          "schema_ref": "schema://Horror.Place/invariants_v1.json",
+          "target_path_pattern": "contracts/invariant_bundles/.*\\.json",
+          "required_fields": ["bundle_id", "source_ref", "invariants", "attestation_ref"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml",
+        "content_leak_scan": true
+      }
+    },
+    "HorrorPlace-Obscura-Nexus": {
+      "tier": 2,
+      "envelope_patterns": {
+        "routing_config": {
+          "description": "ALN routing configuration",
+          "schema_ref": "schema://HorrorPlace-Obscura-Nexus/routing_v1.json",
+          "target_path_pattern": "config/routing/.*\\.json",
+          "required_fields": ["route_id", "source_repo", "target_repo", "trigger_conditions"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml"
+      }
+    },
+    "HorrorPlace-Liminal-Continuum": {
+      "tier": 2,
+      "envelope_patterns": {
+        "environment_contract": {
+          "description": "Liminal environment contract",
+          "schema_ref": "schema://HorrorPlace-Liminal-Continuum/environment_v1.json",
+          "target_path_pattern": "environments/.*\\.json",
+          "required_fields": ["environment_id", "threshold_zones", "stress_gradients", "invariants"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml"
+      }
+    },
+    "HorrorPlace-Codebase-of-Death": {
+      "tier": 2,
+      "envelope_patterns": {
+        "engine_code": {
+          "description": "Engine code generation (Rust/Lua)",
+          "schema_ref": null,
+          "target_path_pattern": "(src|lua)/.*",
+          "required_fields": ["module_path", "api_bindings", "schema_refs_used"]
+        }
+      },
+      "ci_hooks": {
+        "validation_workflow": ".github/workflows/ai-envelope-check.yml",
+        "code_lint": true
+      }
+    }
+  }
+}
