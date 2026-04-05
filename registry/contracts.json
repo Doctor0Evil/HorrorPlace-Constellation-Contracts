@@ -1,0 +1,69 @@
+{
+  "contracts": {
+    "mood.dreadforge_resonance.v1": {
+      "tier1_source": {
+        "repo": "Horror.Place",
+        "path": "moods/mood.dreadforge_resonance.v1.json",
+        "lua_module": "moods.DreadForge_Resonance.Contract",
+        "schema": "core/schemas/mood_contract_v1.json"
+      },
+      "tier2_implementations": [
+        {
+          "engine": "unreal_engine_5",
+          "adapter_repo": "HorrorPlace-Adapters-Unreal",
+          "adapter_path": "Source/HorrorPlace/DreadForgeAdapter.cpp",
+          "notes": "Uses FMOD for audio; HVF vectors mapped to Niagara fog systems."
+        },
+        {
+          "engine": "godot_4",
+          "adapter_repo": "HorrorPlace-Adapters-Godot",
+          "adapter_path": "addons/horror_place/dreadforge_adapter.gd",
+          "notes": "GDExtension C++ layer for performance; Lua via luaglut binding."
+        }
+      ],
+      "governance": {
+        "seal_registry": "HorrorPlace-Constellation-Ledger",
+        "validation_endpoint": "https://api.horror.place/v1/validate/dreadforge",
+        "required_telemetry_fields": [
+          "session_id",
+          "mood_id",
+          "region_id",
+          "tile_id",
+          "UEC",
+          "EMD",
+          "STCI",
+          "CDL",
+          "ARR",
+          "violation_count"
+        ]
+      }
+    }
+  },
+  "audio_profiles": {
+    "audio.hellscape_default.v1": {
+      "tier1_source": {
+        "repo": "Horror.Place",
+        "path": "profiles/audio.hellscape_default.v1.json",
+        "lua_module": "profiles.HellscapeDefault.Audio"
+      },
+      "tier2_implementations": [
+        {
+          "middleware": "fmod_studio",
+          "adapter_repo": "HorrorPlace-Adapters-FMOD",
+          "adapter_path": "src/fmod_hellscape_adapter.cpp"
+        },
+        {
+          "middleware": "wwise",
+          "adapter_repo": "HorrorPlace-Adapters-Wwise",
+          "adapter_path": "Source/HorrorPlace/WwiseHellscapeAdapter.cpp"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "registry_version": "1.0.0",
+    "last_updated": "2026-01-XXT00:00:00Z",
+    "maintainer": "Horror$Place Consortium",
+    "contact": "standards@horror.place"
+  }
+}
