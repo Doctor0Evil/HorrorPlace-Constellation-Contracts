@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema.HorrorPlace-Constellation-Contracts.registry-surpriseMechanics.v1.json",
+  "title": "Surprise Mechanics Registry Entry v1",
+  "description": "NDJSON registry entry schema for surprise mechanic contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaref",
+    "tier",
+    "mechanicContractId",
+    "category",
+    "intensityBand",
+    "deadledgerref"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Registry entry ID for this surprise mechanic."
+    },
+    "schemaref": {
+      "type": "string",
+      "description": "Schema reference for this registry entry.",
+      "const": "schema.HorrorPlace-Constellation-Contracts.registry-surpriseMechanics.v1.json"
+    },
+    "tier": {
+      "type": "string",
+      "description": "Tier of this registry entry.",
+      "enum": [
+        "public",
+        "vault",
+        "lab",
+        "research"
+      ]
+    },
+    "mechanicContractId": {
+      "type": "string",
+      "description": "ID of the surpriseMechanicContract this registry row refers to."
+    },
+    "category": {
+      "type": "string",
+      "description": "Surprise mechanic category.",
+      "enum": [
+        "PerceptualMisdirection",
+        "SystemicTiming",
+        "EnvironmentTopology",
+        "SocialNPCBehavior",
+        "DiegeticSystem"
+      ]
+    },
+    "intensityBand": {
+      "type": "string",
+      "description": "High-level intensity band for this mechanic.",
+      "enum": [
+        "mild",
+        "moderate",
+        "severe",
+        "adult"
+      ]
+    },
+    "styleid": {
+      "type": "string",
+      "description": "Optional style contract ID associated with this mechanic."
+    },
+    "regionHint": {
+      "type": "string",
+      "description": "Optional region or policy envelope this mechanic is most often used with."
+    },
+    "implementationDescriptor": {
+      "type": "object",
+      "description": "Opaque descriptor of engine/library implementations.",
+      "additionalProperties": false,
+      "properties": {
+        "adapters": {
+          "type": "array",
+          "description": "List of engine adapters that implement this mechanic.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["engine", "id"],
+            "properties": {
+              "engine": {
+                "type": "string",
+                "description": "Adapter key (e.g., godot-2d-forest, unreal-fps, lua-runtime)."
+              },
+              "id": {
+                "type": "string",
+                "description": "Implementation ID in the adapter."
+              }
+            }
+          }
+        }
+      }
+    },
+    "deadledgerref": {
+      "type": "string",
+      "description": "Opaque Dead-Ledger reference for attestations linked to this mechanic."
+    }
+  }
+}
