@@ -1,0 +1,149 @@
+name: "Registry Lint (Reusable)"
+description: "Enforces NDJSON registry rules: ID uniqueness, required fields, schemaref prefix, and reference presence."
+
+on:
+  workflow_call:
+    inputs:
+      data_glob:
+        description: "Glob pattern for registry NDJSON files."
+        required: true
+        type: string
+        default: "**/*.ndjson"
+      strict_unique_ids:
+        description: "If true, enforces ID uniqueness globally across all matched files."
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  lint-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Registry Linter
+        run: |
+          python - <<'PYCODE'
+          import json
+          import sys
+          import glob
+          import re
+          from pathlib import Path
+
+          data_glob = "${{ inputs.data_glob }}"
+          strict_unique = ${{ inputs.strict_unique_ids }}
+          
+          seen_ids = set()
+          errors_found = False
+          total_entries = 0
+          total_files = 0
+
+          files = glob.glob(data_glob, recursive=True)
+          
+          # Exclude .git and hidden dirs if glob catches them, though usually doesn't
+          files = [f for f in files if not f.startswith('.')]
+
+          for data_file in files:
+              total_files += 1
+              path = Path(data_file)
+              if not path.is_file():
+                  continue
+                  
+              content = path.read_text(encoding="utf-8").strip()
+              if not content:
+                  continue
+                  
+              lines = content.splitlines()
+              
+              for i, line in enumerate(lines):
+                  line = line.strip()
+                  if not line:
+                      continue
+                      
+                  try:
+                      entry = json.loads(line)
+                  except json.JSONDecodeError as e:
+                      print(f"::error file={data_file},line={i+1}:: Invalid JSON at line {i+1}: {e}")
+                      errors_found = True
+                      continue
+
+                  total_entries += 1
+
+                  # 1. Check Required Fields
+                  required = ['id', 'schemaref', 'tier', 'metadata']
+                  for field in required:
+                      if field not in entry:
+                          print(f"::error file={data_file},line={i+1}:: Missing required field '{field}'")
+                          errors_found = True
+
+                  # 2. ID Uniqueness
+                  entry_id = entry.get('id')
+                  if entry_id:
+                      if strict_unique:
+                          if entry_id in seen_ids:
+                              print(f"::error file={data_file},line={i+1}:: Duplicate ID '{entry_id}'")
+                              errors_found = True
+                          else:
+                              seen_ids.add(entry_id)
+                      else:
+                          pass # Only checking per-file if strict_unique is false, but here we accumulate. 
+                               # If we wanted per-file, we would clear seen_ids here.
+                  else:
+                      # ID is required, so error logged above
+
+                  # 3. Schemaref Prefix
+                  schemaref = entry.get('schemaref')
+                  if schemaref:
+                      if not re.match(r'^schema:Horror\.Place/.+', schemaref):
+                          print(f"::error file={data_file},line={i+1}:: Invalid schemaref prefix '{schemaref}'. Must start with 'schema:Horror.Place/'")
+                          errors_found = True
+                  
+                  # 4. Tier Range
+                  tier = entry.get('tier')
+                  if isinstance(tier, int):
+                      if tier < 1 or tier > 3:
+                          print(f"::error file={data_file},line={i+1}:: Invalid tier '{tier}'. Must be 1, 2, or 3.")
+                          errors_found = True
+                  elif isinstance(tier, str):
+                      # Some registries use strings for tier, but base schema says integer. 
+                      # Assuming strict base schema enforcement elsewhere.
+                      pass
+
+                  # 5. Reference Field Presence (AnyOf: artifactid, cid, deadledgerref)
+                  has_ref = any(k in entry for k in ['artifactid', 'cid', 'deadledgerref'])
+                  if not has_ref:
+                      print(f"::error file={data_file},line={i+1}:: Missing required reference field (artifactid, cid, or deadledgerref)")
+                      errors_found = True
+
+                  # 6. Metadata Status
+                  meta = entry.get('metadata', {})
+                  if isinstance(meta, dict):
+                      status = meta.get('status')
+                      if status not in ['draft', 'active', 'archived']:
+                          print(f"::error file={data_file},line={i+1}:: Invalid metadata.status '{status}'")
+                          errors_found = True
+                          
+                      # Check for raw content leaks (heuristic: long strings in description/narrative fields)
+                      # Assuming metadata shouldn't have these, but good to check
+                      
+                  # 7. Raw Content Leak Check (Heuristic)
+                  # Check for fields that imply narrative content in a contract-only repo
+                  forbidden_fields = ['narrative', 'lore_text', 'description']
+                  for f in forbidden_fields:
+                      if f in entry:
+                          val = entry[f]
+                          if isinstance(val, str) and len(val) > 200: # Threshold
+                              print(f"::warning file={data_file},line={i+1}:: Potential raw content in field '{f}' (length > 200)")
+
+          if errors_found:
+              print("Registry lint failed.")
+              sys.exit(1)
+          else:
+              print(f"Registry lint passed. Checked {total_entries} entries in {total_files} files.")
+          PYCODE
