@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:Horror.Place/constellation/registry-entry-base.v1",
   "title": "Registry Entry Base v1",
-  "description": "Base schema for NDJSON registry entries across the HorrorPlace constellation.",
+  "description": "Base schema for NDJSON registry entries across the HorrorPlace constellation. All registry entries must extend this schema via allOf.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,19 +14,19 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^[A-Z]{2,4}-[A-Z0-9]{2,8}-\\d{4}$",
-      "description": "Globally unique entity ID. Format: TYPE-CODE-SEQUENCE (e.g., REG-ARAL-0001)."
+      "description": "Stable, globally unique identifier for this registry entity. Format: TYPE-CODE-SEQUENCE (e.g., REG-ARAL-0001).",
+      "pattern": "^[A-Z]{2,4}-[A-Z0-9]{2,8}-\\d{4}$"
     },
     "schemaref": {
       "type": "string",
-      "pattern": "^schema:Horror\\.Place/.+",
-      "description": "Canonical schema URI for the underlying contract or card."
+      "description": "Canonical schema URI this entry conforms to.",
+      "pattern": "^schema:Horror\\.Place/.+"
     },
     "tier": {
       "type": "integer",
+      "description": "Visibility / governance tier: 1=public, 2=vault, 3=lab.",
       "minimum": 1,
-      "maximum": 3,
-      "description": "Visibility / governance tier: 1=public, 2=vault, 3=lab."
+      "maximum": 3
     },
     "artifactid": {
       "type": "string",
@@ -34,11 +34,11 @@
     },
     "cid": {
       "type": "string",
-      "description": "Opaque content-addressed identifier (e.g., CID)."
+      "description": "Content-addressed identifier (e.g., IPFS CID or equivalent)."
     },
     "deadledgerref": {
       "type": "object",
-      "description": "Optional Dead-Ledger binding for provenance and gating.",
+      "description": "Dead-Ledger binding for provenance and entitlement gating.",
       "additionalProperties": false,
       "required": [
         "proofEnvelopeId",
@@ -53,7 +53,7 @@
         },
         "verifierRef": {
           "type": "string",
-          "description": "Opaque reference to the verifier / circuit registry entry."
+          "description": "Opaque reference to the verifier/circuit registry entry."
         },
         "circuitType": {
           "type": "string",
@@ -84,8 +84,8 @@
           "enum": [
             "draft",
             "active",
-            "deprecated",
-            "archived"
+            "archived",
+            "deprecated"
           ],
           "description": "Lifecycle status for this entry."
         },
