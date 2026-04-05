@@ -1,0 +1,178 @@
+{
+  "$id": "schema:HorrorPlace.ConstellationContracts.prisms.prism-runtime-binding-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Prism Binding v1",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "schema:HorrorPlace.ConstellationContracts.tooling.prismMeta.v1.json"
+    }
+  ],
+  "properties": {
+    "prismKind": {
+      "const": "runtime-prism"
+    },
+    "apiface": {
+      "type": "string",
+      "enum": [
+        "H",
+        "Telemetry",
+        "Policy"
+      ],
+      "description": "Which high-level runtime API surface this prism governs."
+    },
+    "sourceSchemas": {
+      "type": "array",
+      "description": "List of schemaref URIs whose instances this runtime binding can operate on (events, personas, nature-seeds, etc.).",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "requiredAgentCapabilities": {
+      "type": "array",
+      "description": "Names of capabilities that an agentProfile must expose to generate or modify artifacts under this prism.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "apiBindings": {
+      "type": "array",
+      "description": "Declared runtime bindings between contract fields and H./Telemetry./Policy. API calls.",
+      "items": {
+        "type": "object",
+        "required": [
+          "functionName",
+          "direction",
+          "bindingId"
+        ],
+        "properties": {
+          "bindingId": {
+            "type": "string",
+            "description": "Stable id for this binding (e.g., H.CIC.region_tile.v1)."
+          },
+          "functionName": {
+            "type": "string",
+            "description": "API function name (e.g., H.CIC, Telemetry.record_session, Policy.check_entitlement)."
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "read-write"
+            ]
+          },
+          "allowedSchemas": {
+            "type": "array",
+            "description": "Subset of sourceSchemas that this binding applies to.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "description": "Mapping from contract fields or invariants to API parameters.",
+            "items": {
+              "type": "object",
+              "required": [
+                "paramName",
+                "source"
+              ],
+              "properties": {
+                "paramName": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string",
+                  "description": "JSON Pointer, dotted field path, or invariant/metric id (e.g., invariants.DET)."
+                },
+                "required": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "description": "Mapping from API results back into telemetry envelopes or contract fields.",
+            "items": {
+              "type": "object",
+              "required": [
+                "target",
+                "kind"
+              ],
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "description": "JSON Pointer or dotted path in a telemetry envelope or contract (e.g., metrics.UEC)."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "telemetry",
+                    "contract",
+                    "ephemeral"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "constraints": {
+            "type": "object",
+            "description": "Optional constraints on invariant/metric ranges and side-effect policy.",
+            "properties": {
+              "invariantGuards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Invariant id (e.g., DET, CIC, LSG)."
+                    },
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "rejectOnViolation": {
+                      "type": "boolean",
+                      "default": true
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "sideEffectPolicy": {
+                "type": "string",
+                "enum": [
+                  "pure",
+                  "telemetry-only",
+                  "contract-mutation-allowed"
+                ],
+                "default": "telemetry-only"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "prismKind",
+    "apiface",
+    "sourceSchemas",
+    "apiBindings"
+  ],
+  "additionalProperties": false
+}
