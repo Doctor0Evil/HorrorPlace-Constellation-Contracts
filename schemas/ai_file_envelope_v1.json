@@ -1,21 +1,159 @@
 {
-  "ai_file_envelope": {
-    "target_repo": "HorrorPlace-Atrocity-Seeds",
-    "target_path": "events/industrial_dissolution_rumor_v1.json",
-    "schemaref": "schema://Horror.Place/eventcontract_v1.json",
-    "tier": "T2_private",
-    "intended_audience": "engineers_and_pipelines",
-    "description": "Implication-only event seed referencing an invariant bundle in Black-Archivum.",
-    "cross_repo_links": [
-      {
-        "type": "invariant_bundle",
-        "target_repo": "HorrorPlace-Black-Archivum",
-        "path": "contracts/invariant_bundles/aral_basin_collapse_v1.json"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/ai_file_envelope_v1.json",
+  "title": "AI File Envelope v1",
+  "description": "Standard envelope describing target repository, path, schemas, and content for AI-generated files in the Horror$Place VM-constellation. Enables deterministic, schema-first authoring with explicit cross-repo linkage and CI validation.",
+  "type": "object",
+  "required": ["ai_file_envelope"],
+  "additionalProperties": false,
+  "properties": {
+    "ai_file_envelope": {
+      "type": "object",
+      "description": "Wrapper containing metadata and content for a single AI-generated artifact.",
+      "required": [
+        "target_repo",
+        "target_path",
+        "tier",
+        "description",
+        "content_language",
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target_repo": {
+          "type": "string",
+          "description": "Logical repository name in the VM-constellation.",
+          "enum": [
+            "Horror.Place",
+            "Horror.Place-Orchestrator",
+            "HorrorPlace-Constellation-Contracts",
+            "HorrorPlace-Codebase-of-Death",
+            "HorrorPlace-Black-Archivum",
+            "HorrorPlace-Spectral-Foundry",
+            "HorrorPlace-Atrocity-Seeds",
+            "HorrorPlace-Obscura-Nexus",
+            "HorrorPlace-Liminal-Continuum",
+            "HorrorPlace-Process-Gods-Research",
+            "HorrorPlace-Redacted-Chronicles",
+            "HorrorPlace-Neural-Resonance-Lab",
+            "HorrorPlace-Dead-Ledger-Network"
+          ]
+        },
+        "target_path": {
+          "type": "string",
+          "description": "Relative path within target_repo; must be GitHub-compatible and follow repo directory conventions.",
+          "pattern": "^[A-Za-z0-9_.\\-\\/]+$",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "schemaref": {
+          "type": ["string", "null"],
+          "description": "Canonical schema URI for JSON/NDJSON content; null for free-form text, code, or Markdown files.",
+          "pattern": "^schema://[A-Za-z0-9._\\-/:]+$"
+        },
+        "tier": {
+          "type": "string",
+          "description": "Constellation tier classification for the artifact.",
+          "enum": ["T1_public", "T2_private", "T3_private"]
+        },
+        "intended_audience": {
+          "type": "string",
+          "description": "Primary audience for the artifact.",
+          "enum": [
+            "engineers",
+            "engineers_and_pipelines",
+            "orchestrator_services",
+            "archivists",
+            "researchers",
+            "designers"
+          ],
+          "default": "engineers"
+        },
+        "description": {
+          "type": "string",
+          "description": "Concise summary of the artifact's purpose and scope.",
+          "minLength": 10,
+          "maxLength": 512
+        },
+        "cross_repo_links": {
+          "type": "array",
+          "description": "Explicit cross-repository references required by this artifact.",
+          "items": {
+            "type": "object",
+            "required": ["type", "target_repo", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Semantic type of the cross-repo link (e.g., invariant_bundle, seed_file, schema, deadledger_ref).",
+                "minLength": 1
+              },
+              "target_repo": {
+                "type": "string",
+                "description": "Repository containing the referenced artifact.",
+                "enum": [
+                  "Horror.Place",
+                  "Horror.Place-Orchestrator",
+                  "HorrorPlace-Constellation-Contracts",
+                  "HorrorPlace-Codebase-of-Death",
+                  "HorrorPlace-Black-Archivum",
+                  "HorrorPlace-Spectral-Foundry",
+                  "HorrorPlace-Atrocity-Seeds",
+                  "HorrorPlace-Obscura-Nexus",
+                  "HorrorPlace-Liminal-Continuum",
+                  "HorrorPlace-Process-Gods-Research",
+                  "HorrorPlace-Redacted-Chronicles",
+                  "HorrorPlace-Neural-Resonance-Lab",
+                  "HorrorPlace-Dead-Ledger-Network"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "description": "Relative path to the referenced artifact within target_repo.",
+                "pattern": "^[A-Za-z0-9_.\\-\\/]+$",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            }
+          },
+          "default": []
+        },
+        "content_language": {
+          "type": "string",
+          "description": "Language/format of the body content.",
+          "enum": [
+            "json",
+            "ndjson",
+            "markdown",
+            "python",
+            "lua",
+            "rust",
+            "yaml",
+            "text"
+          ]
+        },
+        "body": {
+          "description": "Actual file content, shaped according to content_language.",
+          "oneOf": [
+            {
+              "description": "Structured content for JSON/NDJSON files.",
+              "type": "object"
+            },
+            {
+              "description": "Text-based files (Markdown, code, etc.).",
+              "type": "object",
+              "required": ["text"],
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "description": "Raw text content for non-JSON artifacts."
+                }
+              }
+            }
+          ]
+        }
       }
-    ],
-    "content_language": "json",
-    "body": {
-      "...": "actual file content here"
     }
   }
 }
