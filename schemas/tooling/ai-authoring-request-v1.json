@@ -20,7 +20,8 @@
     },
     "requestId": {
       "type": "string",
-      "description": "Stable identifier for this authoring request."
+      "description": "Stable identifier for this authoring request.",
+      "pattern": "^REQ-[0-9]{8}-[0-9]{4}$"
     },
     "caller": {
       "type": "object",
@@ -61,8 +62,11 @@
         },
         "tier": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 3,
+          "enum": [
+            1,
+            2,
+            3
+          ],
           "description": "Governance tier for this authoring operation (1=public, 2=vault, 3=lab)."
         },
         "preferredPaths": {
