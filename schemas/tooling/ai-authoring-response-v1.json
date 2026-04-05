@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:Horror.Place/constellation/ai-authoring-response-v1",
+  "title": "AI Authoring Response v1",
+  "description": "Canonical AI authoring response: a single prism envelope containing up to three artifacts.",
+  "allOf": [
+    {
+      "$ref": "schema:Horror.Place/constellation/prism-envelope.v1"
+    }
+  ]
+}
