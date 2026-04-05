@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:Horror.Place/constellation/prism-envelope.v1",
+  "title": "Prism Envelope v1",
+  "description": "Envelope for one AI-generated changeset: up to three artifacts plus routing and intent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaref",
+    "envelopeId",
+    "author",
+    "target",
+    "intent",
+    "artifacts",
+    "constraints"
+  ],
+  "properties": {
+    "schemaref": {
+      "type": "string",
+      "const": "schema:Horror.Place/constellation/prism-envelope.v1",
+      "description": "Self-referencing schema URI."
+    },
+    "envelopeId": {
+      "type": "string",
+      "description": "Stable identifier for this prism envelope."
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "runtime",
+        "version"
+      ],
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "description": "Logical identifier for the AI agent or tool."
+        },
+        "runtime": {
+          "type": "string",
+          "description": "Name of the platform/runtime (e.g., Qwen-Platform)."
+        },
+        "version": {
+          "type": "string",
+          "description": "Agent or tool version string."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Optional opaque session or conversation identifier."
+        },
+        "agentProfileId": {
+          "type": "string",
+          "description": "Optional reference to an agentProfile contract."
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "branch",
+        "tier"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Target repository (e.g., org/repo)."
+        },
+        "branch": {
+          "type": "string",
+          "description": "Target branch for this changeset."
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Governance tier for the artifacts in this envelope."
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "High-level operation type (e.g., add-style-contract)."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Short description of what this envelope does."
+        },
+        "issueRef": {
+          "type": "string",
+          "description": "Optional link to an issue or ticket."
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "Artifacts included in this changeset (max three).",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "schemaref",
+          "path",
+          "id",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "registry",
+              "secondary"
+            ],
+            "description": "Artifact role within this envelope."
+          },
+          "schemaref": {
+            "type": "string",
+            "description": "Schema URI the artifact content must validate against."
+          },
+          "path": {
+            "type": "string",
+            "description": "Target path in the repo (e.g., core/registry/styles.ndjson)."
+          },
+          "id": {
+            "type": "string",
+            "description": "Logical identifier for this artifact."
+          },
+          "content": {
+            "description": "The JSON or text content to be written to path.",
+            "type": [
+              "object",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "referencedIds": {
+      "type": "array",
+      "description": "IDs of entities this changeset references or binds to.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxArtifacts",
+        "noRawContent"
+      ],
+      "properties": {
+        "maxArtifacts": {
+          "type": "integer",
+          "const": 3,
+          "description": "Hard cap on artifacts per envelope."
+        },
+        "noRawContent": {
+          "type": "boolean",
+          "description": "If true, contract-only repos must not receive raw horror content."
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation time of this envelope (UTC)."
+    }
+  }
+}
