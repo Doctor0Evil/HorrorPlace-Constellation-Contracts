@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts/qpu_datashard_envelope_v1.json",
+  "title": "QPU Datashard Envelope v1",
+  "description": "Tier-0 NDJSON envelope for cross-repo QPU datashards. Each shard is one self-contained line that encodes invariants, metrics, safety/entitlement, routing, and payload references only. No raw BCI, trauma, PII, or narrative payloads are allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "shard_id",
+    "shard_kind",
+    "schemaref",
+    "repo_tier",
+    "repo_name",
+    "safetytier",
+    "intensity_band",
+    "entitlement_profile_id",
+    "function_kind",
+    "invariants",
+    "metrics",
+    "payload_ref",
+    "orchestrator_profile"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/qpu-datashard-v1.json",
+      "description": "Canonical schema URI for this QPU datashard envelope."
+    },
+    "shard_id": {
+      "type": "string",
+      "description": "Stable identifier for this shard within the constellation.",
+      "pattern": "^[a-z0-9_.\\-]{3,128}$"
+    },
+    "shard_kind": {
+      "type": "string",
+      "description": "Logical kind of shard; used by orchestrators and tools for routing.",
+      "enum": [
+        "persona-impl",
+        "invariant-bundle",
+        "spectral-seed",
+        "policy-profile",
+        "telemetry-snapshot",
+        "mechanic-spec",
+        "style-profile",
+        "zkp-proof-envelope",
+        "bci-swing-function"
+      ]
+    },
+    "schemaref": {
+      "type": "string",
+      "description": "Reference to the primary contract schema implemented by this shard (e.g., personacontractv1.json)."
+    },
+    "repo_tier": {
+      "type": "string",
+      "description": "VM-Constellation tier of the emitting repo.",
+      "enum": [
+        "T1-core",
+        "T2-vault",
+        "T3-lab"
+      ]
+    },
+    "repo_name": {
+      "type": "string",
+      "description": "Canonical repository name (e.g., Horror.Place, HorrorPlace-Atrocity-Seeds, HorrorPlace-Dead-Ledger-Network)."
+    },
+    "deadledgerref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Opaque reference to a Dead-Ledger proof envelope or bundle. Must be an opaque handle; no inline proof material."
+    },
+    "safetytier": {
+      "type": "string",
+      "description": "Safety tier associated with this shard (e.g., standard, mature, research)."
+    },
+    "intensity_band": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Normalized horror intensity band for this shard."
+    },
+    "entitlement_profile_id": {
+      "type": "string",
+      "description": "Identifier of the entitlement profile that governs how this shard may be used."
+    },
+    "function_kind": {
+      "type": "string",
+      "description": "Functional role of this shard (e.g., static-contract, bci-swing, telemetry-slice, policy-card)."
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Local invariant values or expectations for this shard, aligned with the global invariants schema.",
+      "additionalProperties": false,
+      "required": [
+        "CIC",
+        "MDI",
+        "AOS",
+        "RRM",
+        "FCF",
+        "SPR",
+        "RWF",
+        "DET",
+        "HVF",
+        "LSG",
+        "SHCI"
+      ],
+      "properties": {
+        "CIC": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "MDI": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "AOS": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "RRM": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "FCF": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "SPR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "RWF": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "DET": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0"
+        },
+        "HVF": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mag",
+            "dir"
+          ],
+          "properties": {
+            "mag": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "dir": {
+              "type": "string",
+              "description": "Qualitative direction for haunt vector (e.g., none, threshold, shore, corridor)."
+            }
+          }
+        },
+        "LSG": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "SHCI": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Entertainment metric bands or deltas relevant to this shard, aligned with the global metrics schema.",
+      "additionalProperties": false,
+      "required": [
+        "UEC",
+        "EMD",
+        "STCI",
+        "CDL",
+        "ARR"
+      ],
+      "properties": {
+        "UEC": {
+          "$ref": "#/$defs/metricDescriptor"
+        },
+        "EMD": {
+          "$ref": "#/$defs/metricDescriptor"
+        },
+        "STCI": {
+          "$ref": "#/$defs/metricDescriptor"
+        },
+        "CDL": {
+          "$ref": "#/$defs/metricDescriptor"
+        },
+        "ARR": {
+          "$ref": "#/$defs/metricDescriptor"
+        }
+      }
+    },
+    "bci_binding": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Optional BCI binding metadata for shards that interact with BCI swing functions. Must only contain derived, pre-processed state descriptors, never raw signal streams.",
+      "additionalProperties": false,
+      "required": [
+        "input_signature",
+        "inputs",
+        "classification_band",
+        "bcistate_schema"
+      ],
+      "properties": {
+        "input_signature": {
+          "type": "string",
+          "description": "Identifier for the abstract BCI state summary this shard expects (e.g., bcistate.alpha_theta_windowed_v1)."
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Names of derived BCI features (e.g., alpha_power_norm, hrv_band)."
+        },
+        "classification_band": {
+          "type": "string",
+          "description": "Qualitative band of BCI state (e.g., calm, mild-arousal, high-arousal, fatigued)."
+        },
+        "bcistate_schema": {
+          "type": "string",
+          "description": "Schema reference for the summarized BCI state object consumed here."
+        }
+      }
+    },
+    "zkp": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Optional ZKP usage metadata, linking this shard to proof types without embedding proofs.",
+      "additionalProperties": false,
+      "required": [
+        "proof_type",
+        "required"
+      ],
+      "properties": {
+        "proof_type": {
+          "type": "string",
+          "description": "Dead-Ledger prooftype that can attest correct use of this shard (e.g., bcistate, sessionsafety, bundle_attestation)."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether a valid proof of this type is required before this shard may be acted upon."
+        }
+      }
+    },
+    "payload_ref": {
+      "type": "object",
+      "description": "Opaque reference to the primary contract or implementation that this shard summarizes. No raw content or trauma data allowed here.",
+      "additionalProperties": false,
+      "required": [
+        "registry",
+        "id",
+        "hash",
+        "path"
+      ],
+      "properties": {
+        "registry": {
+          "type": "string",
+          "description": "Path or name of the registry file that indexes the payload (e.g., registrypersonas.json)."
+        },
+        "id": {
+          "type": "string",
+          "description": "Identifier of the payload within its registry."
+        },
+        "hash": {
+          "type": "string",
+          "description": "Canonical hash (e.g., sha256-...) of the payload."
+        },
+        "path": {
+          "type": "string",
+          "description": "Repository-relative path to the payload file."
+        }
+      }
+    },
+    "orchestrator_profile": {
+      "type": "object",
+      "description": "Hints for orchestrators and CI about cross-tier visibility and NDJSON guarantees.",
+      "additionalProperties": false,
+      "required": [
+        "cross_tier_visible",
+        "ndjson_self_contained"
+      ],
+      "properties": {
+        "cross_tier_visible": {
+          "type": "boolean",
+          "description": "Indicates whether this shard is allowed to cross tiers (e.g., be consumed outside its origin repo)."
+        },
+        "ndjson_self_contained": {
+          "type": "boolean",
+          "const": true,
+          "description": "Must be true; QPU datashards are required to be self-contained per line for cross-repo orchestration."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metricDescriptor": {
+      "type": "object",
+      "description": "Descriptor for a single entertainment metric, expressed as bands and/or deltas. At least one of band, target_band, delta, hard_cap, or max_band must be present.",
+      "additionalProperties": false,
+      "properties": {
+        "band": {
+          "$ref": "#/$defs/band01"
+        },
+        "target_band": {
+          "$ref": "#/$defs/band01"
+        },
+        "delta": {
+          "type": "number",
+          "description": "Intended change to this metric (positive, negative, or zero)."
+        },
+        "hard_cap": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Hard maximum allowed value for this metric."
+        },
+        "max_band": {
+          "$ref": "#/$defs/band01"
+        }
+      },
+      "anyOf": [
+        { "required": [ "band" ] },
+        { "required": [ "target_band" ] },
+        { "required": [ "delta" ] },
+        { "required": [ "hard_cap" ] },
+        { "required": [ "max_band" ] }
+      ]
+    },
+    "band01": {
+      "type": "array",
+      "description": "Closed interval [min, max] for a metric in [0,1].",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
+}
