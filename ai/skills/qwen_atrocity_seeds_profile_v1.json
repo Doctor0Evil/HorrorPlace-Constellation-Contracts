@@ -1,0 +1,89 @@
+{
+  "skill_profile_id": "ai.skill.qwen.atrocity_seeds.v1",
+  "version": "1.0.0",
+  "description": "Qwen AI skill settings for safe, schema-first authoring in HorrorPlace-Atrocity-Seeds and related repos.",
+
+  "awareness": {
+    "vm_constellation_repos": [
+      "Horror.Place",
+      "Horror.Place-Orchestrator",
+      "HorrorPlace-Constellation-Contracts",
+      "HorrorPlace-Codebase-of-Death",
+      "HorrorPlace-Black-Archivum",
+      "HorrorPlace-Spectral-Foundry",
+      "HorrorPlace-Atrocity-Seeds",
+      "HorrorPlace-Obscura-Nexus",
+      "HorrorPlace-Liminal-Continuum",
+      "HorrorPlace-Process-Gods-Research",
+      "HorrorPlace-Redacted-Chronicles",
+      "HorrorPlace-Neural-Resonance-Lab",
+      "HorrorPlace-Dead-Ledger-Network"
+    ],
+    "high_sensitivity_repos": [
+      "HorrorPlace-Black-Archivum",
+      "HorrorPlace-Atrocity-Seeds",
+      "HorrorPlace-Dead-Ledger-Network",
+      "HorrorPlace-Redacted-Chronicles"
+    ]
+  },
+
+  "placement_preferences": {
+    "default_target_repo": null,
+    "repo_by_artifact_type": {
+      "schema": "Horror.Place",
+      "registry_entry": "Horror.Place",
+      "seed_event_or_region": "HorrorPlace-Atrocity-Seeds",
+      "historical_invariant_bundle": "HorrorPlace-Black-Archivum",
+      "engine_code": "HorrorPlace-Codebase-of-Death",
+      "spectral_style_contract": "HorrorPlace-Spectral-Foundry",
+      "routing_config": "HorrorPlace-Obscura-Nexus",
+      "zkp_schema_or_verifier": "HorrorPlace-Dead-Ledger-Network",
+      "ai_authoring_contract": "HorrorPlace-Constellation-Contracts",
+      "orchestrator_workflow_or_service": "Horror.Place-Orchestrator"
+    },
+    "enforce_one_file_per_request": true
+  },
+
+  "safety_posture": {
+    "implication_only_mode": true,
+    "max_intensityband_without_deadledgerref": 7,
+    "hard_forbid_raw_horror_content": true,
+    "require_schema_ref_for_all_json_outputs": true,
+    "require_repo_role_alignment": true,
+    "strict_invariant_ranges": true,
+    "strict_metric_ranges": true,
+    "no_runtime_vault_reads": true
+  },
+
+  "authoring_style": {
+    "prefer_structured_over_prose": true,
+    "doc_tone": "architectural",
+    "avoid_storytelling_in_vaults": true,
+    "use_ids_and_hashes_instead_of_descriptions": true
+  },
+
+  "pre_generation_checks": [
+    "resolve_user_intent_to_artifact_type",
+    "select_target_repo_and_path",
+    "load_relevant_schemas_and_checklist",
+    "verify_invariants_and_metrics_needed",
+    "confirm_no_forbidden_content_in_plan"
+  ],
+
+  "post_generation_self_checks": [
+    "validate_against_schema",
+    "validate_against_atrocity_seeds_checklist",
+    "scan_for_raw_content_terms",
+    "verify_invariant_and_metric_ranges",
+    "ensure_deadledgerref_presence_for_high_intensity",
+    "ensure_correct_repo_and_path_mapping"
+  ],
+
+  "behavior_on_violation": {
+    "schema_validation_failure": "auto_correct_structure_or_abort_with_explanation",
+    "checklist_violation": "regenerate_with_stricter_constraints",
+    "raw_content_detected": "remove_or_redact_and_rephrase_as_ids_invariants",
+    "misplaced_artifact": "move_plan_to_correct_repo_and_explain",
+    "missing_deadledgerref_for_high_intensity": "either lower_intensityband_or_add_deadledgerref_stub"
+  }
+}
