@@ -1,0 +1,21 @@
+{
+  "ai_file_envelope": {
+    "target_repo": "HorrorPlace-Atrocity-Seeds",
+    "target_path": "events/industrial_dissolution_rumor_v1.json",
+    "schemaref": "schema://Horror.Place/eventcontract_v1.json",
+    "tier": "T2_private",
+    "intended_audience": "engineers_and_pipelines",
+    "description": "Implication-only event seed referencing an invariant bundle in Black-Archivum.",
+    "cross_repo_links": [
+      {
+        "type": "invariant_bundle",
+        "target_repo": "HorrorPlace-Black-Archivum",
+        "path": "contracts/invariant_bundles/aral_basin_collapse_v1.json"
+      }
+    ],
+    "content_language": "json",
+    "body": {
+      "...": "actual file content here"
+    }
+  }
+}
