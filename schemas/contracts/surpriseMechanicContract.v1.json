@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema.HorrorPlace-Constellation-Contracts.surpriseMechanicContract.v1.json",
+  "title": "Surprise Mechanic Contract v1",
+  "description": "Canonical contract card for surprise mechanics, binding invariant slices and entertainment metric envelopes to Surprise.Event-style outcomes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schemaref",
+    "category",
+    "tier",
+    "invariantPreconditions",
+    "metricIntent",
+    "detCaps",
+    "lsgCaps",
+    "shciMode",
+    "arrProfile",
+    "intensityBand",
+    "deadledgerref"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable ID for this surprise mechanic contract (registry key)."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this mechanic contract (e.g., 1.0.0).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+    },
+    "schemaref": {
+      "type": "string",
+      "description": "Canonical schema reference for this contract.",
+      "const": "schema.HorrorPlace-Constellation-Contracts.surpriseMechanicContract.v1.json"
+    },
+    "category": {
+      "type": "string",
+      "description": "Surprise mechanic category.",
+      "enum": [
+        "PerceptualMisdirection",
+        "SystemicTiming",
+        "EnvironmentTopology",
+        "SocialNPCBehavior",
+        "DiegeticSystem"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "description": "Visibility / safety tier for this mechanic.",
+      "enum": [
+        "public",
+        "vault",
+        "lab",
+        "research"
+      ]
+    },
+    "styleid": {
+      "type": "string",
+      "description": "Optional style contract ID this mechanic must respect."
+    },
+    "policyProfileId": {
+      "type": "string",
+      "description": "Optional policy envelope / profile this mechanic is constrained by."
+    },
+
+    "invariantPreconditions": {
+      "type": "object",
+      "description": "Local invariant bands or point targets required for this mechanic to be eligible.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "$ref": "#/$defs/range01" },
+        "MDI": { "$ref": "#/$defs/range01" },
+        "AOS": { "$ref": "#/$defs/range01" },
+        "RRM": { "$ref": "#/$defs/range01" },
+        "FCF": { "$ref": "#/$defs/range01" },
+        "SPR": { "$ref": "#/$defs/range01" },
+        "RWF": { "$ref": "#/$defs/range01" },
+        "DET": { "$ref": "#/$defs/rangeDet" },
+        "HVF": { "$ref": "#/$defs/range01" },
+        "LSG": { "$ref": "#/$defs/range01" },
+        "SHCI": { "$ref": "#/$defs/range01" }
+      }
+    },
+
+    "metricIntent": {
+      "type": "object",
+      "description": "Intended impact on entertainment metrics expressed as bands or signed deltas.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/$defs/metricBand" },
+        "EMD": { "$ref": "#/$defs/metricBand" },
+        "STCI": { "$ref": "#/$defs/metricBand" },
+        "CDL": { "$ref": "#/$defs/metricBand" },
+        "ARR": { "$ref": "#/$defs/metricBand" }
+      }
+    },
+
+    "detCaps": {
+      "type": "object",
+      "description": "Explicit DET exposure caps for this mechanic.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
+      }
+    },
+
+    "lsgCaps": {
+      "type": "object",
+      "description": "LSG liminal stress caps for this mechanic (where in liminal gradients it may manifest).",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "shciMode": {
+      "type": "string",
+      "description": "How tightly this mechanic is coupled to local spectral history.",
+      "enum": [
+        "LooseEcho",
+        "BoundToRegion",
+        "BoundToEventChain",
+        "ArchivedLegendOnly"
+      ]
+    },
+
+    "arrProfile": {
+      "type": "object",
+      "description": "Profile for how often this mechanic may fully resolve vs. remain ambiguous.",
+      "additionalProperties": false,
+      "required": ["targetARR", "maxResolutionsPerSession"],
+      "properties": {
+        "targetARR": { "$ref": "#/$defs/range01" },
+        "maxResolutionsPerSession": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+
+    "intensityBand": {
+      "type": "string",
+      "description": "High-level intensity band for this mechanic.",
+      "enum": [
+        "mild",
+        "moderate",
+        "severe",
+        "adult"
+      ]
+    },
+
+    "uecTarget": { "$ref": "#/$defs/range01" },
+    "emdTarget": { "$ref": "#/$defs/range01" },
+    "stciTarget": { "$ref": "#/$defs/range01" },
+    "cdlTarget": { "$ref": "#/$defs/range01" },
+    "arrTarget": { "$ref": "#/$defs/range01" },
+
+    "categoryHints": {
+      "type": "object",
+      "description": "Category-specific fields clarifying how this mechanic behaves.",
+      "additionalProperties": false,
+      "properties": {
+        "PerceptualMisdirection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "almostEvent": { "type": "boolean" },
+            "falseResolution": { "type": "boolean" }
+          }
+        },
+        "SystemicTiming": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "detTrajectory": {
+              "type": "string",
+              "enum": ["rampUp", "pulse", "cooldown"]
+            },
+            "maxPeaksPerSession": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "EnvironmentTopology": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requiresLiminalThreshold": { "type": "boolean" },
+            "hvfDirection": {
+              "type": "string",
+              "description": "Qualitative hint about Haunt Vector direction (e.g., corridor, ridge, border)."
+            }
+          }
+        },
+        "SocialNPCBehavior": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "npcRole": { "type": "string" },
+            "visibilityMode": {
+              "type": "string",
+              "enum": ["overt", "covert", "implied"]
+            }
+          }
+        },
+        "DiegeticSystem": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "systemType": {
+              "type": "string",
+              "enum": ["radio", "journal", "powerGrid", "ritual", "other"]
+            },
+            "leakMode": {
+              "type": "string",
+              "enum": ["drip", "burst", "misaligned", "withheld"]
+            }
+          }
+        }
+      }
+    },
+
+    "eligibilityQuery": {
+      "type": "object",
+      "description": "Abstract query spec used by H.Surprise.queryEligibleMechanics.",
+      "additionalProperties": false,
+      "properties": {
+        "regionTags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requiresHistoryAnchors": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "deadledgerref": {
+      "type": "string",
+      "description": "Opaque reference to Dead-Ledger attestations for this mechanic."
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Human-readable design notes and intent.",
+      "maxLength": 4000
+    }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "category": { "const": "PerceptualMisdirection" } } },
+      "then": {
+        "properties": {
+          "detCaps": {
+            "properties": {
+              "max": { "maximum": 4.0 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "intensityBand": { "const": "mild" } } },
+      "then": {
+        "properties": {
+          "detCaps": {
+            "properties": {
+              "max": { "maximum": 3.0 }
+            }
+          }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "description": "Numeric range in [0,1].",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "rangeDet": {
+      "type": "object",
+      "description": "DET range in [0,10].",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
+      }
+    },
+    "metricBand": {
+      "type": "array",
+      "description": "Metric band [min,max] in [0,1].",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
+}
