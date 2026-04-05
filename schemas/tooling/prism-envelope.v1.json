@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:Horror.Place/constellation/prism-envelope.v1",
   "title": "Prism Envelope v1",
-  "description": "Envelope for one AI-generated changeset: up to three artifacts plus routing and intent.",
+  "description": "Envelope for one AI-generated changeset: up to three artifacts plus routing and intent metadata.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -22,7 +22,8 @@
     },
     "envelopeId": {
       "type": "string",
-      "description": "Stable identifier for this prism envelope."
+      "description": "Stable identifier for this prism envelope.",
+      "pattern": "^ENV-[0-9]{8}-[0-9]{4}$"
     },
     "author": {
       "type": "object",
@@ -74,8 +75,7 @@
         },
         "tier": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 3,
+          "enum": [1, 2, 3],
           "description": "Governance tier for the artifacts in this envelope."
         }
       }
@@ -141,9 +141,13 @@
           },
           "content": {
             "description": "The JSON or text content to be written to path.",
-            "type": [
-              "object",
-              "string"
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
             ]
           }
         }
