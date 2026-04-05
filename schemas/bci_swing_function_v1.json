@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/bci_swing_function_v1.json",
+  "title": "BCI Swing Function v1",
+  "description": "Schema for BCI swing functions that map physiological or neural features to entertainment metric adjustments within the Horror$Place VM-constellation. Each swing is a named, parameterized transformation with explicit linkage to safety tiers, entitlement profiles, and Dead-Ledger proof types. Serialized as single-line NDJSON within qpudatashard envelopes.",
+  "type": "object",
+  "required": ["bci_swing_function"],
+  "additionalProperties": false,
+  "properties": {
+    "bci_swing_function": {
+      "type": "object",
+      "description": "A self-contained BCI transformation definition for cross-repo orchestration.",
+      "required": [
+        "function_id",
+        "input_features",
+        "output_targets",
+        "safetytier",
+        "entitlement_profile_id",
+        "prooftype",
+        "input_bands",
+        "output_bands",
+        "guardrail_flags",
+        "lab_source",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "function_id": {
+          "type": "string",
+          "pattern": "^bci_swing_[a-z][a-z0-9_]{2,63}$",
+          "description": "Stable identifier for this BCI swing function instance."
+        },
+        "input_features": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "fear_index",
+              "boredom_index",
+              "anticipation_index",
+              "confusion_index",
+              "overload_flag",
+              "alertness_index",
+              "prediction_confidence",
+              "frontal_theta_band",
+              "blink_rate",
+              "heart_rate_band",
+              "breathing_variability",
+              "skin_conductance_level",
+              "pupil_dilation",
+              "micro_expression_valence",
+              "postural_stability"
+            ]
+          },
+          "description": "List of BCI-derived or physiological features used as input to this transformation."
+        },
+        "output_targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR",
+              "intensity_band",
+              "DET_cap",
+              "SHCI_weight"
+            ]
+          },
+          "description": "Metrics or system parameters adjusted by this swing."
+        },
+        "safetytier": {
+          "type": "string",
+          "enum": ["standard", "mature", "research"],
+          "description": "Governing safety posture; determines allowable input/output ranges and proof requirements."
+        },
+        "entitlement_profile_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_\\-]{2,63}$",
+          "description": "ID of the Dead-Ledger entitlement or BCIseed profile governing this swing."
+        },
+        "prooftype": {
+          "type": "string",
+          "enum": ["bcistate", "sessionsafety", "trauma_entitlement", "none"],
+          "description": "Primary ZKP proof type required to authorize invocation of this swing."
+        },
+        "input_bands": {
+          "type": "object",
+          "description": "Expected numeric ranges for each input feature; used for validation and gating.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["min", "max"],
+            "additionalProperties": false,
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "unit": { "type": "string", "description": "Optional unit label (e.g., 'Hz', 'uS', 'normalized')" }
+            }
+          }
+        },
+        "output_bands": {
+          "type": "object",
+          "description": "Allowed target bands or delta ranges for each output metric.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["min", "max"],
+            "additionalProperties": false,
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "delta_mode": {
+                "type": "string",
+                "enum": ["absolute", "relative", "clamped"],
+                "default": "absolute",
+                "description": "Whether output is an absolute value, relative adjustment, or clamped to bounds."
+              }
+            }
+          }
+        },
+        "guardrail_flags": {
+          "type": "object",
+          "description": "Behavioral flags for edge-case handling and safety enforcement.",
+          "additionalProperties": false,
+          "properties": {
+            "auto_downgrade": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, automatically reduce intensity_band on overload detection."
+            },
+            "hard_block": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, deny swing invocation if any input exceeds safe bounds."
+            },
+            "log_only": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, record swing evaluation without applying output (research mode)."
+            },
+            "require_deadledger_ref": {
+              "type": "boolean",
+              "default": true,
+              "description": "If true, swing invocation requires a valid deadledgerref attestation."
+            },
+            "max_invocations_per_session": {
+              "type": ["integer", "null"],
+              "minimum": 1,
+              "description": "Optional cap on how many times this swing may fire per user session."
+            }
+          }
+        },
+        "lab_source": {
+          "type": "string",
+          "enum": [
+            "HorrorPlace-Neural-Resonance-Lab",
+            "HorrorPlace-Redacted-Chronicles",
+            "HorrorPlace-Process-Gods-Research",
+            "HorrorPlace-Dead-Ledger-Network"
+          ],
+          "description": "Tier-3 lab repository where this swing was calibrated or validated."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of this swing function definition."
+        },
+        "calibration_metadata": {
+          "type": ["object", "null"],
+          "description": "Optional metadata about the calibration dataset or research protocol.",
+          "additionalProperties": false,
+          "properties": {
+            "participant_count": { "type": "integer", "minimum": 1 },
+            "session_count": { "type": "integer", "minimum": 1 },
+            "effect_size_cohen_d": { "type": "number" },
+            "p_value": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ethics_approval_id": { "type": "string" },
+            "calibration_date": { "type": "string", "format": "date" }
+          }
+        }
+      }
+    }
+  }
+}
