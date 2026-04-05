@@ -1,0 +1,150 @@
+{
+  "$id": "schema:HorrorPlace.ConstellationContracts.prisms.prism-schema-mapping-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Schema Prism Mapping v1",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "schema:HorrorPlace.ConstellationContracts.tooling.prismMeta.v1.json"
+    }
+  ],
+  "properties": {
+    "prismKind": {
+      "const": "schema-prism"
+    },
+    "sourceSchema": {
+      "type": "string",
+      "description": "Canonical schemaref URI of the source contract schema to be projected (e.g., nature-seed-contract-v1.json)."
+    },
+    "sourceRegistry": {
+      "type": "string",
+      "description": "Optional schemaref or logical id of the registry that exposes instances of the source schema."
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "language",
+          "typeName",
+          "projectionId"
+        ],
+        "properties": {
+          "projectionId": {
+            "type": "string",
+            "description": "Stable id for this specific projection (e.g., nature-seed.npc_behavior.lua.v1)."
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "lua",
+              "rust",
+              "cpp",
+              "typescript",
+              "csharp"
+            ]
+          },
+          "modulePath": {
+            "type": "string",
+            "description": "Logical module or package path for the generated type."
+          },
+          "typeName": {
+            "type": "string",
+            "description": "Name of the target type (struct/class/table name)."
+          },
+          "fieldMappings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "sourceField",
+                "targetField",
+                "targetType"
+              ],
+              "properties": {
+                "sourceField": {
+                  "type": "string",
+                  "description": "JSON Pointer or dotted path in the source schema (e.g., metricsIntent.UEC)."
+                },
+                "targetField": {
+                  "type": "string",
+                  "description": "Field name in the target type."
+                },
+                "targetType": {
+                  "type": "string",
+                  "description": "Logical type in the target language (e.g., f32, i32, bool, string)."
+                },
+                "nullable": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "enumMapping": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Optional mapping from source enum values to target enum variants."
+                },
+                "rangePolicy": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "clamp": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "rejectOnOverflow": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "ownershipHints": {
+            "type": "object",
+            "description": "Optional hints about lifetime/ownership semantics for engine types.",
+            "properties": {
+              "threadSafety": {
+                "type": "string",
+                "enum": [
+                  "unspecified",
+                  "send",
+                  "sync"
+                ],
+                "default": "unspecified"
+              },
+              "allocationStrategy": {
+                "type": "string",
+                "enum": [
+                  "stack",
+                  "heap",
+                  "arena",
+                  "pooled"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "prismKind",
+    "sourceSchema",
+    "targets"
+  ],
+  "additionalProperties": false
+}
