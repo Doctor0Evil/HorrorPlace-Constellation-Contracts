@@ -1,0 +1,118 @@
+name: "Prism Envelope Lint (Reusable)"
+description: "Validates Prism Envelope constraints: max artifacts, role enums, and noRawContent."
+
+on:
+  workflow_call:
+    inputs:
+      data_glob:
+        description: "Glob pattern for envelope JSON files."
+        required: true
+        type: string
+        default: "**/envelope*.json"
+
+jobs:
+  lint-prism-envelope:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Prism Linter
+        run: |
+          python - <<'PYCODE'
+          import json
+          import sys
+          import glob
+          from pathlib import Path
+
+          data_glob = "${{ inputs.data_glob }}"
+          errors_found = False
+          total_files = 0
+
+          files = glob.glob(data_glob, recursive=True)
+          files = [f for f in files if not f.startswith('.')]
+
+          for data_file in files:
+              total_files += 1
+              path = Path(data_file)
+              if not path.is_file():
+                  continue
+                  
+              try:
+                  with path.open("r", encoding="utf-8") as f:
+                      envelope = json.load(f)
+              except Exception as e:
+                  print(f"::error file={data_file}:: Failed to parse JSON: {e}")
+                  errors_found = True
+                  continue
+
+              # 1. Schemaref Check
+              schemaref = envelope.get('schemaref')
+              valid_refs = [
+                  'schema:Horror.Place/constellation/prism-envelope.v1',
+                  'schema:Horror.Place/constellation/ai-authoring-response-v1'
+              ]
+              if schemaref not in valid_refs:
+                  print(f"::error file={data_file}:: Invalid schemaref '{schemaref}'. Expected prism-envelope or ai-authoring-response.")
+                  errors_found = True
+
+              # 2. Artifacts Array Length
+              artifacts = envelope.get('artifacts', [])
+              if not isinstance(artifacts, list):
+                  print(f"::error file={data_file}:: 'artifacts' is not an array.")
+                  errors_found = True
+              elif len(artifacts) > 3:
+                  print(f"::error file={data_file}:: 'artifacts' count ({len(artifacts)}) exceeds maximum of 3.")
+                  errors_found = True
+
+              # 3. Artifact Content Checks
+              for i, art in enumerate(artifacts):
+                  if not isinstance(art, dict):
+                      print(f"::error file={data_file},artifact_idx={i}:: Artifact is not an object.")
+                      errors_found = True
+                      continue
+                      
+                  role = art.get('role')
+                  valid_roles = ['primary', 'registry', 'secondary']
+                  if role not in valid_roles:
+                      print(f"::error file={data_file},artifact_idx={i}:: Invalid role '{role}'. Must be {valid_roles}.")
+                      errors_found = True
+                      
+                  if not art.get('schemaref'):
+                      print(f"::error file={data_file},artifact_idx={i}:: Artifact missing 'schemaref'.")
+                      errors_found = True
+                      
+                  if not art.get('path'):
+                      print(f"::error file={data_file},artifact_idx={i}:: Artifact missing 'path'.")
+                      errors_found = True
+
+              # 4. Constraints Check
+              constraints = envelope.get('constraints', {})
+              if isinstance(constraints, dict):
+                  max_art = constraints.get('maxArtifacts')
+                  if max_art is not None and max_art != 3:
+                      print(f"::warning file={data_file}:: constraints.maxArtifacts is {max_art}, expected 3 for strict enforcement.")
+                  
+                  # Note: noRawContent is a boolean flag, usually true for contract repos. 
+                  # We warn if it's explicitly false in a public context, but generally just check presence.
+                  if 'noRawContent' not in constraints:
+                      print(f"::warning file={data_file}:: constraints.noRawContent field is missing.")
+
+              # 5. Author/Target/Intent
+              required_blocks = ['author', 'target', 'intent']
+              for block in required_blocks:
+                  if block not in envelope:
+                      print(f"::error file={data_file}:: Missing required block '{block}'.")
+                      errors_found = True
+
+          if errors_found:
+              print("Prism envelope lint failed.")
+              sys.exit(1)
+          else:
+              print(f"Prism envelope lint passed. Checked {total_files} files.")
+          PYCODE
