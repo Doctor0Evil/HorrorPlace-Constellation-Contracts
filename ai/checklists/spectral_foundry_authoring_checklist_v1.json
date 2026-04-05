@@ -1,0 +1,120 @@
+{
+  "checklist_id": "ai.authoring.checklist.spectral_foundry.v1",
+  "version": "1.0.0",
+  "description": "Pre-CI AI authoring checklist for HorrorPlace-Spectral-Foundry. Ensures spectral entities, style contracts, and metrics bindings are schema-bound, implication-only, and correctly placed.",
+  "target_repo": "HorrorPlace-Spectral-Foundry",
+  "applies_to": [
+    "styles/*.json",
+    "entities/*.json",
+    "registry/*.json",
+    "schemas/*.json",
+    "scripts/*.py",
+    "docs/*.md"
+  ],
+  "required_context": {
+    "must_know_repos": [
+      "Horror.Place",
+      "Horror.Place-Orchestrator",
+      "HorrorPlace-Constellation-Contracts",
+      "HorrorPlace-Codebase-of-Death",
+      "HorrorPlace-Black-Archivum",
+      "HorrorPlace-Spectral-Foundry",
+      "HorrorPlace-Atrocity-Seeds",
+      "HorrorPlace-Obscura-Nexus",
+      "HorrorPlace-Liminal-Continuum",
+      "HorrorPlace-Process-Gods-Research",
+      "HorrorPlace-Redacted-Chronicles",
+      "HorrorPlace-Neural-Resonance-Lab",
+      "HorrorPlace-Dead-Ledger-Network"
+    ],
+    "canonical_schemas": [
+      "schema://Horror.Place/stylecontract_v1.json",
+      "schema://Horror.Place/invariants_v1.json",
+      "schema://Horror.Place/entertainment_metrics_v1.json"
+    ]
+  },
+  "global_rules": [
+    {
+      "id": "rule.one_file_per_request",
+      "severity": "ERROR",
+      "description": "Each authoring request must propose exactly one primary file plus optional registry edits.",
+      "applies_to": ["*"],
+      "ai_action": "Negotiate a sequence for multiple artifacts; do not return unrelated files at once."
+    },
+    {
+      "id": "rule.no_raw_horror_content",
+      "severity": "ERROR",
+      "description": "Spectral contracts must be implication-first. No narrative prose or explicit descriptions.",
+      "applies_to": ["styles/*.json", "entities/*.json", "docs/*.md"],
+      "ai_action": "Use IDs, invariant bindings, and metric ranges instead of descriptive text."
+    },
+    {
+      "id": "rule.no_runtime_logic",
+      "severity": "ERROR",
+      "description": "Spectral Foundry defines contracts, not runtime behavior.",
+      "applies_to": ["scripts/*.py"],
+      "ai_action": "Scripts may only validate schemas or compute hashes; no engine logic or direct game loops."
+    }
+  ],
+  "style_contract_rules": {
+    "applies_to": ["styles/*.json"],
+    "required_fields": [
+      "id",
+      "schemaref",
+      "invariant_bindings",
+      "metric_targets",
+      "engine_adapters",
+      "safetytier",
+      "intensityband"
+    ],
+    "invariant_binding_rules": {
+      "description": "Must map specific invariants to style behaviors (e.g., fog density, audio distortion).",
+      "allowed_invariants": ["CIC", "AOS", "SPR", "DET", "SHCI"],
+      "ai_action": "Ensure all invariant values fall within [0.0, 1.0] except DET [0, 10]."
+    },
+    "metric_target_rules": {
+      "description": "Must define target ranges for UEC, EMD, STCI, CDL, ARR.",
+      "ai_action": "Values must be within [0.0, 1.0]."
+    },
+    "adapter_rules": {
+      "description": "Must specify engine adapters (e.g., godot-2d, unreal-fps) by ID only.",
+      "forbidden": ["embedded_shaders", "binary_blobs", "asset_urls"]
+    }
+  },
+  "entity_definition_rules": {
+    "applies_to": ["entities/*.json"],
+    "required_fields": [
+      "entity_id",
+      "behavior_tree_ref",
+      "invariant_thresholds",
+      "safetytier"
+    ],
+    "threshold_rules": {
+      "description": "Entity activation must be gated by invariant thresholds.",
+      "ai_action": "Define clear min/max ranges for CIC, SPR, etc."
+    },
+    "forbidden_fields": [
+      "sprite_path",
+      "model_file",
+      "animation_clip",
+      "narrative_description"
+    ]
+  },
+  "registry_rules": {
+    "applies_to": ["registry/styles.ndjson", "registry/entities.ndjson"],
+    "format": "ndjson",
+    "required_fields": [
+      "id",
+      "schemaref",
+      "path",
+      "hash",
+      "tier",
+      "tags"
+    ],
+    "ai_actions": [
+      "Path must use git@ URI for vault references.",
+      "Hash must be SHA-256 of the canonicalized contract.",
+      "Update registry only after the contract file is valid."
+    ]
+  }
+}
