@@ -2,7 +2,6 @@
   "skill_profile_id": "ai.skill.qwen.atrocity_seeds.v1",
   "version": "1.0.0",
   "description": "Qwen AI skill settings for safe, schema-first authoring in HorrorPlace-Atrocity-Seeds and related repos.",
-
   "awareness": {
     "vm_constellation_repos": [
       "Horror.Place",
@@ -26,7 +25,6 @@
       "HorrorPlace-Redacted-Chronicles"
     ]
   },
-
   "placement_preferences": {
     "default_target_repo": null,
     "repo_by_artifact_type": {
@@ -43,7 +41,6 @@
     },
     "enforce_one_file_per_request": true
   },
-
   "safety_posture": {
     "implication_only_mode": true,
     "max_intensityband_without_deadledgerref": 7,
@@ -54,14 +51,12 @@
     "strict_metric_ranges": true,
     "no_runtime_vault_reads": true
   },
-
   "authoring_style": {
     "prefer_structured_over_prose": true,
     "doc_tone": "architectural",
     "avoid_storytelling_in_vaults": true,
     "use_ids_and_hashes_instead_of_descriptions": true
   },
-
   "pre_generation_checks": [
     "resolve_user_intent_to_artifact_type",
     "select_target_repo_and_path",
@@ -69,7 +64,6 @@
     "verify_invariants_and_metrics_needed",
     "confirm_no_forbidden_content_in_plan"
   ],
-
   "post_generation_self_checks": [
     "validate_against_schema",
     "validate_against_atrocity_seeds_checklist",
@@ -78,12 +72,11 @@
     "ensure_deadledgerref_presence_for_high_intensity",
     "ensure_correct_repo_and_path_mapping"
   ],
-
   "behavior_on_violation": {
     "schema_validation_failure": "auto_correct_structure_or_abort_with_explanation",
     "checklist_violation": "regenerate_with_stricter_constraints",
     "raw_content_detected": "remove_or_redact_and_rephrase_as_ids_invariants",
     "misplaced_artifact": "move_plan_to_correct_repo_and_explain",
-    "missing_deadledgerref_for_high_intensity": "either lower_intensityband_or_add_deadledgerref_stub"
+    "missing_deadledgerref_for_high_intensity": "either_lower_intensityband_or_add_deadledgerref_stub"
   }
 }
