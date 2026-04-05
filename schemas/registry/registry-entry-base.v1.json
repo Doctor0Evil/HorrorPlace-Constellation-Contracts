@@ -1,61 +1,126 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horrorplace.constellation/schemas/registry/registry-entry-base.v1.json",
-  "title": "Registry Entry Base Schema v1.0.0",
-  "description": "Base definition for all NDJSON registry entries. Establishes required identity, reference, and governance fields.",
+  "$id": "schema:Horror.Place/constellation/registry-entry-base.v1",
+  "title": "Registry Entry Base v1",
+  "description": "Base schema for NDJSON registry entries across the HorrorPlace constellation.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
     "schemaref",
-    "deadledgerref",
-    "artifactid",
-    "createdAt",
-    "status"
+    "tier",
+    "metadata"
   ],
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^[A-Z]{2,4}-[A-Z0-9]{3,6}-\\d{4}$",
+      "pattern": "^[A-Z]{2,4}-[A-Z0-9]{2,8}-\\d{4}$",
       "description": "Globally unique entity ID. Format: TYPE-CODE-SEQUENCE (e.g., REG-ARAL-0001)."
     },
     "schemaref": {
       "type": "string",
-      "format": "uri",
-      "description": "Canonical JSON Schema $id this entry conforms to."
+      "pattern": "^schema:Horror\\.Place/.+",
+      "description": "Canonical schema URI for the underlying contract or card."
     },
-    "deadledgerref": {
-      "type": "string",
-      "pattern": "^zkp:sha256:[a-f0-9]{64}(:sig:ed25519:[a-f0-9]{128})?(:tier:(public|vault|lab))?$",
-      "description": "Cryptographic attestation reference for provenance and tier validation."
+    "tier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "Visibility / governance tier: 1=public, 2=vault, 3=lab."
     },
     "artifactid": {
       "type": "string",
-      "description": "Content-addressable or implementation-agnostic reference (e.g., ipfs:bafy..., cid:sha256:...)."
+      "description": "Opaque artifact identifier in a backing vault or repo."
     },
-    "createdAt": {
+    "cid": {
       "type": "string",
-      "format": "date-time",
-      "description": "UTC timestamp of entry creation."
+      "description": "Opaque content-addressed identifier (e.g., CID)."
     },
-    "status": {
-      "type": "string",
-      "enum": ["active", "deprecated", "archived", "draft"],
-      "description": "Lifecycle state of the registry entry."
+    "deadledgerref": {
+      "type": "object",
+      "description": "Optional Dead-Ledger binding for provenance and gating.",
+      "additionalProperties": false,
+      "required": [
+        "proofEnvelopeId",
+        "verifierRef",
+        "circuitType",
+        "protocolVersion"
+      ],
+      "properties": {
+        "proofEnvelopeId": {
+          "type": "string",
+          "description": "ID of the ZKP proof envelope attesting this entity."
+        },
+        "verifierRef": {
+          "type": "string",
+          "description": "Opaque reference to the verifier / circuit registry entry."
+        },
+        "circuitType": {
+          "type": "string",
+          "description": "Name or class of the ZKP circuit used."
+        },
+        "protocolVersion": {
+          "type": "string",
+          "description": "Version string for the proof protocol."
+        }
+      }
     },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9\\-]*$"
-      },
-      "description": "Lowercase, hyphenated keywords for filtering and categorization."
-    },
-    "tier": {
-      "type": "string",
-      "enum": ["public", "vault", "lab"],
-      "default": "public",
-      "description": "Access tier governing validation rigor and content policies."
+    "metadata": {
+      "type": "object",
+      "description": "Non-contentful metadata for discovery and audit.",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Short, human-readable label."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "active",
+            "deprecated",
+            "archived"
+          ],
+          "description": "Lifecycle status for this entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp (UTC)."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 last updated timestamp (UTC)."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Lowercase, hyphenated keywords for filtering and categorization.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "sourceRepo": {
+          "type": "string",
+          "description": "Origin repository for the implementation."
+        }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "anyOf": [
+        { "required": ["artifactid"] },
+        { "required": ["cid"] },
+        { "required": ["deadledgerref"] }
+      ]
+    }
+  ]
 }
