@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:Horror.Place/constellation/qpudatashard-v1",
+  "title": "QPU Data Shard v1",
+  "description": "Machine-readable shard for metrics, invariants, or analysis results, optimized for NDJSON streaming.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaref",
+    "shardId",
+    "origin",
+    "payload",
+    "timestamp"
+  ],
+  "properties": {
+    "schemaref": {
+      "type": "string",
+      "const": "schema:Horror.Place/constellation/qpudatashard-v1",
+      "description": "Self-referencing schema URI."
+    },
+    "shardId": {
+      "type": "string",
+      "description": "Stable identifier for this shard within its dataset."
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "sourceRepo"
+      ],
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "description": "Agent or process that produced this shard."
+        },
+        "sourceRepo": {
+          "type": "string",
+          "description": "Repository or service this shard originated from."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session or experiment identifier."
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "region-metrics",
+            "persona-metrics",
+            "schema-impact",
+            "drift-alert",
+            "experiment-result"
+          ],
+          "description": "Shard payload type."
+        },
+        "regionId": {
+          "type": "string",
+          "description": "Region identifier, when applicable."
+        },
+        "personaId": {
+          "type": "string",
+          "description": "Persona identifier, when applicable."
+        },
+        "invariants": {
+          "type": "object",
+          "description": "Snapshot of invariant values (CIC, AOS, etc.).",
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0, "maximum": 1 },
+            "MDI": { "type": "number", "minimum": 0, "maximum": 1 },
+            "AOS": { "type": "number", "minimum": 0, "maximum": 1 },
+            "RRM": { "type": "number", "minimum": 0, "maximum": 1 },
+            "FCF": { "type": "number", "minimum": 0, "maximum": 1 },
+            "SPR": { "type": "number", "minimum": 0, "maximum": 1 },
+            "RWF": { "type": "number", "minimum": 0, "maximum": 1 },
+            "DET": { "type": "number", "minimum": 0, "maximum": 10 },
+            "HVF": { "type": "number" },
+            "LSG": { "type": "number" },
+            "SHCI": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Snapshot of entertainment metrics.",
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "type": "number", "minimum": 0, "maximum": 1 },
+            "EMD": { "type": "number", "minimum": 0, "maximum": 1 },
+            "STCI": { "type": "number", "minimum": 0, "maximum": 1 },
+            "CDL": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ARR": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "details": {
+          "type": "object",
+          "description": "Type-specific numeric or categorical details.",
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string",
+              "boolean"
+            ]
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "array",
+      "description": "Links back to canonical contracts or registry entries.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Link type (e.g., contract, region, persona)."
+          },
+          "id": {
+            "type": "string",
+            "description": "Referenced ID."
+          },
+          "schemaref": {
+            "type": "string",
+            "description": "Optional schema URI of the linked entity."
+          }
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp for this shard (UTC)."
+    }
+  }
+}
