@@ -1,13 +1,43 @@
 ---
-invariants_used: [CIC, MDI, AOS, RRM, FCF, SPR, RWF, DET, HVF, LSG, SHCI]
-metrics_used: [UEC, EMD, STCI, CDL, ARR]
-tiers: [T1_public, T2_private, T3_private]
-deadledger_surface: [zkpproofv1_schema, verifiers_registry, bundle_attestation, agent_attestation]
+title: AI Authoring Guidelines v1
+version: 1.0.0
+doctype: spec-v1
+schemaref:
+  - schema.HorrorPlace-Constellation-Contracts.ai_file_envelope_v1.json
+  - schema.HorrorPlace-Constellation-Contracts.ai_research_plan_v1.json
+invariantsused:
+  - CIC
+  - MDI
+  - AOS
+  - RRM
+  - FCF
+  - SPR
+  - RWF
+  - DET
+  - HVF
+  - LSG
+  - SHCI
+metricsused:
+  - UEC
+  - EMD
+  - STCI
+  - CDL
+  - ARR
+tiers:
+  - T1_public
+  - T2_private
+  - T3_private
+deadledgersurface:
+  - zkpproofschema
+  - verifiersregistry
+  - bundleattestation
+  - agentattestation
+aiauthoringcontract: horrorplace-constellation-ai-authoring-contract-v1
 ---
 
 # AI Authoring Guidelines v1
 
-This document defines how AI/chat tools must behave when generating files for the Horror$Place VM-constellation. It explains the use of `ai_file_envelope` and `ai_research_plan` as standard contracts for planning, generating, and validating artifacts across all repositories.
+This document defines how AI/chat tools must behave when generating files for the Horror$Place VM-constellation. It establishes the use of `ai_file_envelope` and `ai_research_plan` as standard contracts for planning, generating, and validating artifacts across all repositories.
 
 The goal is to treat AI-chat as a deterministic compiler: every authoring action has a clear target repository and path, adheres to canonical schemas, and never bypasses the constellation’s safety and governance rules.
 
@@ -40,7 +70,7 @@ AI tools must be aware of the full VM-constellation and choose a target reposito
   - `HorrorPlace-Constellation-Contracts`: cross-repo schemas, registry formats, AI authoring contracts, reusable CI.
 
 - **Tier 2 (private)**  
-  - `HorrorPlace-Codebase-of-Death`: engine implementations.  
+  - `HorrorPlace-Codebase-of-Death`: engine implementations (Rust/Lua).  
   - `HorrorPlace-Black-Archivum`: historical invariant bundles.  
   - `HorrorPlace-Spectral-Foundry`: spectral entities and style contracts.  
   - `HorrorPlace-Atrocity-Seeds`: PCG seeds (events/regions/styles), implication-only.  
@@ -53,11 +83,11 @@ AI tools must be aware of the full VM-constellation and choose a target reposito
   - `HorrorPlace-Neural-Resonance-Lab`: BCI/neural schemas and analysis.  
   - `HorrorPlace-Dead-Ledger-Network`: ZKP envelopes, verifiers, entitlement protocols.
 
-AI must never place horror seeds or explicit content in public-contract or core governance repositories (HorrorPlace-Constellation-Contracts, Horror.Place-Orchestrator, HorrorPlace-Dead-Ledger-Network).
+**CRITICAL RULE**: AI must never place horror seeds or explicit content in public-contract or core governance repositories (`HorrorPlace-Constellation-Contracts`, `Horror.Place`, `Horror.Place-Orchestrator`, `HorrorPlace-Dead-Ledger-Network`).
 
 ---
 
-## 3. ai_file_envelope: generation contract
+## 3. `ai_file_envelope`: generation contract
 
 The `ai_file_envelope` is a standard wrapper that describes an AI-generated file: which repo it belongs to, where it should live, which schema it targets, and what its content is.
 
@@ -65,7 +95,7 @@ The `ai_file_envelope` is a standard wrapper that describes an AI-generated file
 
 The envelope is governed by:
 
-- `schemas/ai_file_envelope_v1.json` in HorrorPlace-Constellation-Contracts.
+- `schemas/ai_file_envelope_v1.json` in `HorrorPlace-Constellation-Contracts`.
 
 AI-generated envelopes must conform to that schema to be considered valid.
 
@@ -74,13 +104,13 @@ AI-generated envelopes must conform to that schema to be considered valid.
 Every envelope must include:
 
 - `target_repo`  
-  The logical repository name (one of the 12 constellation repos).
+  The logical repository name (one of the constellation repos).
 
 - `target_path`  
-  The repository-relative file path (for example, `events/aral_dissolution_v1.json`, `registry/events.json`, `docs/ai_authoring_guidelines_v1.md`).
+  The repository-relative file path (for example, `events/aral_dissolution_v1.json`, `registry/events.json`, `docs/ai-authoring-guidelines-v1.md`).
 
 - `schemaref`  
-  A canonical schema URI for JSON/NDJSON content (for example, `schema://Horror.Place/eventcontract_v1.json`), or `null` for free-form text/code files.
+  A canonical schema URI for JSON/NDJSON content (for example, `schema.Horror.Place.eventcontractv1.json`), or `null` for free-form text/code files.
 
 - `tier`  
   One of `T1_public`, `T2_private`, `T3_private`, consistent with the chosen repository.
@@ -92,7 +122,7 @@ Every envelope must include:
   Describes the body format: `json`, `ndjson`, `markdown`, `python`, `lua`, `rust`, `yaml`, or `text`.
 
 - `body`  
-  The actual file content. For JSON/NDJSON, this is a structured object. For text/code/Markdown, it is an object containing a `text` field.
+  The actual file content. For JSON/NDJSON, this is structured data. For text/code/Markdown, it is an object containing a `text` field.
 
 Optional `cross_repo_links` entries may be added to list referenced bundles, descriptors, schemas, or configs in other repos.
 
@@ -100,7 +130,7 @@ Optional `cross_repo_links` entries may be added to list referenced bundles, des
 
 AI tools should:
 
-1. Resolve the user’s request to an artifact type (e.g., “Atrocity-Seeds event seed”, “Horror.Place registry entry”, “Orchestrator workflow”).  
+1. Resolve the user’s request to an artifact type.  
 2. Choose `target_repo` and `target_path` according to the constellation’s directory conventions.  
 3. Select an appropriate `schemaref` if the content is JSON/NDJSON.  
 4. Construct `body` so it is ready to be committed as-is at `target_path`.  
@@ -114,7 +144,7 @@ Downstream CI in each repo can then:
 
 ---
 
-## 4. ai_research_plan: research-first contract
+## 4. `ai_research_plan`: research-first contract
 
 When information is insufficient or when the requested operation is high-risk, AI must avoid guessing and instead emit an `ai_research_plan`.
 
@@ -122,7 +152,7 @@ When information is insufficient or when the requested operation is high-risk, A
 
 The research plan envelope is governed by:
 
-- `schemas/ai_research_plan_v1.json` in HorrorPlace-Constellation-Contracts.
+- `schemas/ai_research_plan_v1.json` in `HorrorPlace-Constellation-Contracts`.
 
 Any research plan must validate against this schema.
 
@@ -137,16 +167,16 @@ Each research plan must include:
   Where the eventual file will live if the plan is executed.
 
 - `intended_artifact_type`  
-  High-level target (e.g., `seed_event`, `seed_region`, `registry_entry`, `doc`, `orchestrator_workflow`).
+  High-level target (for example, `seed_event`, `seed_region`, `registry_entry`, `doc`, `orchestrator_workflow`).
 
 - `status`  
   Typically `"research_required"` when first issued.
 
 - `reason`  
-  A clear explanation of why research is needed (for example, missing invariant bundle ID, missing intensity constraints, or ambiguous tier).
+  A clear explanation of why research is needed.
 
 - `required_actions`  
-  A list of steps, each with an `id`, `description`, optional `tools_or_sources`, and `expected_output`. These steps define exactly what the AI (or human) should do or look up before safe generation.
+  A list of steps, each with an `id`, `description`, optional `tools_or_sources`, and `expected_output`.
 
 - `next_action_for_user`  
   A natural-language prompt guiding the user to confirm details or provide missing inputs.
@@ -156,7 +186,7 @@ Each research plan must include:
 When the AI cannot safely generate a file:
 
 1. Emit an `ai_research_plan` explaining what is missing and what must be done.  
-2. Ask the user to confirm parameters (e.g., theme, maximum intensity band, desired tier).  
+2. Ask the user to confirm parameters (for example, theme, maximum intensity band, desired tier).  
 3. Once the user provides the necessary information or approves the plan, proceed in a subsequent step to generate the actual `ai_file_envelope`.
 
 This approach replaces refusals with structured redirection, while still respecting safety and governance.
@@ -219,7 +249,7 @@ Each repository can enforce these guidelines by:
 - Cross-checking `target_repo` and `target_path` values against actual changes in the PR.  
 - Running schema validation, invariant/metric range checks, and content leak scans on the files referenced by envelopes.
 
-HorrorPlace-Constellation-Contracts provides reusable GitHub Actions workflows to:
+`HorrorPlace-Constellation-Contracts` provides reusable GitHub Actions workflows to:
 
 - Validate AI envelopes.  
 - Enforce one-file-per-envelope discipline.  
