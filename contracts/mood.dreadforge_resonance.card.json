@@ -1,0 +1,23 @@
+{
+  "card_id": "card.mood.dreadforge_resonance.v1",
+  "type": "ContractCard",
+  "category": "Mood",
+  "tier_link": "Horror.Place/moods/mood.dreadforge_resonance.v1.json",
+  "doctrinal_definition": {
+    "title": "DreadForge Resonance",
+    "core_concept": "Atmospheric Integrity Enforcement",
+    "description": "A systemic guarantee that action-horror environments retain a 'living memory' of trauma. It prevents 'sterile' combat zones by binding spawn logic, encounter density, and audio ambiance to geo-historical invariants (CIC, LSG, HVF).",
+    "philosophy": "No map is just geometry; every coordinate is a potential Atrocity-Anchor. If a tile cannot sustain a minimum Dread Threshold (DET) and Trauma Imprint (CIC), it is deemed unfit for deployment."
+  },
+  "implementation_requirements": {
+    "minimum_cic": 0.60,
+    "minimum_lsg": 0.65,
+    "spawn_validation": "Mandatory invariant query before player instantiation.",
+    "anti_camping": "Dynamic pressure applied via HVF vectors and auditory ritual residues (RRM) when players linger in high-CIC zones without moving."
+  },
+  "governance": {
+    "seal_eligibility": true,
+    "telemetry_required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+    "audit_level": "High"
+  }
+}
