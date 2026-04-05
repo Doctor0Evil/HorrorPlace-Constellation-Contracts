@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:Horror.Place/constellation/ai-authoring-request-v1",
+  "title": "AI Authoring Request v1",
+  "description": "Typed request for a single AI-generated changeset, which must be returned as a prism envelope (ai-authoring-response-v1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaref",
+    "requestId",
+    "caller",
+    "target",
+    "intent"
+  ],
+  "properties": {
+    "schemaref": {
+      "type": "string",
+      "const": "schema:Horror.Place/constellation/ai-authoring-request-v1",
+      "description": "Self-referencing schema URI."
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Stable identifier for this authoring request."
+    },
+    "caller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clientId"
+      ],
+      "properties": {
+        "clientId": {
+          "type": "string",
+          "description": "ID of the client or service making this request."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional opaque end-user identifier (non-PII)."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session or conversation identifier."
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "tier"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Target repository for the generated artifacts (e.g., org/repo)."
+        },
+        "branch": {
+          "type": "string",
+          "description": "Preferred target branch; tools may map this to a feature branch."
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Governance tier for this authoring operation (1=public, 2=vault, 3=lab)."
+        },
+        "preferredPaths": {
+          "type": "array",
+          "description": "Optional hints for where generated artifacts should be placed.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "High-level operation type (e.g., add-style-contract, add-region-card)."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Short description of what the caller wants the AI to do."
+        },
+        "details": {
+          "type": "string",
+          "description": "Optional freeform natural-language instructions for the AI."
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxArtifacts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Maximum number of artifacts the AI may include in the prism envelope."
+        },
+        "noRawContent": {
+          "type": "boolean",
+          "description": "If true, the AI must not generate any raw horror content; contract-only artifacts only."
+        },
+        "allowedSchemas": {
+          "type": "array",
+          "description": "Optional whitelist of schemaref URIs the AI may target for artifacts.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowedRoles": {
+          "type": "array",
+          "description": "Optional whitelist of artifact roles (primary, registry, secondary) the AI may use.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "registry",
+              "secondary"
+            ]
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional machine-readable context the AI can use.",
+      "additionalProperties": false,
+      "properties": {
+        "referencedIds": {
+          "type": "array",
+          "description": "IDs of regions, personas, styles, or events this request should anchor to.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "registryHints": {
+          "type": "array",
+          "description": "Optional hints about which registry files are in play (e.g., core/registry/styles.ndjson).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "invariantSnapshot": {
+          "type": "object",
+          "description": "Optional numeric snapshot of invariants (CIC, AOS, etc.) relevant to this request.",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "metricSnapshot": {
+          "type": "object",
+          "description": "Optional numeric snapshot of entertainment metrics (UEC, EMD, STCI, CDL, ARR).",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "expectedResponse": {
+      "type": "object",
+      "description": "Explicit contract for the response type.",
+      "additionalProperties": false,
+      "required": [
+        "schemaref"
+      ],
+      "properties": {
+        "schemaref": {
+          "type": "string",
+          "const": "schema:Horror.Place/constellation/ai-authoring-response-v1",
+          "description": "The AI must respond with a document that validates against this schema."
+        }
+      }
+    }
+  }
+}
