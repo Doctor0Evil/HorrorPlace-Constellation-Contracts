@@ -1,0 +1,125 @@
+name: "QPUdatashard Validation (Reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      shard_glob:
+        description: "Glob pattern for QPUdatashard NDJSON files to validate."
+        required: true
+        type: string
+        default: "**/*.ndjson"
+      schema_path:
+        description: "Path to qpudatashard_core_v1.json schema within this repo."
+        required: true
+        type: string
+        default: "schemas/qpudatashard_core_v1.json"
+      enforce_cross_repo_links:
+        description: "Whether to validate that cross_repo_links reference valid repos."
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  validate-qpudatashards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Validate QPUdatashards against core schema
+        run: |
+          python - << 'PYCODE'
+          import json
+          import sys
+          from pathlib import Path
+          from jsonschema import validate, Draft202012Validator, ValidationError
+
+          schema_path = Path("${{ inputs.schema_path }}")
+          shard_glob = "${{ inputs.shard_glob }}"
+          enforce_links = ${{ inputs.enforce_cross_repo_links }}
+
+          if not schema_path.is_file():
+              print(f"ERROR: Schema file not found: {schema_path}")
+              sys.exit(1)
+
+          with schema_path.open("r", encoding="utf-8") as f:
+              schema = json.load(f)
+
+          validator = Draft202012Validator(schema)
+          errors_found = False
+          valid_count = 0
+
+          # Find all matching NDJSON files
+          for pattern in shard_glob.split(","):
+              pattern = pattern.strip()
+              for shard_file in Path(".").rglob(pattern):
+                  if not shard_file.is_file():
+                      continue
+                  
+                  print(f"Validating: {shard_file}")
+                  
+                  with shard_file.open("r", encoding="utf-8") as f:
+                      for line_num, line in enumerate(f, 1):
+                          line = line.strip()
+                          if not line:
+                              continue
+                          try:
+                              shard = json.loads(line)
+                              validate(instance=shard, schema=schema)
+                              
+                              # Optional: validate cross_repo_links if enabled
+                              if enforce_links and "qpudatashard" in shard:
+                                  payload = shard["qpudatashard"]
+                                  if "cross_repo_links" in payload:
+                                      valid_repos = [
+                                          "Horror.Place",
+                                          "Horror.Place-Orchestrator",
+                                          "HorrorPlace-Constellation-Contracts",
+                                          "HorrorPlace-Codebase-of-Death",
+                                          "HorrorPlace-Black-Archivum",
+                                          "HorrorPlace-Spectral-Foundry",
+                                          "HorrorPlace-Atrocity-Seeds",
+                                          "HorrorPlace-Obscura-Nexus",
+                                          "HorrorPlace-Liminal-Continuum",
+                                          "HorrorPlace-Process-Gods-Research",
+                                          "HorrorPlace-Redacted-Chronicles",
+                                          "HorrorPlace-Neural-Resonance-Lab",
+                                          "HorrorPlace-Dead-Ledger-Network"
+                                      ]
+                                      for link in payload["cross_repo_links"]:
+                                          if link.get("target_repo") not in valid_repos:
+                                              print(f"  WARNING: Invalid cross_repo_links target_repo: {link.get('target_repo')}")
+                              
+                              valid_count += 1
+                              
+                          except ValidationError as e:
+                              errors_found = True
+                              loc = "/".join(str(p) for p in e.path) if e.path else "root"
+                              print(f"  ERROR line {line_num}: {e.message} at '{loc}'")
+                          except json.JSONDecodeError as e:
+                              errors_found = True
+                              print(f"  ERROR line {line_num}: Invalid JSON - {e.msg}")
+
+          if errors_found:
+              print("\nVALIDATION FAILED: One or more QPUdatashards did not conform to schema.")
+              sys.exit(1)
+          
+          print(f"\nVALIDATION PASSED: {valid_count} shard records validated successfully.")
+          PYCODE
+
+      - name: Report validation summary
+        if: always()
+        run: |
+          echo "QPUdatashard validation completed."
+          echo "Schema: ${{ inputs.schema_path }}"
+          echo "Glob pattern: ${{ inputs.shard_glob }}"
