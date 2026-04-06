@@ -2,13 +2,49 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/spine/schema-spine-index.v1.json",
   "title": "Schema Spine Index v1",
+  "description": "Machine-readable index of canonical schemas and their consumers across the VM-Constellation.",
   "type": "object",
   "additionalProperties": false,
   "required": ["indexVersion", "generatedAt", "schemas", "consumers"],
   "properties": {
-    "indexVersion": { "type": "string" },
-    "generatedAt": { "type": "string", "format": "date-time" },
-    "schemas": { "type": "object" },
-    "consumers": { "type": "object" }
+    "indexVersion": {
+      "type": "string",
+      "description": "Semantic version of the index format."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the index was generated."
+    },
+    "schemas": {
+      "type": "object",
+      "description": "Map of schema ID to metadata.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "version", "tier"],
+        "properties": {
+          "title": { "type": "string" },
+          "version": { "type": "string" },
+          "tier": { "type": "string" }
+        }
+      }
+    },
+    "consumers": {
+      "type": "object",
+      "description": "Map of consumer repo name to dependency information.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tier", "usesSchemas"],
+        "properties": {
+          "tier": { "type": "string" },
+          "usesSchemas": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
   }
 }
