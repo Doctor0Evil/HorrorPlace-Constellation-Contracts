@@ -1,0 +1,30 @@
+{
+  "$id": "https://horror.place/manifests/repo-manifest.hpc.atrocity-seeds.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "kind": "repoManifest",
+  "repoId": "hpc.atrocity-seeds",
+  "displayName": "Horror.Place Atrocity Seeds",
+  "description": "Dedicated repository for high-intensity seedContractCard entries and related seed manifests.",
+  "tiers": [
+    "mature",
+    "vault"
+  ],
+  "defaultTier": "mature",
+  "registryRoots": {
+    "seeds": "registry/seeds.ndjson",
+    "policies": "registry/seed-policies.ndjson"
+  },
+  "aiAuthoring": {
+    "requestsDir": ".ai/requests",
+    "responsesDir": ".ai/responses",
+    "allowedObjectKinds": [
+      "seedContractCard",
+      "policyContractCard"
+    ]
+  },
+  "spine": {
+    "schemaIndexPath": "schemas/core/schema-spine-index-v1.json",
+    "invariantsSpinePath": "schemas/core/invariants-spine.v1.json",
+    "metricsSpinePath": "schemas/core/entertainment-metrics-spine.v1.json"
+  }
+}
