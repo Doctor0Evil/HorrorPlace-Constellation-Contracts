@@ -1,0 +1,32 @@
+{
+  "$id": "https://horror.place/manifests/repo-manifest.hpc.codebase-of-death.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "kind": "repoManifest",
+  "repoId": "hpc.codebase-of-death",
+  "displayName": "Horror.Place Codebase of Death",
+  "description": "Engine, scripting, and logic constellation for Horror.Place, hosting behavior contracts and technical policies.",
+  "tiers": [
+    "standard",
+    "mature"
+  ],
+  "defaultTier": "standard",
+  "registryRoots": {
+    "behaviors": "registry/behaviors.ndjson",
+    "policies": "registry/engine-policies.ndjson",
+    "styles": "registry/styles.ndjson"
+  },
+  "aiAuthoring": {
+    "requestsDir": ".ai/requests",
+    "responsesDir": ".ai/responses",
+    "allowedObjectKinds": [
+      "behaviorContractCard",
+      "policyContractCard",
+      "styleContractCard"
+    ]
+  },
+  "spine": {
+    "schemaIndexPath": "schemas/core/schema-spine-index-v1.json",
+    "invariantsSpinePath": "schemas/core/invariants-spine.v1.json",
+    "metricsSpinePath": "schemas/core/entertainment-metrics-spine.v1.json"
+  }
+}
