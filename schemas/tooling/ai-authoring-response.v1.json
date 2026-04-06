@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/tooling/ai-authoring-response.v1.json",
+  "title": "AI Authoring Response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["targetRepo", "targetPath", "schemaRef", "payload"],
+  "properties": {
+    "targetRepo": { "type": "string" },
+    "targetPath": { "type": "string" },
+      "schemaRef": { "type": "string" },
+      "payload": { "type": "object" },
+      "prismMeta": { "type": "object" }
+  }
+}
