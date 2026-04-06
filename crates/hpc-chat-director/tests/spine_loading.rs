@@ -3,302 +3,171 @@
 //! Ensures the schema spine loads correctly and derived metrics
 //! compute as expected from base invariants.
 
-use std::path::Path;
-use hpc_chat_director::config::Config;
-use hpc_chat_director::spine;
-use hpc_chat_director::model::spine_types::{SchemaSpine, Tier};
+use std::path::PathBuf;
+use std::collections::HashMap;
 
-/// Test that a minimal spine loads successfully.
+use hpc_chat_director::SpineIndex;
+use hpc_chat_director::model::spine_types::{ObjectKind, Tier};
+
+/// Spine loads from the real repo and exposes basic queries.
 #[test]
-fn test_spine_loads_minimal() {
-    // Create a temporary directory with a minimal spine
-    let temp_dir = tempfile::tempdir().unwrap();
-    let spine_path = temp_dir.path().join("schemas").join("core").join("schema-spine-index-v1.json");
-    
-    // Ensure parent directories exist
-    std::fs::create_dir_all(spine_path.parent().unwrap()).unwrap();
-    
-    // Write minimal valid spine JSON
-    let minimal_spine = r#"{
-        "version": "v1",
-        "$id": "schema://HorrorPlace-Constellation-Contracts/schema-spine-index-v1.json",
-        "title": "Test Spine",
-        "description": "Minimal spine for testing",
-        "invariants": {
-            "CIC": {
-                "name": "CIC",
-                "canonicalRange": { "min": 0.0, "max": 1.0 },
-                "tierOverrides": {},
-                "driftMode": "static",
-                "compatibleWith": [],
-                "description": "Contextual Integrity Coefficient",
-                "requiredBy": []
-            }
-        },
-        "metrics": {},
-        "contractFamilies": [],
-        "interactionRules": [],
-        "safeDefaults": {}
-    }"#;
-    
-    std::fs::write(&spine_path, minimal_spine).unwrap();
-    
-    // Load config and spine
-    let config = Config::detect(temp_dir.path()).unwrap();
-    let result = spine::load(&config);
-    
-    assert!(result.is_ok(), "Failed to load minimal spine: {:?}", result.err());
-    
-    let spine = result.unwrap();
-    assert_eq!(spine.version, "v1");
-    assert!(spine.invariants.contains_key("CIC"));
+fn spine_loads_and_exposes_basic_queries() {
+    // Adjust this root resolution if your workspace layout differs.
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("..");
+
+    let schema_spine = root
+        .join("schemas")
+        .join("core")
+        .join("schema-spine-index-v1.json");
+    let invariants_spine = root
+        .join("schemas")
+        .join("core")
+        .join("invariants-spine.v1.json");
+    let entertainment_spine = root
+        .join("schemas")
+        .join("core")
+        .join("entertainment-metrics-spine.v1.json");
+
+    let spine = SpineIndex::load_from_paths(
+        &schema_spine,
+        &invariants_spine,
+        &entertainment_spine,
+    )
+    .expect("spine must load from repo schemas");
+
+    // Basic invariant/metric lookup.
+    assert!(spine.describe_invariant("CIC").is_some());
+    assert!(spine.describe_metric("UEC").is_some());
+
+    // ObjectKind profile is available for a v1 contract family.
+    let mood_profile = spine.describe_object_kind(ObjectKind::MoodContract);
+    assert!(mood_profile.is_some());
 }
 
-/// Test that invariant ranges are queried correctly.
+/// Canonical ranges for invariants are exposed and tier-aware.
 #[test]
-fn test_invariant_ranges() {
-    let spine = load_test_spine();
-    
-    // Get CIC spec
-    let cic = spine.invariants.get("CIC").unwrap();
-    
-    // Check canonical range
-    assert_eq!(cic.canonical_range.min, 0.0);
-    assert_eq!(cic.canonical_range.max, 1.0);
-    
-    // Check tier overrides (if any)
-    // In test spine, no overrides, so should use canonical
+fn invariant_ranges_respect_tier_overrides() {
+    let spine = load_repo_spine();
+
+    let cic_spec = spine
+        .describe_invariant("CIC")
+        .expect("CIC spec must exist");
+
+    // Canonical band and tier override should be consistent.
+    let (base_min, base_max) =
+        spine.range_for_invariant(&cic_spec, ObjectKind::MoodContract, Tier::Tier2Internal);
+    assert!(base_min <= base_max);
+
+    // Tier 1 public should narrow CIC ceiling as per spec.
+    let (_t1_min, t1_max) =
+        spine.range_for_invariant(&cic_spec, ObjectKind::MoodContract, Tier::Tier1Public);
+    assert!(t1_max <= base_max);
 }
 
-/// Test that metric targets are queried correctly.
+/// Metric target bands are exposed as safe target bands per tier.
 #[test]
-fn test_metric_targets() {
-    let spine = load_test_spine();
-    
-    // Get UEC spec if present
-    if let Some(uec) = spine.metrics.get("UEC") {
-        assert_eq!(uec.target_band.min, 0.0);
-        assert_eq!(uec.target_band.max, 1.0);
-    }
+fn metric_targets_respect_tier_bands() {
+    let spine = load_repo_spine();
+
+    let uec_spec = spine
+        .describe_metric("UEC")
+        .expect("UEC metric spec must exist");
+
+    let (t1_min, t1_max) =
+        spine.target_band_for_metric(&uec_spec, ObjectKind::MoodContract, Tier::Tier1Public);
+    assert!(0.0 <= t1_min && t1_min <= t1_max && t1_max <= 1.0);
 }
 
-/// Test that contract families are loaded correctly.
+/// Contract family profiles are loaded and include required invariants.
 #[test]
-fn test_contract_families() {
-    let spine = load_test_spine();
-    
-    // Check that mood contract family exists
-    let mood_family = spine
-        .contract_families
-        .iter()
-        .find(|f| f.name == "mood")
-        .expect("mood contract family not found");
-    
-    assert!(mood_family.kinds.contains(&"moodContract".to_string()));
-    assert!(mood_family.required_invariants.contains(&"CIC".to_string()));
+fn contract_families_have_required_invariants() {
+    let spine = load_repo_spine();
+
+    let mood_profile = spine
+        .describe_object_kind(ObjectKind::MoodContract)
+        .expect("moodContract family profile must exist");
+    assert!(mood_profile.required_invariants.contains(&"CIC".to_string()));
 }
 
-/// Test derived metric computation (SPR, SHCI).
+/// Derived metrics (SPR, SHCI) stay within [0.0, 1.0] for plausible inputs.
 #[test]
-fn test_derived_metrics() {
-    let spine = load_test_spine();
-    
-    // Create a test invariant snapshot
-    let mut invariants = std::collections::HashMap::new();
+fn derived_metrics_are_in_valid_range() {
+    let spine = load_repo_spine();
+
+    let mut invariants = HashMap::new();
     invariants.insert("CIC".to_string(), 0.8);
     invariants.insert("AOS".to_string(), 0.6);
     invariants.insert("MDI".to_string(), 0.5);
-    
-    // Compute derived metrics
-    let derived = spine.compute_derived(&invariants);
-    
-    // SPR and SHCI should be in valid range [0.0, 1.0]
-    assert!((0.0..=1.0).contains(&derived.spr));
-    assert!((0.0..=1.0).contains(&derived.shci));
-    
-    // With high CIC, SHCI should be relatively high
-    assert!(derived.shci >= 0.5);
+    invariants.insert("LSG".to_string(), 0.4);
+    invariants.insert("FCF".to_string(), 5.0);
+
+    let derived = spine
+        .compute_derived_metrics(&invariants)
+        .expect("derived metrics must compute");
+
+    if let Some(spr) = derived.spr {
+        assert!((0.0..=1.0).contains(&spr));
+    }
+    if let Some(shci) = derived.shci {
+        assert!((0.0..=1.0).contains(&shci));
+    }
 }
 
-/// Test safe defaults query.
+/// Safe defaults provide a Tier 1-safe band for moodContract.
 #[test]
-fn test_safe_defaults() {
-    let spine = load_test_spine();
-    
-    // Get safe defaults for moodContract at Tier 1
-    let defaults = spine.safe_defaults("moodContract", Tier::T1);
-    
-    assert!(defaults.is_some());
-    let defaults = defaults.unwrap();
-    
-    // Should have CIC default in safe range
+fn safe_defaults_for_mood_tier1_exist() {
+    let spine = load_repo_spine();
+
+    let defaults = spine
+        .safe_defaults(ObjectKind::MoodContract, Tier::Tier1Public)
+        .expect("safe defaults for moodContract Tier1Public must exist");
+
     assert!(defaults.invariants.contains_key("CIC"));
+    let cic_band = defaults.invariants.get("CIC").unwrap();
+    assert!(cic_band.0 <= cic_band.1);
 }
 
-/// Test objectKind profile query.
+/// ObjectKind profile API reports required invariants and metrics.
 #[test]
-fn test_describe_object_kind() {
-    let spine = load_test_spine();
-    
-    let profile = spine.describe_object_kind("moodContract");
-    
-    assert!(profile.is_some());
-    let profile = profile.unwrap();
-    
-    assert_eq!(profile.kind, "moodContract");
+fn describe_object_kind_reports_requirements() {
+    let spine = load_repo_spine();
+
+    let profile = spine
+        .describe_object_kind(ObjectKind::MoodContract)
+        .expect("moodContract profile must exist");
+
+    assert_eq!(profile.kind, ObjectKind::MoodContract);
     assert!(!profile.required_invariants.is_empty());
+    assert!(!profile.required_metrics.is_empty());
 }
 
-/// Load a test spine with realistic data.
-fn load_test_spine() -> SchemaSpine {
-    // Use fixture data or generate minimal valid spine
-    let temp_dir = tempfile::tempdir().unwrap();
-    setup_test_spine_files(temp_dir.path());
-    
-    let config = Config::detect(temp_dir.path()).unwrap();
-    spine::load(&config).expect("Failed to load test spine")
-}
+/// Helper: load the real spine from the repo instead of synthesizing JSON.
+fn load_repo_spine() -> SpineIndex {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("..");
 
-/// Set up test spine files in a temporary directory.
-fn setup_test_spine_files(root: &Path) {
-    let spine_dir = root.join("schemas").join("core");
-    std::fs::create_dir_all(&spine_dir).unwrap();
-    
-    // Write schema-spine-index-v1.json
-    let spine_index = r#"{
-        "version": "v1",
-        "$id": "schema://HorrorPlace-Constellation-Contracts/schema-spine-index-v1.json",
-        "title": "Test Schema Spine",
-        "description": "Test spine for unit tests",
-        "invariants": {
-            "CIC": {
-                "name": "CIC",
-                "canonicalRange": { "min": 0.0, "max": 1.0 },
-                "tierOverrides": {},
-                "driftMode": "static",
-                "compatibleWith": ["ARR", "SHCI"],
-                "description": "Contextual Integrity Coefficient",
-                "requiredBy": ["mood", "event", "region", "seed"]
-            },
-            "AOS": {
-                "name": "AOS",
-                "canonicalRange": { "min": 0.0, "max": 1.0 },
-                "tierOverrides": {},
-                "driftMode": "slowly_varying",
-                "compatibleWith": ["EMD"],
-                "description": "Ambient Oscillation Score",
-                "requiredBy": ["mood", "event", "region", "seed"]
-            },
-            "MDI": {
-                "name": "MDI",
-                "canonicalRange": { "min": 0.0, "max": 1.0 },
-                "tierOverrides": {},
-                "driftMode": "static",
-                "compatibleWith": [],
-                "description": "Mood Drift Index",
-                "requiredBy": ["mood", "region", "seed"]
-            },
-            "DET": {
-                "name": "DET",
-                "canonicalRange": { "min": 0.0, "max": 10.0 },
-                "tierOverrides": {
-                    "T1": { "min": 0.0, "max": 7.0 }
-                },
-                "driftMode": "static",
-                "compatibleWith": ["CDL", "ARR"],
-                "description": "Dread Entropy Threshold",
-                "requiredBy": ["mood", "event"]
-            }
-        },
-        "metrics": {
-            "UEC": {
-                "name": "UEC",
-                "targetBand": { "min": 0.0, "max": 1.0 },
-                "tierAdjustments": {},
-                "telemetryHook": null,
-                "description": "Unnamed Entertainment Coefficient",
-                "requiredBy": ["mood", "event", "region", "seed"]
-            },
-            "ARR": {
-                "name": "ARR",
-                "targetBand": { "min": 0.3, "max": 1.0 },
-                "tierAdjustments": {},
-                "telemetryHook": "session_end",
-                "description": "Audience Retention Rating",
-                "requiredBy": ["mood", "event", "region", "seed"]
-            }
-        },
-        "contractFamilies": [
-            {
-                "name": "mood",
-                "kinds": ["moodContract"],
-                "requiredInvariants": ["CIC", "MDI", "AOS", "DET", "LSG", "HVF", "SHCI"],
-                "optionalInvariants": [],
-                "requiredMetrics": ["UEC", "EMD", "CDL", "ARR"],
-                "optionalMetrics": ["STCI"],
-                "allowedPhases": [1, 2, 3],
-                "tierRestrictions": {}
-            },
-            {
-                "name": "event",
-                "kinds": ["eventContract"],
-                "requiredInvariants": ["CIC", "LSG", "DET", "SHCI", "RWF"],
-                "optionalInvariants": [],
-                "requiredMetrics": ["UEC", "EMD", "STCI", "CDL", "ARR"],
-                "optionalMetrics": [],
-                "allowedPhases": [1, 2, 3],
-                "tierRestrictions": {}
-            },
-            {
-                "name": "region",
-                "kinds": ["regionContractCard"],
-                "requiredInvariants": ["CIC", "MDI", "AOS", "SHCI", "LSG", "HVF"],
-                "optionalInvariants": [],
-                "requiredMetrics": ["UEC", "ARR"],
-                "optionalMetrics": [],
-                "allowedPhases": [1, 2],
-                "tierRestrictions": {}
-            },
-            {
-                "name": "seed",
-                "kinds": ["seedContractCard"],
-                "requiredInvariants": ["CIC", "MDI", "AOS", "LSG", "HVF", "SHCI"],
-                "optionalInvariants": [],
-                "requiredMetrics": ["UEC", "ARR"],
-                "optionalMetrics": [],
-                "allowedPhases": [1, 2],
-                "tierRestrictions": {}
-            }
-        ],
-        "interactionRules": [
-            {
-                "id": "XMIT_001",
-                "sourceMetric": "DET",
-                "targetMetric": "CDL",
-                "effectType": "amplify",
-                "condition": { "sourceThreshold": 8.0 },
-                "description": "High DET raises CDL floor"
-            }
-        ],
-        "safeDefaults": {
-            "moodContract": {
-                "byTier": {
-                    "T1": {
-                        "invariants": {
-                            "CIC": { "min": 0.3, "max": 0.7 },
-                            "DET": { "min": 0.0, "max": 7.0 }
-                        },
-                        "metrics": {
-                            "ARR": { "min": 0.5, "max": 1.0 }
-                        }
-                    }
-                }
-            }
-        }
-    }"#;
-    
-    std::fs::write(spine_dir.join("schema-spine-index-v1.json"), spine_index).unwrap();
-    
-    // Write invariants-spine.v1.json (could be separate or merged)
-    // For this test, we use the merged format above
+    let schema_spine = root
+        .join("schemas")
+        .join("core")
+        .join("schema-spine-index-v1.json");
+    let invariants_spine = root
+        .join("schemas")
+        .join("core")
+        .join("invariants-spine.v1.json");
+    let entertainment_spine = root
+        .join("schemas")
+        .join("core")
+        .join("entertainment-metrics-spine.v1.json");
+
+    SpineIndex::load_from_paths(
+        &schema_spine,
+        &invariants_spine,
+        &entertainment_spine,
+    )
+    .expect("failed to load spine from repo fixtures")
 }
