@@ -1,7 +1,7 @@
 # Workflow: Constellation Pre-Commit Pack (Reusable)
 # Purpose: Demonstrate how other repos can include this repo's validation tools as a reusable workflow
-# Triggers: workflow_call (for reuse), workflow_dispatch (for testing)
-# Usage: Other repos call this via uses: Doctor0Evil/HorrorPlace-Constellation-Contracts/.github/workflows/constellation-precommit-pack.yml@main
+# Usage:
+#   uses: Doctor0Evil/HorrorPlace-Constellation-Contracts/.github/workflows/constellation-precommit-pack.yml@main
 
 name: Constellation Pre-Commit Pack
 
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [${{ inputs.python_version }}]
+        python-version: ["${{ inputs.python_version || '3.11' }}"]
 
     steps:
       - name: Checkout repository (caller or this repo)
@@ -72,55 +72,44 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install jsonschema typing-extensions
 
       - name: Schema validation (optional)
-        if: inputs.validate_schemas
+        if: ${{ inputs.validate_schemas }}
         run: |
-          python tooling/python/cli/hpc-validate-schema.py \
-            --mode batch \
-            --root schemas/ \
-            --strict \
-            --report precommit-schema-report.json || exit 1
+          python tooling/python/cli/hpc-validate-schema.py --json || exit 1
 
       - name: Registry linting (optional)
-        if: inputs.lint_registries
+        if: ${{ inputs.lint_registries }}
         run: |
-          python tooling/python/cli/hpc-lint-registry.py \
-            --mode batch \
-            --root registry/ \
-            --strict \
-            --report precommit-registry-report.json || exit 1
+          python tooling/python/cli/hpc-lint-registry.py --json --summary || exit 1
 
       - name: AI authoring validation (optional)
-        if: inputs.validate_ai_authored
+        if: ${{ inputs.validate_ai_authored }}
         run: |
-          # Find any contract card files in the repo
-          CONTRACT_CARDS=$(find . -type f \( -name "*ContractCard*.json" -o -name "policyEnvelope*.json" \) -not -path "./.git/*" || true)
-          if [ -n "$CONTRACT_CARDS" ]; then
-            for f in $CONTRACT_CARDS; do
-              python tooling/python/cli/hpc-validate-schema.py \
-                --mode ai-authoring \
-                --file "$f" \
-                --strict \
-                --report precommit-ai-report.json || exit 1
-            done
+          if find .ai -name "*request*.json" | grep -q .; then
+            find .ai -name "*request*.json" -print0 | xargs -0 -I {} \
+              python tooling/python/schemaspine/aiauthoringvalidator.py request {}
           else
-            echo "No contract card files found; skipping AI authoring validation"
+            echo "No ai-authoring-request files found under .ai/"
+          fi
+          if find .ai -name "*response*.json" | grep -q .; then
+            find .ai -name "*response*.json" -print0 | xargs -0 -I {} \
+              python tooling/python/schemaspine/aiauthoringvalidator.py response {}
+          else
+            echo "No ai-authoring-response files found under .ai/"
           fi
 
-      - name: Upload combined report (if any step failed)
+      - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: precommit-validation-errors
+          name: precommit-validation-logs
           path: |
-            precommit-schema-report.json
-            precommit-registry-report.json
-            precommit-ai-report.json
+            .
           retention-days: 7
