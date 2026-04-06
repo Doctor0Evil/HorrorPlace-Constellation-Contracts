@@ -1,0 +1,123 @@
+{
+  "$id": "https://horror.place/constellation/schemas/chatdirector-envelope-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "chatDirectorAuthoringEnvelopev1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "schemaRef",
+    "deadledgerRef",
+    "phase",
+    "tier",
+    "invariants",
+    "metrics",
+    "promotionCriteria"
+  ],
+  "properties": {
+    "requestId": {
+      "type": "string"
+    },
+    "schemaRef": {
+      "type": "string",
+      "format": "uri"
+    },
+    "deadledgerRef": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["draft", "linted", "reviewed", "approved", "frozen"]
+    },
+    "tier": {
+      "type": "string"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "LSG", "DET", "SHCI"],
+      "properties": {
+        "CIC": { "$ref": "#/definitions/invariantValue" },
+        "AOS": { "$ref": "#/definitions/invariantValue" },
+        "LSG": { "$ref": "#/definitions/invariantValue" },
+        "DET": {
+          "allOf": [
+            { "$ref": "#/definitions/invariantValue" },
+            {
+              "properties": {
+                "value": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+              }
+            }
+          ]
+        },
+        "SHCI": { "$ref": "#/definitions/invariantValue" }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": { "$ref": "#/definitions/metricValue" },
+        "EMD": { "$ref": "#/definitions/metricValue" },
+        "STCI": { "$ref": "#/definitions/metricValue" },
+        "CDL": { "$ref": "#/definitions/metricValue" },
+        "ARR": { "$ref": "#/definitions/metricValue" }
+      }
+    },
+    "promotionCriteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fromPhase": { "type": "string" },
+        "toPhase": { "type": "string" },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "description"],
+            "properties": {
+              "code": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "invariantValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "source", "confidence"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "source": {
+          "type": "string",
+          "enum": ["author", "telemetry", "derived"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    },
+    "metricValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "source", "confidence"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "source": {
+          "type": "string",
+          "enum": ["author", "telemetry", "derived"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    }
+  }
+}
