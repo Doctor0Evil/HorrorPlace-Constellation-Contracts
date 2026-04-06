@@ -1,0 +1,236 @@
+{
+  "schemaSpineVersion": "1.0.0",
+  "updatedAt": "2026-04-05T00:00:00Z",
+  "invariants": {
+    "id": "schemas/invariants/invariants-spine-v1.json",
+    "uri": "https://horror.place/schemas/invariants-spine-v1.json",
+    "draft": "2020-12",
+    "fields": [
+      "CIC",
+      "MDI",
+      "AOS",
+      "RRM",
+      "FCF",
+      "SPR",
+      "RWF",
+      "DET",
+      "HVF",
+      "LSG",
+      "SHCI"
+    ],
+    "range": {
+      "default": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "DET": {
+        "min": 0.0,
+        "max": 10.0
+      }
+    },
+    "consumers": [
+      {
+        "repo": "Horror.Place",
+        "paths": [
+          "schemas/invariants/invariants-spine-v1.json",
+          "src/h_invariants.lua"
+        ]
+      },
+      {
+        "repo": "HorrorPlace-Black-Archivum",
+        "paths": [
+          "schemas/invariant-bundle-v1.json",
+          "registry/registry-invariants.ndjson"
+        ]
+      },
+      {
+        "repo": "HorrorPlace-Atrocity-Seeds",
+        "paths": [
+          "schemas/region-contract-v1.json",
+          "schemas/event-contract-v1.json"
+        ]
+      }
+    ]
+  },
+  "metrics": {
+    "id": "schemas/metrics/metrics-spine-v1.json",
+    "uri": "https://horror.place/schemas/metrics-spine-v1.json",
+    "draft": "2020-12",
+    "fields": [
+      "UEC",
+      "EMD",
+      "STCI",
+      "CDL",
+      "ARR"
+    ],
+    "range": {
+      "default": {
+        "min": 0.0,
+        "max": 1.0
+      }
+    },
+    "consumers": [
+      {
+        "repo": "Horror.Place",
+        "paths": [
+          "schemas/metrics/metrics-spine-v1.json",
+          "src/h_metrics.lua"
+        ]
+      },
+      {
+        "repo": "HorrorPlace-Spectral-Foundry",
+        "paths": [
+          "schemas/persona-contract-v1.json",
+          "src/director/telemetry.lua"
+        ]
+      }
+    ]
+  },
+  "contracts": {
+    "styleContract": {
+      "id": "schemas/contracts/style-contract-v1.json",
+      "uri": "https://horror.place/schemas/contracts/style-contract-v1.json",
+      "kind": "style",
+      "consumers": [
+        {
+          "repo": "Horror.Place",
+          "paths": [
+            "schemas/contracts/style-contract-v1.json",
+            "registry/registry-styles.ndjson"
+          ]
+        },
+        {
+          "repo": "HorrorPlace-Obscura-Nexus",
+          "paths": [
+            "schemas/experimental/style-contract-v2.json"
+          ]
+        }
+      ]
+    },
+    "eventContract": {
+      "id": "schemas/contracts/event-contract-v1.json",
+      "uri": "https://horror.place/schemas/contracts/event-contract-v1.json",
+      "kind": "event",
+      "consumers": [
+        {
+          "repo": "Horror.Place",
+          "paths": [
+            "schemas/contracts/event-contract-v1.json",
+            "registry/registry-events.ndjson"
+          ]
+        },
+        {
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "paths": [
+            "schemas/event-contract-v1.json",
+            "events/"
+          ]
+        }
+      ]
+    },
+    "regionContract": {
+      "id": "schemas/contracts/region-contract-v1.json",
+      "uri": "https://horror.place/schemas/contracts/region-contract-v1.json",
+      "kind": "region",
+      "consumers": [
+        {
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "paths": [
+            "schemas/region-contract-v1.json",
+            "regions/"
+          ]
+        }
+      ]
+    },
+    "personaContract": {
+      "id": "schemas/contracts/persona-contract-v1.json",
+      "uri": "https://horror.place/schemas/contracts/persona-contract-v1.json",
+      "kind": "persona",
+      "consumers": [
+        {
+          "repo": "HorrorPlace-Spectral-Foundry",
+          "paths": [
+            "schemas/persona-contract-v1.json",
+            "registry/registry-personas.ndjson"
+          ]
+        },
+        {
+          "repo": "HorrorPlace-Codebase-of-Death",
+          "paths": [
+            "schemas/persona-contract-v1.json",
+            "personas/"
+          ]
+        }
+      ]
+    },
+    "contractCardPolicy": {
+      "id": "schemas/contracts/policyEnvelope.schema.json",
+      "uri": "https://horror.place/schemas/contracts/policyEnvelope.v1.json",
+      "kind": "policyEnvelope",
+      "consumers": [
+        {
+          "repo": "Horror.Place",
+          "paths": [
+            "schemas/contracts/policyEnvelope.schema.json"
+          ]
+        },
+        {
+          "repo": "HorrorPlace-Constellation-Contracts",
+          "paths": [
+            "schemas/contracts/policyEnvelope.schema.json"
+          ]
+        }
+      ]
+    },
+    "contractCardRegion": {
+      "id": "schemas/contracts/regionContractCard.schema.json",
+      "uri": "https://horror.place/schemas/contracts/regionContractCard.v1.json",
+      "kind": "regionContractCard",
+      "consumers": [
+        {
+          "repo": "Horror.Place",
+          "paths": [
+            "schemas/contracts/regionContractCard.schema.json"
+          ]
+        },
+        {
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "paths": [
+            "schemas/regionContractCard.schema.json"
+          ]
+        }
+      ]
+    },
+    "contractCardSeed": {
+      "id": "schemas/contracts/seedContractCard.schema.json",
+      "uri": "https://horror.place/schemas/contracts/seedContractCard.v1.json",
+      "kind": "seedContractCard",
+      "consumers": [
+        {
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "paths": [
+            "schemas/seedContractCard.schema.json",
+            "seeds/"
+          ]
+        }
+      ]
+    }
+  },
+  "aiAuthoring": {
+    "request": {
+      "id": "schemas/tooling/ai-authoring-request-v1.json",
+      "uri": "https://horror.place/schemas/tooling/ai-authoring-request-v1.json",
+      "kind": "aiAuthoringRequest"
+    },
+    "response": {
+      "id": "schemas/tooling/ai-authoring-response-v1.json",
+      "uri": "https://horror.place/schemas/tooling/ai-authoring-response-v1.json",
+      "kind": "aiAuthoringResponse"
+    },
+    "prismEnvelope": {
+      "id": "schemas/tooling/prism-envelope-v1.json",
+      "uri": "https://horror.place/schemas/tooling/prism-envelope-v1.json",
+      "kind": "prismEnvelope"
+    }
+  }
+}
