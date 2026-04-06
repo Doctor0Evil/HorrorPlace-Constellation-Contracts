@@ -1,0 +1,39 @@
+{
+  "$id": "https://horror.place/constellation/schemas/chatdirector-request-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "chatDirectorRequestv1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["objectKind", "authoringEnvelope", "contractBody"],
+  "properties": {
+    "objectKind": {
+      "type": "string",
+      "enum": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard"
+      ]
+    },
+    "authoringEnvelope": {
+      "$ref": "https://horror.place/constellation/schemas/chatdirector-envelope-v1.json"
+    },
+    "contractBody": {
+      "oneOf": [
+        { "$ref": "https://horror.place/constellation/schemas/chatdirector-moodcontract-v1.json" },
+        { "$ref": "https://horror.place/constellation/schemas/chatdirector-eventcontract-v1.json" },
+        { "$ref": "https://horror.place/constellation/schemas/chatdirector-regioncontractcard-v1.json" },
+        { "$ref": "https://horror.place/constellation/schemas/chatdirector-seedcontractcard-v1.json" }
+      ]
+    }
+  },
+  "discriminator": {
+    "propertyName": "objectKind",
+    "mapping": {
+      "moodContract": "https://horror.place/constellation/schemas/chatdirector-moodcontract-v1.json",
+      "eventContract": "https://horror.place/constellation/schemas/chatdirector-eventcontract-v1.json",
+      "regionContractCard": "https://horror.place/constellation/schemas/chatdirector-regioncontractcard-v1.json",
+      "seedContractCard": "https://horror.place/constellation/schemas/chatdirector-seedcontractcard-v1.json"
+    }
+  }
+}
