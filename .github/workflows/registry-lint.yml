@@ -1,17 +1,22 @@
 # Workflow: Lint NDJSON Registry Files
-# Purpose: Validate registry entries against schema, check required fields, schemaref prefixes, deadledgerref presence
-# Triggers: pull_request, workflow_dispatch
+# Purpose: Validate registry entries against schema, check IDs and references
+# Triggers: push, pull_request, workflow_dispatch
 # Usage: Reusable across constellation repos for registry consistency
 
-name: Registry Linting
+name: Registry Lint
 
 on:
+  push:
+    paths:
+      - "schemas/**"
+      - "registry/**"
+      - "tooling/python/**"
+      - ".github/workflows/registry-lint.yml"
   pull_request:
     paths:
-      - "registry/**/*.ndjson*"
-      - "registry/**/*.example"
-      - "schemas/registry/*.json"
-      - "tooling/python/**/*.py"
+      - "schemas/**"
+      - "registry/**"
+      - "tooling/python/**"
       - ".github/workflows/registry-lint.yml"
   workflow_dispatch:
 
@@ -43,32 +48,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install jsonschema typing-extensions
 
-      - name: Run registry linter over example and changed files
+      - name: Generate schema spine index (check mode)
         run: |
-          # Lint all .example files first (always)
-          python tooling/python/cli/hpc-lint-registry.py \
-            --mode batch \
-            --root registry/ \
-            --pattern "*.example" \
-            --strict \
-            --report registry-lint-report.json
+          python tooling/python/cli/hpc-generate-spine-index.py --check
 
-          # If on PR, also lint changed .ndjson files
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E '\.ndjson$' || true)
-            if [ -n "$CHANGED" ]; then
-              echo "Linting changed registry files: $CHANGED"
-              for f in $CHANGED; do
-                python tooling/python/cli/hpc-lint-registry.py \
-                  --mode file \
-                  --file "$f" \
-                  --strict \
-                  --report registry-lint-report.json
-              done
-            fi
-          fi
+      - name: Lint all NDJSON registries (JSONL diagnostics)
+        run: |
+          python tooling/python/cli/hpc-lint-registry.py --json --summary > registry-lint-report.json
 
-      - name: Upload lint report (if failed)
+      - name: Upload lint report (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -78,9 +66,7 @@ jobs:
 
       - name: Fail if any registry entry is invalid
         run: |
-          if [ -f registry-lint-report.json ]; then
-            if grep -q '"valid": false' registry-lint-report.json; then
-              echo "::error::Registry linting failed. See registry-lint-report.json for details."
-              exit 1
-            fi
+          if grep -q '"severity":"error"' registry-lint-report.json; then
+            echo "::error::Registry linting failed. See registry-lint-report.json for details."
+            exit 1
           fi
