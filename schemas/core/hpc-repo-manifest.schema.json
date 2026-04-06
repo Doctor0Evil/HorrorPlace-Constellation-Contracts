@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/hpc-repo-manifest.schema.json",
+  "title": "HPC Repository Manifest",
+  "description": "Minimal manifest that describes a constellation-aware repository for AI agents, CI, and tooling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "repoName",
+    "tier",
+    "visibility",
+    "role",
+    "languages",
+    "paths",
+    "schemas",
+    "registries",
+    "ciProfiles"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "type": "string",
+      "description": "Semantic version for this manifest format, e.g. 1.0.0."
+    },
+    "repoName": {
+      "type": "string",
+      "description": "Canonical repository name, matching the GitHub repo.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "tier": {
+      "type": "string",
+      "description": "Constellation tier classification.",
+      "enum": ["T1", "T2", "T3"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "private"]
+    },
+    "role": {
+      "type": "string",
+      "description": "Short doctrinal role description for this repo."
+    },
+    "languages": {
+      "type": "object",
+      "description": "Approximate language composition by percentage.",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 100.0
+      }
+    },
+    "paths": {
+      "type": "object",
+      "description": "Allowed high-level paths for AI-generated artifacts and CI focus.",
+      "additionalProperties": false,
+      "required": [
+        "schemas",
+        "registry",
+        "docs",
+        "workflows",
+        "tooling"
+      ],
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Root directories that contain JSON Schemas and contract definitions."
+        },
+        "registry": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Root directories that contain NDJSON or JSON registries."
+        },
+        "docs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Documentation roots, safe for dense Markdown."
+        },
+        "workflows": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Locations of CI and automation workflows."
+        },
+        "tooling": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Helper scripts or libraries that integrate with contracts and registries."
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "description": "Key schema files owned or mirrored by this repo.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "schemaref", "kind"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path to a schema file in this repo."
+          },
+          "schemaref": {
+            "type": "string",
+            "description": "Canonical schema ID or URI this file represents."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Logical kind, e.g. invariants, metrics, contract, ai-authoring, registry-entry."
+          }
+        }
+      }
+    },
+    "registries": {
+      "type": "array",
+      "description": "Registry files that define IDs and references.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "entityType", "format"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path to a registry file."
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Type of entities stored here, e.g. region, event, persona, style, vm-role."
+          },
+          "format": {
+            "type": "string",
+            "enum": ["ndjson", "json"]
+          }
+        }
+      }
+    },
+    "ciProfiles": {
+      "type": "object",
+      "description": "How this repo consumes shared CI/pre-commit packs.",
+      "additionalProperties": false,
+      "required": [
+        "importsSharedPack",
+        "workflows",
+        "precommit"
+      ],
+      "properties": {
+        "importsSharedPack": {
+          "type": "boolean",
+          "description": "Whether this repo imports the shared constellation CI pack."
+        },
+        "workflows": {
+          "type": "array",
+          "description": "Key workflow files that enforce schema/registry rules.",
+          "items": { "type": "string" }
+        },
+        "precommit": {
+          "type": "array",
+          "description": "Local pre-commit hook configs or scripts, if any.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional freeform notes for humans and tools."
+    }
+  }
+}
