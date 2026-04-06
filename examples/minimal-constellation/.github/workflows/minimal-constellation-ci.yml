@@ -1,0 +1,64 @@
+name: Minimal Constellation CI
+
+on:
+  push:
+    paths:
+      - "schemas/**"
+      - "registry/**"
+      - "examples/minimal-constellation/**"
+      - "tooling/python/**"
+      - ".github/workflows/minimal-constellation-ci.yml"
+  pull_request:
+    paths:
+      - "schemas/**"
+      - "registry/**"
+      - "examples/minimal-constellation/**"
+      - "tooling/python/**"
+      - ".github/workflows/minimal-constellation-ci.yml"
+
+jobs:
+  minimal-constellation-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Build hpc-chat-director CLI
+        run: |
+          cargo build --bin hpc-chat-director
+
+      - name: Generate schema spine index (check mode)
+        run: |
+          python tooling/python/cli/hpc-generate-spine-index.py --check
+
+      - name: Validate schemas
+        run: |
+          python tooling/python/cli/hpc-validate-schema.py --json
+
+      - name: Lint NDJSON registries
+        run: |
+          python tooling/python/cli/hpc-lint-registry.py --json --summary
+
+      - name: Run CHAT_DIRECTOR smoke tests on minimal constellation
+        run: |
+          # Example: validate a prepared response for the minimal constellation.
+          # You can add more commands as the example grows.
+          ./target/debug/hpc-chat-director validate-response \
+            --from-file examples/minimal-constellation/registry/region-contract-response.json \
+            --format json
