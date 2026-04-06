@@ -1,86 +1,246 @@
 #!/usr/bin/env python3
 """
-CLI: Validate JSON files against HorrorPlace constellation schemas.
-Usage: python hpc-validate-schema.py --mode file --schema <path> --file <path> [--report out.json]
+hpc-validate-schema.py
+
+Thin CLI wrapper to run JSON Schema Draft 2020-12 validation on schema files
+under schemas/**/*.json.
+
+Features:
+- Validates one or more schema files.
+- Resolves $ref using the schema's $id/id and file-based resolution.
+- Emits structured diagnostics with file, jsonPointer, error code, and message.
+- Supports JSONL output for AI/CI consumption.
+- Non-zero exit code on any validation error.
 """
+
+from __future__ import annotations
 
 import argparse
 import json
 import sys
+from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-try:
-    import jsonschema
-except ImportError:
-    print("[ERROR] Missing dependency: pip install jsonschema", file=sys.stderr)
-    sys.exit(1)
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from schema_spine import AIAuthoringValidator
+from jsonschema import Draft202012Validator, RefResolver  # type: ignore
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate constellation JSON schemas and contracts")
-    parser.add_argument("--mode", choices=["schema", "ai-authoring", "batch"], default="schema")
-    parser.add_argument("--schema", type=str, help="Path to JSON Schema file")
-    parser.add_argument("--file", type=str, help="Path to JSON instance file")
-    parser.add_argument("--root", type=str, default="schemas/", help="Root directory for batch scanning")
-    parser.add_argument("--report", type=str, help="Output report JSON path")
-    parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
-    args = parser.parse_args()
+REPO_ROOT_SENTINELS = {".git", ".github"}
 
-    validator = AIAuthoringValidator()
-    report = {"valid": True, "errors": [], "warnings": []}
+
+@dataclass
+class Diagnostic:
+    severity: str  # "error" or "warning"
+    file: str
+    code: str
+    message: str
+    json_pointer: Optional[str] = None
+    field: Optional[str] = None
+    value: Optional[Any] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+def _find_repo_root(start: Path) -> Path:
+    current = start
+    while current != current.parent:
+        if any((current / s).exists() for s in REPO_ROOT_SENTINELS):
+            return current
+        current = current.parent
+    return start
+
+
+def _load_json(path: Path) -> Any:
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _collect_schema_paths(repo_root: Path, explicit: Optional[List[Path]] = None) -> List[Path]:
+    if explicit:
+        return [p for p in explicit if p.is_file()]
+
+    base = repo_root / "schemas"
+    if not base.is_dir():
+        return []
+
+    paths = sorted(base.rglob("*.json"))
+    return [p for p in paths if p.is_file()]
+
+
+def _build_schema_store(schema_paths: Iterable[Path]) -> Dict[str, Dict[str, Any]]:
+    """
+    Build a simple in-memory store mapping schema IDs and file URIs to schema dicts.
+
+    This lets RefResolver resolve $ref both by $id and by relative path.
+    """
+    store: Dict[str, Dict[str, Any]] = {}
+
+    for path in schema_paths:
+        try:
+            schema = _load_json(path)
+        except Exception:
+            continue
+
+        file_uri = path.resolve().as_uri()
+        store[file_uri] = schema
+
+        schema_id = schema.get("$id") or schema.get("id")
+        if isinstance(schema_id, str):
+            store[schema_id] = schema
+
+    return store
+
+
+def _make_validator_for_schema(
+    schema: Dict[str, Any],
+    base_uri: str,
+    store: Dict[str, Dict[str, Any]],
+) -> Draft202012Validator:
+    resolver = RefResolver(base_uri=base_uri, referrer=schema, store=store)
+    return Draft202012Validator(schema, resolver=resolver)
+
+
+def _validate_schema_file(
+    path: Path,
+    store: Dict[str, Dict[str, Any]],
+) -> List[Diagnostic]:
+    diagnostics: List[Diagnostic] = []
 
     try:
-        if args.mode == "ai-authoring":
-            if not args.file:
-                print("[ERROR] --file required for ai-authoring mode", file=sys.stderr)
-                return 1
-            path = Path(args.file)
-            is_valid = validator.validate(path)
-            r = validator.get_report()
-            report.update(r)
+        schema = _load_json(path)
+    except Exception as exc:
+        diagnostics.append(
+            Diagnostic(
+                severity="error",
+                file=str(path),
+                code="INVALID_JSON",
+                message=f"Schema file is not valid JSON: {exc}",
+            )
+        )
+        return diagnostics
 
-        elif args.mode == "schema" and args.file and args.schema:
-            with open(args.schema, "r") as sf, open(args.file, "r") as inst:
-                schema = json.load(sf)
-                instance = json.load(inst)
-            try:
-                jsonschema.validate(instance=instance, schema=schema)
-            except jsonschema.ValidationError as e:
-                report["valid"] = False
-                report["errors"].append(str(e.message))
+    base_uri = path.resolve().as_uri()
+    validator = _make_validator_for_schema(schema, base_uri, store)
 
-        elif args.mode == "batch":
-            # Simplified batch: scan and check parseability
-            root = Path(args.root)
-            for p in root.rglob("*.json"):
-                try:
-                    with open(p, "r") as f:
-                        json.load(f)
-                except Exception as e:
-                    report["valid"] = False
-                    report["errors"].append(f"{p}: {e}")
-        else:
-            print("[ERROR] Unsupported mode/args combination", file=sys.stderr)
-            return 1
+    try:
+        validator.check_schema(schema)
+    except Exception as exc:
+        diagnostics.append(
+            Diagnostic(
+                severity="error",
+                file=str(path),
+                code="SCHEMA_SELF_INVALID",
+                message=f"Schema violates JSON Schema meta-schema: {exc}",
+            )
+        )
+        return diagnostics
 
-        if args.report:
-            Path(args.report).parent.mkdir(parents=True, exist_ok=True)
-            with open(args.report, "w") as f:
-                json.dump(report, f, indent=2)
+    for error in validator.iter_errors({}):
+        pointer = "/".join(
+            [""] + list(error.absolute_path)
+        ) if error.absolute_path else ""
+        field = str(error.path[-1]) if error.path else None
 
-        if not report["valid"]:
-            print("[FAIL] Validation failed. See report.", file=sys.stderr)
-            return 1
-        print("[OK] Validation passed.")
+        hint = _derive_remediation_hint(error.validator, error.validator_value)
+        context = {
+            "validator": error.validator,
+            "validator_value": error.validator_value,
+        }
+        if hint is not None:
+            context["hint"] = hint
+
+        diagnostics.append(
+            Diagnostic(
+                severity="error",
+                file=str(path),
+                code="SCHEMA_REFERENCE_ERROR",
+                message=error.message,
+                json_pointer=pointer or None,
+                field=field,
+                value=error.instance,
+                context=context,
+            )
+        )
+
+    return diagnostics
+
+
+def _derive_remediation_hint(validator: str, validator_value: Any) -> Optional[str]:
+    """
+    Lightweight remediation hints for common schema issues.
+    """
+    if validator == "type":
+        return "Check that the 'type' keyword is a valid JSON Schema type or array of types."
+    if validator == "$ref":
+        return "Ensure the $ref target exists and its id/path is correct relative to this schema."
+    if validator == "required":
+        return "Verify that all required properties are defined under 'properties'."
+    if validator == "enum":
+        return "Ensure the value is one of the allowed 'enum' entries."
+    if validator == "format":
+        return "Confirm the value matches the declared 'format' or remove the format constraint."
+    return None
+
+
+def _print_diagnostics(
+    diagnostics: List[Diagnostic],
+    json_output: bool,
+) -> None:
+    if json_output:
+        for d in diagnostics:
+            obj = asdict(d)
+            compact = {k: v for k, v in obj.items() if v is not None}
+            sys.stdout.write(json.dumps(compact, ensure_ascii=False) + "\n")
+    else:
+        for d in diagnostics:
+            location = f"{d.file}"
+            if d.json_pointer:
+                location += f"{d.json_pointer}"
+            sys.stdout.write(f"[{d.severity.upper()}] {d.code} at {location}: {d.message}\n")
+            if d.context and "hint" in d.context:
+                sys.stdout.write(f"  hint: {d.context['hint']}\n")
+
+
+def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Validate JSON Schema files (Draft 2020-12) under schemas/**/*.json."
+    )
+    parser.add_argument(
+        "paths",
+        nargs="*",
+        help="Optional schema file paths to validate. If omitted, validates all schemas/**/*.json.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit diagnostics as JSON objects (one per line) for AI/CI consumption.",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = _parse_args(argv)
+
+    repo_root = _find_repo_root(Path.cwd())
+
+    explicit_paths = [Path(p) for p in args.paths] if args.paths else None
+    schema_paths = _collect_schema_paths(repo_root, explicit_paths)
+
+    if not schema_paths:
+        sys.stderr.write("No schema files found to validate.\n")
         return 0
 
-    except Exception as e:
-        print(f"[FATAL] {e}", file=sys.stderr)
-        return 2
+    store = _build_schema_store(schema_paths)
+
+    all_diagnostics: List[Diagnostic] = []
+    for path in schema_paths:
+        diags = _validate_schema_file(path, store)
+        all_diagnostics.extend(diags)
+
+    _print_diagnostics(all_diagnostics, json_output=args.json)
+
+    has_errors = any(d.severity == "error" for d in all_diagnostics)
+    return 1 if has_errors else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
