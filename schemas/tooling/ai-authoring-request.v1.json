@@ -2,15 +2,35 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/tooling/ai-authoring-request.v1.json",
   "title": "AI Authoring Request v1",
+  "description": "Structured request for a single AI-generated artifact.",
   "type": "object",
   "additionalProperties": false,
   "required": ["targetRepo", "targetPath", "schemaRef", "tier", "purpose"],
   "properties": {
-    "targetRepo": { "type": "string" },
-    "targetPath": { "type": "string" },
-    "schemaRef": { "type": "string" },
-    "tier": { "type": "string", "enum": ["T1-core", "T2-vault", "T3-lab"] },
-    "purpose": { "type": "string" },
-    "prismMetaRef": { "type": "string" }
+    "targetRepo": {
+      "type": "string",
+      "description": "Canonical name of the repository to receive the artifact."
+    },
+    "targetPath": {
+      "type": "string",
+      "description": "Repository-relative path of the file to create or update."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema URI that the payload must validate against."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["T1-core", "T2-vault", "T3-lab"],
+      "description": "VM-Constellation tier of the target repository."
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Short human-readable description of the change."
+    },
+    "prismMetaRef": {
+      "type": "string",
+      "description": "Optional reference to a prismMeta profile."
+    }
   }
 }
