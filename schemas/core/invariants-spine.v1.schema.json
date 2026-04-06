@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/invariants-spine.v1.schema.json",
+  "title": "Invariants and Entertainment Metrics Spine v1",
+  "type": "object",
+  "required": ["version", "invariants", "entertainmentMetrics"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "invariants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/invariantSpec" },
+      "minItems": 1
+    },
+    "entertainmentMetrics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/metricSpec" },
+      "minItems": 1
+    },
+    "interactionRules": {
+      "description": "Cross-metric interaction rules (XMIT_*). AI agents can query this to understand couplings like DET→CDL amplification.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/interactionRule" },
+      "minItems": 0
+    }
+  },
+  "$defs": {
+    "objectKind": {
+      "type": "string",
+      "enum": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ]
+    },
+    "valueType": {
+      "type": "object",
+      "oneOf": [
+        {
+          "description": "Numeric range-valued invariant",
+          "properties": {
+            "type": { "const": "range" },
+            "min": { "type": "number" },
+            "max": { "type": "number" }
+          },
+          "required": ["type", "min", "max"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Enum-valued invariant",
+          "properties": {
+            "type": { "const": "enum" },
+            "values": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            }
+          },
+          "required": ["type", "values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "Boolean-valued invariant",
+          "properties": {
+            "type": { "const": "bool" }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "overrideRange": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["min", "max"],
+      "additionalProperties": false
+    },
+    "invariantSpec": {
+      "type": "object",
+      "required": [
+        "name",
+        "abbreviation",
+        "category",
+        "valueType",
+        "appliesTo",
+        "driftAllowed",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "abbreviation": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["structural", "entertainment", "derived"]
+        },
+        "valueType": { "$ref": "#/$defs/valueType" },
+        "appliesTo": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/objectKind" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "driftAllowed": { "type": "boolean" },
+        "tierOverrides": {
+          "type": "object",
+          "description": "Per-tier overrides of the base min/max range for this invariant.",
+          "additionalProperties": {
+            "$ref": "#/$defs/overrideRange"
+          }
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "telemetryHook": {
+          "type": "string",
+          "description": "Optional telemetry hook name for logging this invariant."
+        },
+        "compatibleMetrics": {
+          "type": "array",
+          "description": "Names of entertainment metrics that this invariant directly interacts with.",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "metricSpec": {
+      "type": "object",
+      "required": [
+        "name",
+        "abbreviation",
+        "targetBand",
+        "appliesTo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "abbreviation": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "targetBand": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "telemetryHook": {
+          "type": "string",
+          "description": "Optional telemetry hook name used for runtime metric collection."
+        },
+        "appliesTo": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/objectKind" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "comparisonOperator": {
+      "type": "string",
+      "enum": [
+        ">",
+        ">=",
+        "<",
+        "<=",
+        "==",
+        "!="
+      ]
+    },
+    "interactionEffectKind": {
+      "type": "string",
+      "enum": ["amplify", "suppress", "gate"]
+    },
+    "interactionRule": {
+      "type": "object",
+      "description": "Cross-metric interaction rule (e.g., XMIT_001: DET/CDL coupling). AI agents can read these and use them as authoring hints.",
+      "required": [
+        "interactionId",
+        "errorCode",
+        "metricA",
+        "metricB",
+        "interactionType",
+        "condition",
+        "effect",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "interactionId": {
+          "type": "string",
+          "pattern": "^XMIT_[0-9]{3}$"
+        },
+        "errorCode": {
+          "type": "string",
+          "pattern": "^ERR_[A-Z0-9_]+$"
+        },
+        "metricA": {
+          "type": "string",
+          "description": "Name or abbreviation of the driving invariant/metric (e.g., DET, CIC, AOS, LSG)."
+        },
+        "metricB": {
+          "type": "string",
+          "description": "Name or abbreviation of the affected invariant/metric (e.g., CDL, SHCI, ARR, EMD, HVF)."
+        },
+        "interactionType": {
+          "$ref": "#/$defs/interactionEffectKind"
+        },
+        "appliesTo": {
+          "type": "array",
+          "description": "Optional subset of objectKinds this interaction applies to. If omitted, applies to all.",
+          "items": { "$ref": "#/$defs/objectKind" },
+          "uniqueItems": true
+        },
+        "condition": {
+          "type": "object",
+          "description": "Trigger condition on metricA (and optionally metricB) that activates this rule.",
+          "required": ["metricA"],
+          "additionalProperties": false,
+          "properties": {
+            "metricA": {
+              "type": "object",
+              "required": ["op", "value"],
+              "additionalProperties": false,
+              "properties": {
+                "op": { "$ref": "#/$defs/comparisonOperator" },
+                "value": { "type": "number" }
+              }
+            },
+            "metricB": {
+              "type": "object",
+              "required": ["op", "value"],
+              "additionalProperties": false,
+              "properties": {
+                "op": { "$ref": "#/$defs/comparisonOperator" },
+                "value": { "type": "number" }
+              }
+            }
+          }
+        },
+        "effect": {
+          "type": "object",
+          "description": "How metricB's acceptable band changes when the condition holds.",
+          "required": ["metricB"],
+          "additionalProperties": false,
+          "properties": {
+            "metricB": {
+              "type": "object",
+              "description": "New or adjusted constraints on metricB.",
+              "oneOf": [
+                {
+                  "description": "Adjusted absolute band, e.g., widened or narrowed range.",
+                  "required": ["mode", "min", "max"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["absoluteBand"]
+                    },
+                    "min": { "type": "number" },
+                    "max": { "type": "number" }
+                  }
+                },
+                {
+                  "description": "Adjusted floor only, useful for ARR/CDL floors.",
+                  "required": ["mode", "min"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["floorOnly"]
+                    },
+                    "min": { "type": "number" }
+                  }
+                },
+                {
+                  "description": "Relative adjustment by delta.",
+                  "required": ["mode", "deltaMin", "deltaMax"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": ["relativeDelta"]
+                    },
+                    "deltaMin": { "type": "number" },
+                    "deltaMax": { "type": "number" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512
+        }
+      }
+    }
+  }
+}
