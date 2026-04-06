@@ -1,0 +1,27 @@
+{
+  "$id": "https://horror.place/constellation/schemas/chatdirector-skeleton-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "chatDirectorSkeletonProfilev1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["archetypeId", "objectKind", "tier", "defaultEnvelope", "partialBody"],
+  "properties": {
+    "archetypeId": { "type": "string" },
+    "objectKind": {
+      "type": "string",
+      "enum": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard"
+      ]
+    },
+    "tier": { "type": "string" },
+    "defaultEnvelope": {
+      "$ref": "https://horror.place/constellation/schemas/chatdirector-envelope-v1.json"
+    },
+    "partialBody": {
+      "type": "object"
+    }
+  }
+}
