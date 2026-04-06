@@ -1,17 +1,17 @@
 # Workflow: Generate Schema Spine Index
-# Purpose: Build schema-spine-index.json from all schemas in schemas/, mapping invariants/metrics to consumers
-# Triggers: push to main, workflow_dispatch, scheduled weekly
-# Output: schema-spine-index.json artifact (read-only, for reference)
+# Purpose: Build schema-spine-index-v1.json from schemas/core/, mapping invariants/metrics to consumers
+# Triggers: push to main (schema/tooling changes), manual dispatch, weekly schedule
+# Output: schema-spine-index-v1.json checked for drift; optional artifact for inspection
 
-name: Generate Schema Spine Index
+name: Spine Index Generate
 
 on:
   push:
     branches:
       - main
     paths:
-      - "schemas/**/*.json"
-      - "tooling/python/**/*.py"
+      - "schemas/**"
+      - "tooling/python/**"
       - ".github/workflows/spine-index-generate.yml"
   workflow_dispatch:
   schedule:
@@ -25,9 +25,6 @@ jobs:
   generate-spine-index:
     name: Build Schema Spine Index
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
 
     steps:
       - name: Checkout repository
@@ -35,49 +32,33 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install jsonschema typing-extensions
+          pip install jsonschema
 
-      - name: Generate spine index
+      - name: Regenerate schema spine index (write)
         run: |
-          python tooling/python/cli/hpc-generate-spine-index.py \
-            --root schemas/ \
-            --output schema-spine-index.json \
-            --format compact \
-            --validate
+          python tooling/python/cli/hpc-generate-spine-index.py
 
-      - name: Validate generated index against its own schema
+      - name: Check for uncommitted changes
         run: |
-          python tooling/python/cli/hpc-validate-schema.py \
-            --schema schemas/tooling/spineIndex.v1.json \
-            --instance schema-spine-index.json \
-            --strict
+          if ! git diff --quiet; then
+            echo "schema-spine-index-v1.json changed; commit updated index."
+            git status --short
+            exit 1
+          fi
 
       - name: Upload spine index as artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: schema-spine-index
-          path: schema-spine-index.json
+          name: schema-spine-index-v1
+          path: schemas/core/schema-spine-index-v1.json
           retention-days: 30
-
-      - name: Comment on PR if triggered by push
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            if (fs.existsSync('schema-spine-index.json')) {
-              const index = JSON.parse(fs.readFileSync('schema-spine-index.json', 'utf8'));
-              const schemaCount = Object.keys(index.schemas || {}).length;
-              const invariantCount = Object.keys(index.invariants || {}).length;
-              const metricCount = Object.keys(index.metrics || {}).length;
-              core.notice(`Schema spine index updated: ${schemaCount} schemas, ${invariantCount} invariants, ${metricCount} metrics`);
-            }
