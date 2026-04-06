@@ -14,7 +14,7 @@
 //! let director = ChatDirector::load_environment(Path::new("/path/to/constellation"))?;
 //!
 //! // Plan: normalize intent into a structured request
-//! let request = director.plan_from_prompt("Create a marsh region seed")?;
+//! let request = director.plan_from_prompt("Create a marsh region seed", None)?;
 //!
 //! // Generate: AI produces a response matching ai-authoring-response-v1.json
 //! // let response: AiAuthoringResponse = ai_generate(&request)?;
@@ -31,9 +31,12 @@
 //!
 //! Every error includes structured remediation hints:
 //!
-//! ```rust
+//! ```no_run
 //! use hpc_chat_director::{Error, ValidationError};
 //!
+//! # let director = todo!();
+//! # let req = todo!();
+//! # let resp = todo!();
 //! match director.validate_response(&req, &resp) {
 //!     Ok(file) => { /* proceed */ }
 //!     Err(Error::Validation(ValidationError { code, json_pointer, remediation, .. })) => {
@@ -54,26 +57,29 @@ pub mod phases;
 pub mod spine;
 pub mod validate;
 
-// Optional modules gated by features
+// Optional modules gated by features.
 #[cfg(feature = "http-service")]
 pub mod service;
 
 pub mod generate;
 pub mod cli;
 
-// Re-export public API surface
+// Re-export public API surface.
 pub use config::{Config, ContextMode, EnvironmentSummary};
 pub use errors::{Error, PhaseError, ValidationError, Remediation};
 pub use manifests::{ManifestContext, ManifestDiagnostic, ManifestValidationResult};
 pub use model::{
+    manifest_types::{RepoManifest, TargetRule, Tier},
     request_types::{AiAuthoringRequest, RequestDefaults},
     response_types::{AiAuthoringResponse, PrismEnvelope, ValidatedFile},
     spine_types::{ContractFamily, InvariantSpec, MetricSpec, SchemaSpine},
-    manifest_types::{RepoManifest, Tier, TargetRule},
 };
 pub use phases::Phase;
-pub use spine::{DerivedMetrics, ObjectKindProfile, DefaultBands};
-pub use validate::{ValidationResult, RankedDiagnostic};
+pub use spine::{DefaultBands, DerivedMetrics, ObjectKindProfile};
+pub use validate::{RankedDiagnostic, ValidationResult};
+
+use once_cell::sync::OnceCell;
+use std::collections::HashMap;
 
 /// Core façade for constellation authoring operations.
 ///
@@ -84,9 +90,9 @@ pub struct ChatDirector {
     config: Config,
     spine: SchemaSpine,
     manifests: Vec<RepoManifest>,
-    /// Cached compiled schemas for performance (not part of public API)
+    /// Cached compiled schemas for performance (not part of public API).
     #[doc(hidden)]
-    schema_cache: once_cell::sync::OnceCell<std::collections::HashMap<String, jsonschema::Validator>>,
+    schema_cache: OnceCell<HashMap<String, jsonschema::Validator>>,
 }
 
 impl ChatDirector {
@@ -99,13 +105,23 @@ impl ChatDirector {
         let config = Config::detect(root)?;
         let spine = spine::load(&config)?;
         let manifests = manifests::load_all(&config)?;
-        
+
         Ok(Self {
             config,
             spine,
             manifests,
-            schema_cache: once_cell::sync::OnceCell::new(),
+            schema_cache: OnceCell::new(),
         })
+    }
+
+    /// Return a reference to the loaded schema spine.
+    pub fn spine(&self) -> &SchemaSpine {
+        &self.spine
+    }
+
+    /// Return a reference to the loaded repo manifests.
+    pub fn manifests(&self) -> &[RepoManifest] {
+        &self.manifests
     }
 
     /// Normalize a natural-language prompt into a structured authoring request.
@@ -121,7 +137,6 @@ impl ChatDirector {
         prompt: &str,
         defaults: Option<RequestDefaults>,
     ) -> Result<AiAuthoringRequest, Error> {
-        // Implementation delegated to internal planner
         cli::plan::normalize_prompt(prompt, &self.spine, &self.manifests, defaults)
     }
 
@@ -145,7 +160,7 @@ impl ChatDirector {
 
     /// Apply a validated file to disk at its manifest-approved path.
     ///
-    /// Respects `--dry-run` semantics via config; optionally runs
+    /// Respects dry-run semantics via config; optionally runs
     /// post-apply hooks declared in the target repo's manifest.
     pub fn apply(&self, file: &ValidatedFile) -> Result<(), Error> {
         cli::apply::write_validated(file, &self.config, &self.manifests)
@@ -172,8 +187,8 @@ impl ChatDirector {
     /// Suggest canonical target paths for a given intent and objectKind.
     ///
     /// Returns `(targetRepo, targetPath, tier)` tuples derived from
-    /// manifest `defaultTargetPaths` and `allowedSchemas`. Eliminates
-    /// directory-guessing by AI agents.
+    /// manifest `defaultPaths` and schema whitelists. Eliminates
+    /// directory guessing by AI agents.
     pub fn plan_paths(
         &self,
         intent: &str,
@@ -201,6 +216,29 @@ pub struct CapabilityCatalog {
     pub repo_routing: std::collections::HashMap<String, RepoRoutingEntry>,
 }
 
+impl CapabilityCatalog {
+    /// Build a catalog from spine and manifests.
+    pub fn from_spine_and_manifests(
+        spine: &SchemaSpine,
+        manifests: &[RepoManifest],
+    ) -> Self {
+        // Placeholder implementation; fill with real queries.
+        let object_kinds = std::collections::HashMap::new();
+        let phase_rules = std::collections::HashMap::new();
+        let invariants = std::collections::HashMap::new();
+        let metrics = std::collections::HashMap::new();
+        let repo_routing = std::collections::HashMap::new();
+
+        CapabilityCatalog {
+            object_kinds,
+            phase_rules,
+            invariants,
+            metrics,
+            repo_routing,
+        }
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PhaseRuleSet {
@@ -212,11 +250,11 @@ pub struct PhaseRuleSet {
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InvariantStrictness {
-    /// Phase 0: schema-only validation
+    /// Phase 0: schema-only validation.
     SchemaOnly,
-    /// Phase 1-2: ranges enforced, interactions soft
+    /// Phase 1–2: ranges enforced, interactions soft.
     Relaxed,
-    /// Phase 3-4: full enforcement including cross-metric rules
+    /// Phase 3–4: full enforcement including cross-metric rules.
     Strict,
 }
 
@@ -224,10 +262,10 @@ pub enum InvariantStrictness {
 #[serde(rename_all = "camelCase")]
 pub struct InvariantCatalogEntry {
     pub name: String,
-    pub canonical_range: serde_json::Value, // { "min": 0.0, "max": 1.0 } or similar
+    pub canonical_range: serde_json::Value,
     pub tier_overrides: std::collections::HashMap<Tier, serde_json::Value>,
     pub description: String,
-    pub compatible_with: Vec<String>, // metric names this invariant interacts with
+    pub compatible_with: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -257,5 +295,6 @@ pub struct CanonicalTarget {
     pub target_repo: String,
     pub target_path: String,
     pub tier: Tier,
-    pub confidence: f64, // 0.0-1.0, based on manifest specificity
+    /// Confidence (0.0–1.0) based on manifest specificity.
+    pub confidence: f64,
 }
