@@ -1,0 +1,467 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/hpc-spine-index.schema.json",
+  "title": "HPC Schema Spine Index",
+  "description": "Canonical schema for schema-spine-index-v1.json documents in HorrorPlace-Constellation-Contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaSpineVersion",
+    "updatedAt",
+    "canonicalAuthority",
+    "invariants",
+    "metrics",
+    "schemas",
+    "repos",
+    "deadLedger",
+    "transitions"
+  ],
+  "properties": {
+    "schemaSpineVersion": {
+      "type": "string",
+      "description": "Semantic version for the spine index structure, e.g. 1.0.0."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this spine index was generated."
+    },
+    "canonicalAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaRepo",
+        "invariantsSchema",
+        "metricsSchema"
+      ],
+      "properties": {
+        "schemaRepo": {
+          "type": "string",
+          "description": "Repository name acting as schema authority, e.g. Horror.Place."
+        },
+        "invariantsSchema": {
+          "type": "string",
+          "description": "Path or URI to the canonical invariants schema, e.g. schemas/invariantsv1.json."
+        },
+        "metricsSchema": {
+          "type": "string",
+          "description": "Path or URI to the canonical entertainment metrics schema, e.g. schemas/entertainmentmetricsv1.json."
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "description": "Spine entries for each invariant (CIC, MDI, AOS, RRM, FCF, SPR, RWF, DET, HVF, LSG, SHCI).",
+      "items": {
+        "$ref": "#/$defs/invariantEntry"
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "description": "Spine entries for each entertainment metric (UEC, EMD, STCI, CDL, ARR).",
+      "items": {
+        "$ref": "#/$defs/metricEntry"
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "description": "Catalog of JSON Schemas and related spec documents across the constellation.",
+      "items": {
+        "$ref": "#/$defs/schemaArtifact"
+      }
+    },
+    "repos": {
+      "type": "array",
+      "description": "Repository-level manifest slices describing roles, tiers, and key schema consumers.",
+      "items": {
+        "$ref": "#/$defs/repoManifestSlice"
+      }
+    },
+    "deadLedger": {
+      "type": "object",
+      "description": "Summary of Dead-Ledger ZKP contract surfaces and verifier registry state.",
+      "additionalProperties": false,
+      "required": [
+        "zkpSchema",
+        "verifierRegistry",
+        "totalProofTypes",
+        "totalVerifiers"
+      ],
+      "properties": {
+        "zkpSchema": {
+          "type": "string",
+          "description": "Path or URI to the canonical zkpproofv1.json schema."
+        },
+        "verifierRegistry": {
+          "type": "string",
+          "description": "Path or URI to registryverifiers.json."
+        },
+        "totalProofTypes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalVerifiers": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "customProofViolations": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "transitions": {
+      "type": "object",
+      "description": "High-level description of CI and orchestration channels that move artifacts through the constellation.",
+      "additionalProperties": false,
+      "required": [
+        "ciWorkflows",
+        "orchestrators"
+      ],
+      "properties": {
+        "ciWorkflows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ciWorkflow"
+          }
+        },
+        "orchestrators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/orchestrator"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "numericRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "invariantEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "name",
+        "canonicalSource",
+        "schemaDraft",
+        "type",
+        "range",
+        "required",
+        "additionalProperties",
+        "consumers"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Short invariant code, e.g. CIC, MDI, DET."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the invariant."
+        },
+        "canonicalSource": {
+          "type": "string",
+          "description": "Path or URI to the canonical invariant schema defining this field."
+        },
+        "schemaDraft": {
+          "type": "string",
+          "description": "JSON Schema draft identifier, e.g. draft-07 or 2020-12."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "number",
+            "integer",
+            "string",
+            "boolean"
+          ]
+        },
+        "range": {
+          "$ref": "#/$defs/numericRange",
+          "description": "Canonical numeric range for this invariant. DET typically uses 0..10, others 0..1."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this invariant is required in canonical schemas."
+        },
+        "additionalProperties": {
+          "type": "boolean",
+          "description": "Canonical additionalProperties setting for objects that hold this field."
+        },
+        "consumers": {
+          "type": "array",
+          "description": "Downstream consumers of this invariant across repos.",
+          "items": {
+            "$ref": "#/$defs/consumerUsage"
+          }
+        },
+        "driftStatus": {
+          "type": "string",
+          "enum": [
+            "conforming",
+            "drifted",
+            "missing"
+          ],
+          "default": "conforming"
+        }
+      }
+    },
+    "metricEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "name",
+        "canonicalSource",
+        "schemaDraft",
+        "type",
+        "range",
+        "targetBand",
+        "telemetryHooks",
+        "consumers"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Short metric code, e.g. UEC, EMD, STCI."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the metric."
+        },
+        "canonicalSource": {
+          "type": "string",
+          "description": "Path or URI to the canonical metrics schema defining this field."
+        },
+        "schemaDraft": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "number",
+            "integer"
+          ]
+        },
+        "range": {
+          "$ref": "#/$defs/numericRange",
+          "description": "Canonical numeric range for this metric, usually 0..1."
+        },
+        "targetBand": {
+          "$ref": "#/$defs/numericRange",
+          "description": "Recommended operational band for this metric."
+        },
+        "telemetryHooks": {
+          "type": "array",
+          "description": "Names of telemetry signals or counters linked to this metric.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consumerUsage"
+          }
+        },
+        "driftStatus": {
+          "type": "string",
+          "enum": [
+            "conforming",
+            "drifted",
+            "missing"
+          ],
+          "default": "conforming"
+        }
+      }
+    },
+    "consumerUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "usage"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Repository name using this field."
+        },
+        "path": {
+          "type": "string",
+          "description": "File path inside the repo."
+        },
+        "usage": {
+          "type": "string",
+          "description": "Short description, e.g. struct field, registry entry, Lua table field."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "copy",
+            "derived"
+          ],
+          "default": "copy"
+        }
+      }
+    },
+    "schemaArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "schemaDraft",
+        "kind"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "schemaDraft": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "description": "JSON Schema $id or equivalent identifier, if present."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Logical kind, e.g. invariant, metrics, eventContract, regionContractCard, seedContractCard, policyEnvelope, zkpProof."
+        },
+        "hash": {
+          "type": "string",
+          "description": "SHA-256 or similar hash of the schema file."
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "repoManifestSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "tier",
+        "visibility",
+        "role",
+        "languages",
+        "schemas",
+        "registries"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Repository name."
+        },
+        "tier": {
+          "type": "string",
+          "description": "Constellation tier label, e.g. T1, T2, T3."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "private"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "description": "Doctrinal role description."
+        },
+        "languages": {
+          "type": "object",
+          "description": "Approximate language composition by percentage.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          }
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to key schema files in this repo."
+        },
+        "registries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to registry NDJSON files in this repo."
+        }
+      }
+    },
+    "ciWorkflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "purpose"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Repository that owns this workflow."
+        },
+        "path": {
+          "type": "string",
+          "description": "Workflow file path under .github/workflows."
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Short purpose label, e.g. schema-validation, registry-linter, spine-index-generate."
+        }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "role",
+        "configPath"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Repository that acts as an orchestrator."
+        },
+        "role": {
+          "type": "string",
+          "description": "Description of orchestrator responsibilities."
+        },
+        "configPath": {
+          "type": "string",
+          "description": "Path to orchestrator configuration or routing rules."
+        }
+      }
+    }
+  }
+}
