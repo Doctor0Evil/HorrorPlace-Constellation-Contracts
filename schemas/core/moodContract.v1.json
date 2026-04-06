@@ -1,0 +1,122 @@
+{
+  "$id": "https://horror.place/schemas/core/moodContract.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mood Contract v1",
+  "description": "Defines a mood contract that shapes atmosphere and pacing over one or more regions or tile classes within a constellation.",
+  "type": "object",
+  "x-objectKind": "moodContract",
+  "x-contractFamily": "mood",
+  "x-tierApplicability": [
+    "standard",
+    "mature",
+    "vault"
+  ],
+  "x-invariants": [
+    "CIC",
+    "AOS",
+    "LSG",
+    "HVF",
+    "SHCI"
+  ],
+  "x-metrics": [
+    "UEC",
+    "EMD",
+    "ARR",
+    "CDL",
+    "STCI"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Registry identifier for this mood contract, typically MOOD-CODE-SEQ."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "moodContract",
+      "description": "Discriminator indicating this is a mood contract."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical reference to this schema's $id.",
+      "const": "https://horror.place/schemas/core/moodContract.v1.json"
+    },
+    "tier": {
+      "type": "string",
+      "description": "Tier for this contract (e.g., standard, mature, vault)."
+    },
+    "appliesToRegionId": {
+      "type": "string",
+      "description": "ID of the primary region this mood is anchored to."
+    },
+    "moodName": {
+      "type": "string",
+      "description": "Human-readable name for this mood contract."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short description of the intended mood and player experience."
+    },
+    "tileClassBands": {
+      "type": "object",
+      "description": "Per-tile-class invariant and metric bands that define how the mood behaves in different local structures.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "invariantBindings": {
+            "type": "object",
+            "description": "Concrete invariant bindings for this tile class within the mood.",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "metricTargets": {
+            "type": "object",
+            "description": "Target entertainment metrics for this tile class within the mood.",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "invariantBindings",
+          "metricTargets"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Free-form tags for discovery and routing (e.g., liminal, subterranean).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata block for provenance and editorial notes.",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "id",
+    "objectKind",
+    "schemaRef",
+    "tier",
+    "appliesToRegionId",
+    "moodName",
+    "tileClassBands"
+  ],
+  "additionalProperties": false
+}
