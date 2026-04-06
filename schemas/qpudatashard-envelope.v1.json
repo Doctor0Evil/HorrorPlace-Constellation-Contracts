@@ -1,41 +1,92 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horror.place/schemas/qpu-datashard-envelope.v1.json",
+  "$id": "https://horror.place/schemas/qpu/qpudatashard-envelope.v1.json",
   "title": "QPU Datashard Envelope v1",
+  "description": "Minimal envelope for QPU datashards used across the VM-Constellation. One object per NDJSON line.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema",
-    "shardid",
-    "shardkind",
-    "schemaref",
-    "repotier",
-    "reponame",
-    "safetytier",
-    "intensityband",
-    "entitlementprofileid",
-    "functionkind",
+    "shardId",
+    "shardKind",
+    "schemaRef",
+    "repoTier",
+    "repoName",
+    "safetyTier",
+    "intensityBand",
+    "entitlementProfileId",
+    "functionKind",
     "invariants",
     "metrics"
   ],
   "properties": {
     "schema": {
       "type": "string",
-      "const": "https://horror.place/schemas/qpu-datashard-envelope.v1.json"
+      "const": "https://horror.place/schemas/qpu/qpudatashard-envelope.v1.json"
     },
-    "shardid": { "type": "string" },
-    "shardkind": { "type": "string" },
-    "schemaref": { "type": "string" },
-    "repotier": { "type": "string", "enum": ["T1-core", "T2-vault", "T3-lab"] },
-    "reponame": { "type": "string" },
-    "safetytier": { "type": "string", "enum": ["standard", "mature", "research"] },
-    "intensityband": { "type": "integer", "minimum": 0, "maximum": 10 },
-    "entitlementprofileid": { "type": "string" },
-    "deadledgerref": { "type": "string" },
-    "functionkind": { "type": "string" },
-    "invariants": { "type": "object" },
-    "metrics": { "type": "object" },
-    "bcibinding": { "type": "object" },
-    "zkp": { "type": "object" }
+    "shardId": {
+      "type": "string",
+      "description": "Stable identifier for this shard, e.g., qpu.persona.archivist.v1."
+    },
+    "shardKind": {
+      "type": "string",
+      "description": "Logical kind of shard, such as persona-impl, spectral-seed, invariant-bundle, policy-profile."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical URI of the primary contract schema implemented by this shard."
+    },
+    "repoTier": {
+      "type": "string",
+      "enum": ["T1-core", "T2-vault", "T3-lab"],
+      "description": "VM-Constellation tier of the producing repository."
+    },
+    "repoName": {
+      "type": "string",
+      "description": "Canonical repository name, e.g., Horror.Place or HorrorPlace-Atrocity-Seeds."
+    },
+    "safetyTier": {
+      "type": "string",
+      "enum": ["standard", "mature", "research"],
+      "description": "High-level safety tier for this shard."
+    },
+    "intensityBand": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Normalized intensity band in the range 0–10."
+    },
+    "entitlementProfileId": {
+      "type": "string",
+      "description": "Identifier of the entitlement profile that governs this shard."
+    },
+    "deadledgerRef": {
+      "type": "string",
+      "description": "Opaque reference to a Dead-Ledger attestation or proof, if any."
+    },
+    "functionKind": {
+      "type": "string",
+      "description": "Functional role, e.g., static-contract, bci-swing, telemetry-slice, policy-card."
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Numeric invariant values or bands mapped by invariant code.",
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Metric descriptors mapped by metric code.",
+      "additionalProperties": true
+    },
+    "bciBinding": {
+      "type": "object",
+      "description": "Optional binding to a derived BCI summary type.",
+      "additionalProperties": true
+    },
+    "zkp": {
+      "type": "object",
+      "description": "Optional hints about expected proof types for this shard.",
+      "additionalProperties": true
+    }
   }
 }
