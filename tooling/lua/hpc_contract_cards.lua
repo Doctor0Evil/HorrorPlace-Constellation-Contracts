@@ -1,201 +1,361 @@
 -- tooling/lua/hpc_contractcards.lua
 --
--- Usage (from repo root):
---   lua tooling/lua/hpc_contractcards.lua \
---       --root . \
---       --kind moodContract \
---       --tier Tier1Public \
---       contracts/mood/example_mood.json
+-- Lightweight contract card band-check helper.
 --
--- Prints a band-check summary comparing invariantBindings/metricTargets
--- against the spine-defined ranges for the given objectKind + tier.
+-- Responsibilities:
+-- - Load schema-spine-index-v1.json
+-- - Load a contract card JSON file
+-- - Given objectKind and tier (from envelope or contract), look up
+--   canonical invariant and metric bands from the spine
+-- - Compare invariantBindings and metricTargets against those bands
+-- - Return / print a concise summary per invariant/metric:
+--     "within", "edge", or "outside" band
+--
+-- Dependencies:
+--   - json: a minimal JSON library providing json.decode(string) -> table
 
-local json = require("dkjson")
-local SpineClient = require("hpc_spine_client")
+local json = require("json")  -- adapt to your JSON lib name
 
-local M = {}
+local HpcContractCards = {}
+
+-- Configuration: relative path to spine index (can be overridden)
+HpcContractCards.spine_path = "schemas/core/schema-spine-index-v1.json"
+
+----------------------------------------------------------------------
+-- Internal helpers
+----------------------------------------------------------------------
 
 local function read_file(path)
-    local f, err = io.open(path, "r")
-    if not f then
-        return nil, ("failed to open file " .. path .. ": " .. tostring(err))
-    end
-    local contents = f:read("*a")
-    f:close()
-    return contents
+  local f, err = io.open(path, "r")
+  if not f then
+    return nil, ("unable to open file '%s': %s"):format(path, tostring(err))
+  end
+  local content = f:read("*a")
+  f:close()
+  return content, nil
 end
 
-local function parse_args(argv)
-    local opts = {
-        root = ".",
-        kind = "moodContract",
-        tier = "Tier1Public",
-        path = nil,
-    }
-
-    local i = 1
-    while i <= #argv do
-        local a = argv[i]
-        if a == "--root" then
-            i = i + 1
-            opts.root = argv[i]
-        elseif a == "--kind" then
-            i = i + 1
-            opts.kind = argv[i]
-        elseif a == "--tier" then
-            i = i + 1
-            opts.tier = argv[i]
-        else
-            opts.path = a
-        end
-        i = i + 1
-    end
-
-    if not opts.path then
-        return nil, "missing contract JSON path"
-    end
-    return opts
+local function load_json_file(path)
+  local raw, err = read_file(path)
+  if not raw then
+    return nil, err
+  end
+  local ok, decoded = pcall(function()
+    return json.decode(raw)
+  end)
+  if not ok then
+    return nil, ("failed to decode JSON from '%s': %s"):format(path, tostring(decoded))
+  end
+  return decoded, nil
 end
 
-local function extract_invariants(doc)
-    local out = {}
-    local bindings = doc.invariantBindings
-    if type(bindings) ~= "table" then
-        return out
-    end
-    for name, spec in pairs(bindings) do
-        if type(spec) == "table" and spec.value ~= nil then
-            out[name] = tonumber(spec.value)
-        end
-    end
-    return out
+local function abs(x)
+  if x < 0 then
+    return -x
+  end
+  return x
 end
 
-local function extract_metrics(doc)
-    local out = {}
-    local targets = doc.metricTargets
-    if type(targets) ~= "table" then
-        return out
-    end
-    for name, spec in pairs(targets) do
-        if type(spec) == "table" and spec.target ~= nil then
-            out[name] = tonumber(spec.target)
-        end
-    end
-    return out
+----------------------------------------------------------------------
+-- Spine loading and lookup
+----------------------------------------------------------------------
+
+local function load_spine(spine_path)
+  local spine, err = load_json_file(spine_path)
+  if not spine then
+    return nil, err
+  end
+  return spine, nil
 end
 
-local function band_for_invariant(spine, object_kind, tier, abbr)
-    local inv = spine:describe_invariant(abbr)
-    if not inv then
-        return nil
-    end
-    -- spine may carry tierOverrides; this helper just returns canonical range
-    local min = inv.min or (inv.range and inv.range[1])
-    local max = inv.max or (inv.range and inv.range[2])
-    return min, max
-end
-
-local function band_for_metric(spine, object_kind, tier, abbr)
-    local metric = spine:describe_metric(abbr)
-    if not metric then
-        return nil
-    end
-    local band = metric.targetBand or metric.targetband
-    if type(band) == "table" then
-        return band[1], band[2]
-    end
+local function find_schema_entry_for_object_kind(spine, object_kind)
+  if type(spine) ~= "table" or type(spine.schemas) ~= "table" then
     return nil
+  end
+  for _, entry in ipairs(spine.schemas) do
+    if entry.object_kind == object_kind or entry.objectKind == object_kind then
+      return entry
+    end
+  end
+  return nil
 end
 
-local function classify(value, min, max)
-    if value == nil or min == nil or max == nil then
-        return "unknown"
+local function build_band_index(catalog, contract_family)
+  local index = {}
+  if type(catalog) ~= "table" then
+    return index
+  end
+  for _, entry in ipairs(catalog) do
+    local key = entry.key
+    if type(key) == "string" then
+      local family = entry.contract_family or entry.contractFamily
+      if not contract_family or not family or family == contract_family then
+        index[key] = index[key] or {}
+        table.insert(index[key], {
+          tier = entry.tier,
+          min = entry.min,
+          max = entry.max,
+        })
+      end
     end
-    if value < min then
-        return "below"
-    elseif value > max then
-        return "above"
+  end
+  return index
+end
+
+local function pick_band(bands, tier)
+  if type(bands) ~= "table" then
+    return nil
+  end
+  if not tier then
+    return bands[1]
+  end
+  for _, b in ipairs(bands) do
+    if b.tier == tier then
+      return b
+    end
+  end
+  return bands[1]
+end
+
+----------------------------------------------------------------------
+-- Band classification
+----------------------------------------------------------------------
+
+local function classify_value(value, band)
+  if type(value) ~= "number" or type(band) ~= "table" then
+    return "unknown"
+  end
+
+  local min_v = band.min
+  local max_v = band.max
+  if type(min_v) ~= "number" and type(max_v) ~= "number" then
+    return "unknown"
+  end
+
+  local lower = min_v or value
+  local upper = max_v or value
+
+  if value < lower or value > upper then
+    return "outside"
+  end
+
+  local span = upper - lower
+  if span <= 0 then
+    return "within"
+  end
+
+  local dist_to_lower = abs(value - lower)
+  local dist_to_upper = abs(upper - value)
+  local edge_threshold = span * 0.1
+
+  if dist_to_lower <= edge_threshold or dist_to_upper <= edge_threshold then
+    return "edge"
+  end
+
+  return "within"
+end
+
+----------------------------------------------------------------------
+-- Public API
+----------------------------------------------------------------------
+
+function HpcContractCards.load_spine(spine_path)
+  return load_spine(spine_path or HpcContractCards.spine_path)
+end
+
+function HpcContractCards.load_contract(path)
+  return load_json_file(path)
+end
+
+function HpcContractCards.check_contract(spine, contract, object_kind_override, tier_override)
+  if type(spine) ~= "table" then
+    return nil, "invalid spine data"
+  end
+  if type(contract) ~= "table" then
+    return nil, "invalid contract data"
+  end
+
+  local object_kind = object_kind_override or contract.objectKind or contract.object_kind
+  if type(object_kind) ~= "string" then
+    return nil, "objectKind missing from contract and not provided"
+  end
+
+  local tier = tier_override or contract.tier
+  if type(tier) ~= "string" then
+    tier = nil
+  end
+
+  local schema_entry = find_schema_entry_for_object_kind(spine, object_kind)
+  local contract_family = schema_entry and (schema_entry.contract_family or schema_entry.contractFamily)
+
+  local inv_catalog = spine.invariants_catalog or spine.invariantsCatalog
+  local met_catalog = spine.metrics_catalog or spine.metricsCatalog
+
+  local inv_index = build_band_index(inv_catalog, contract_family)
+  local met_index = build_band_index(met_catalog, contract_family)
+
+  local invariant_bindings = contract.invariantBindings or {}
+  local metric_targets = contract.metricTargets or {}
+
+  local invariant_results = {}
+  local metric_results = {}
+
+  for key, value in pairs(invariant_bindings) do
+    local bands = inv_index[key]
+    local band = bands and pick_band(bands, tier) or nil
+    local status = classify_value(value, band)
+    table.insert(invariant_results, {
+      key = key,
+      value = value,
+      min = band and band.min or nil,
+      max = band and band.max or nil,
+      status = status,
+    })
+  end
+
+  for key, value in pairs(metric_targets) do
+    local bands = met_index[key]
+    local band = bands and pick_band(bands, tier) or nil
+
+    if type(value) == "table" and #value == 2 then
+      local low = value[1]
+      local high = value[2]
+      local status_low = classify_value(low, band)
+      local status_high = classify_value(high, band)
+      local combined
+      if status_low == "outside" or status_high == "outside" then
+        combined = "outside"
+      elseif status_low == "edge" or status_high == "edge" then
+        combined = "edge"
+      else
+        combined = "within"
+      end
+      table.insert(metric_results, {
+        key = key,
+        value = { low, high },
+        min = band and band.min or nil,
+        max = band and band.max or nil,
+        status = combined,
+      })
     else
-        return "within"
+      local status = classify_value(value, band)
+      table.insert(metric_results, {
+        key = key,
+        value = value,
+        min = band and band.min or nil,
+        max = band and band.max or nil,
+        status = status,
+      })
     end
+  end
+
+  return {
+    objectKind = object_kind,
+    tier = tier,
+    contractFamily = contract_family,
+    invariants = invariant_results,
+    metrics = metric_results,
+  }, nil
 end
 
-local function summarize_bands(spine, opts, doc)
-    local invariants = extract_invariants(doc)
-    local metrics = extract_metrics(doc)
+function HpcContractCards.print_summary(summary)
+  if type(summary) ~= "table" then
+    io.write("no summary available\n")
+    return
+  end
 
-    local report = {
-        objectKind = opts.kind,
-        tier = opts.tier,
-        invariants = {},
-        metrics = {},
-    }
+  io.write(("Contract band check summary for objectKind=%s tier=%s\n")
+    :format(tostring(summary.objectKind), tostring(summary.tier)))
+  if summary.contractFamily then
+    io.write(("  contractFamily: %s\n"):format(summary.contractFamily))
+  end
 
-    for name, value in pairs(invariants) do
-        local min, max = band_for_invariant(spine, opts.kind, opts.tier, name)
-        local status = classify(value, min, max)
-        table.insert(report.invariants, {
-            name = name,
-            value = value,
-            min = min,
-            max = max,
-            status = status,
-        })
+  io.write("\nInvariants:\n")
+  for _, item in ipairs(summary.invariants or {}) do
+    io.write(("- %s: value=%s, band=[%s,%s], status=%s\n")
+      :format(
+        tostring(item.key),
+        tostring(item.value),
+        item.min ~= nil and tostring(item.min) or "-",
+        item.max ~= nil and tostring(item.max) or "-",
+        tostring(item.status)
+      ))
+  end
+
+  io.write("\nMetrics:\n")
+  for _, item in ipairs(summary.metrics or {}) do
+    local val_str
+    if type(item.value) == "table" and #item.value == 2 then
+      val_str = ("[%s,%s]"):format(tostring(item.value[1]), tostring(item.value[2]))
+    else
+      val_str = tostring(item.value)
     end
-
-    for name, value in pairs(metrics) do
-        local min, max = band_for_metric(spine, opts.kind, opts.tier, name)
-        local status = classify(value, min, max)
-        table.insert(report.metrics, {
-            name = name,
-            value = value,
-            min = min,
-            max = max,
-            status = status,
-        })
-    end
-
-    table.sort(report.invariants, function(a, b) return a.name < b.name end)
-    table.sort(report.metrics, function(a, b) return a.name < b.name end)
-
-    return report
+    io.write(("- %s: value=%s, band=[%s,%s], status=%s\n")
+      :format(
+        tostring(item.key),
+        val_str,
+        item.min ~= nil and tostring(item.min) or "-",
+        item.max ~= nil and tostring(item.max) or "-",
+        tostring(item.status)
+      ))
+  end
 end
 
-function M.main(argv)
-    local opts, err = parse_args(argv)
-    if not opts then
-        io.stderr:write("error: " .. err .. "\n")
-        io.stderr:write("usage: lua hpc_contractcards.lua --root <path> --kind <objectKind> --tier <tier> <contract.json>\n")
-        return 1
-    end
+function HpcContractCards.main(argv)
+  argv = argv or {}
 
-    local spine, spine_err = SpineClient.load(opts.root)
-    if not spine then
-        io.stderr:write("error loading spine: " .. tostring(spine_err) .. "\n")
-        return 1
-    end
+  local spine_path = HpcContractCards.spine_path
+  local contract_path
+  local object_kind
+  local tier
 
-    local text, read_err = read_file(opts.path)
-    if not text then
-        io.stderr:write("error reading contract: " .. tostring(read_err) .. "\n")
-        return 1
+  local i = 1
+  while i <= #argv do
+    local a = argv[i]
+    if a == "--spine" then
+      i = i + 1
+      spine_path = argv[i]
+    elseif a == "--kind" then
+      i = i + 1
+      object_kind = argv[i]
+    elseif a == "--tier" then
+      i = i + 1
+      tier = argv[i]
+    else
+      contract_path = a
     end
+    i = i + 1
+  end
 
-    local doc, _, decode_err = json.decode(text)
-    if decode_err then
-        io.stderr:write("error decoding JSON: " .. tostring(decode_err) .. "\n")
-        return 1
-    end
+  if not contract_path then
+    io.stderr:write("usage: lua hpc_contractcards.lua [--spine path] [--kind objectKind] [--tier tier] <contract.json>\n")
+    return 1
+  end
 
-    local report = summarize_bands(spine, opts, doc)
-    local out = json.encode(report, { indent = 2 })
-    print(out)
-    return 0
+  local spine, err = HpcContractCards.load_spine(spine_path)
+  if not spine then
+    io.stderr:write(("error: %s\n"):format(err))
+    return 1
+  end
+
+  local contract, err2 = HpcContractCards.load_contract(contract_path)
+  if not contract then
+    io.stderr:write(("error: %s\n"):format(err2))
+    return 1
+  end
+
+  local summary, err3 = HpcContractCards.check_contract(spine, contract, object_kind, tier)
+  if not summary then
+    io.stderr:write(("error: %s\n"):format(err3))
+    return 1
+  end
+
+  HpcContractCards.print_summary(summary)
+  return 0
 end
 
 if debug.getinfo(1, "S").short_src == arg[0] then
-    os.exit(M.main({ select(1, table.unpack(arg, 1, #arg)) }))
+  os.exit(HpcContractCards.main(arg))
 end
 
-return M
+return HpcContractCards
