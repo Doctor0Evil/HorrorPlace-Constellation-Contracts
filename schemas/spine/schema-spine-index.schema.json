@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/spine/schema-spine-index.v1.json",
+  "title": "Schema Spine Index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["indexVersion", "generatedAt", "schemas", "consumers"],
+  "properties": {
+    "indexVersion": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "schemas": { "type": "object" },
+    "consumers": { "type": "object" }
+  }
+}
