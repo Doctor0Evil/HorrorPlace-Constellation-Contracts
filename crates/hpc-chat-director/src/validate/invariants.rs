@@ -10,507 +10,423 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
+use crate::errors::{InteractionEffect, Severity, ValidationError, ValidationLayer};
+use crate::model::request_types::AiAuthoringRequest;
 use crate::model::response_types::AiAuthoringResponse;
-use crate::model::spine_types::{ObjectKind, SchemaSpine, Tier};
-use crate::validate::{Diagnostic, Severity, ValidationLayer};
+use crate::spine::{InvariantSpec, MetricSpec, SpineIndex};
 
-/// Basic scalar range (inclusive) used for invariant and metric checks.
-#[derive(Debug, Clone)]
-pub struct ScalarRange {
-    pub min: f64,
-    pub max: f64,
-}
-
-/// Identifies a JSON field to validate and how.
-#[derive(Debug, Clone)]
-pub enum InvariantKind {
-    Structural,
-    Metric,
-    Derived,
-}
-
-/// One row of the enforcement table (range-level checks only).
-#[derive(Debug, Clone)]
-pub struct InvariantRule {
-    pub code: &'static str,
-    pub name: &'static str,
-    pub kind: InvariantKind,
-    pub json_pointer: &'static str,
-    pub base_range: ScalarRange,
-    pub families: &'static [ObjectKind],
-}
-
-/// Result of validating a single invariant or metric.
+/// Invariant-level diagnostic with cross-metric effects and fix ordering.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InvariantResult {
-    /// Metric/invariant name.
-    pub metric: String,
-    /// Submitted value.
-    pub submitted_value: f64,
-    /// Valid band after XMIT adjustments.
-    pub band: InvariantBand,
-    /// Whether the value passed validation.
-    pub passed: bool,
-    /// Cross-metric interaction effects that affected this metric.
+pub struct InvariantDiagnostic {
+    pub code: String,
+    pub json_pointer: String,
+    pub submitted_value: Option<serde_json::Value>,
+    pub expected: String,
+    pub remediation: String,
+    pub severity: Severity,
+    pub fix_order: u32,
     pub interaction_effects: Vec<InteractionEffect>,
 }
 
-/// Numeric band constraint for a metric.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InvariantBand {
-    pub metric: String,
-    pub min: f64,
-    pub max: f64,
-    pub error_code: String,
+/// All invariant/metric diagnostics for a single artifact.
+#[derive(Debug, Default)]
+pub struct InvariantValidationResult {
+    pub diagnostics: Vec<InvariantDiagnostic>,
 }
 
-/// Cross-metric interaction effect record.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InteractionEffect {
-    pub rule_id: String,
-    pub source_metric: String,
-    pub target_metric: String,
-    pub effect_type: String,
-    pub adjusted_band: InvariantBand,
-    pub reason: String,
+/// Placeholder type for storing cross-metric state (e.g., adjusted bands).
+#[derive(Debug, Default)]
+pub struct XmitState {
+    pub adjusted_metric_bands: HashMap<String, (f64, f64)>,
 }
 
-/// Structured explanation for an invariant failure.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InvariantExplanation {
-    pub code: String,
-    pub layer: String,
-    pub severity: String,
-    pub json_pointer: String,
-    pub submitted_value: String,
-    pub expected: String,
-    pub remediation: String,
-}
-
-/// Public entry point used by validatemod.rs.
-///
-/// This is the machine-enforceable horror logic:
-/// 1. Derive effective bands from the spine (including tier overrides).
-/// 2. Apply cross-metric XMIT rules to adjust those bands.
-/// 3. Compare submitted values to post-XMIT bands and emit Diagnostics.
+/// Entry point: enforce invariants and entertainment metrics for a response.
 pub fn validate_invariants(
-    spine: &SchemaSpine,
-    object_kind: ObjectKind,
-    tier: Tier,
+    spine: &SpineIndex,
+    req: &AiAuthoringRequest,
     resp: &AiAuthoringResponse,
-) -> Result<Vec<Diagnostic>, crate::errors::ValidationError> {
-    let artifact = &resp.payload;
+) -> InvariantValidationResult {
+    let mut result = InvariantValidationResult::default();
 
-    // Extract scalar values keyed by invariant / metric abbreviation.
-    let values = extract_metric_values(artifact)?;
+    let object_kind = req.object_kind;
+    let tier = req.tier;
 
-    // Build default bands from the spine for this objectKind and tier.
-    let mut bands = get_default_bands(object_kind, spine, tier)?;
+    // Raw invariant and metric maps extracted from payload.
+    let invariants = extract_invariants(resp);
+    let metrics = extract_metrics(resp);
 
-    // Pass 1: collect pre-XMIT out-of-band values (for telemetry/debug only).
-    let mut pre_xmit_failures: Vec<InvariantResult> = Vec::new();
-    for (metric, value) in &values {
-        if let Some(band) = bands.get(metric) {
-            if value < &band.min || value > &band.max {
-                pre_xmit_failures.push(InvariantResult {
-                    metric: metric.clone(),
-                    submitted_value: *value,
-                    band: band.clone(),
-                    passed: false,
-                    interaction_effects: Vec::new(),
-                });
-            }
-        }
-    }
+    // Pass 1: raw range checks against spine.
+    apply_raw_range_checks(
+        spine,
+        object_kind,
+        tier,
+        &invariants,
+        &metrics,
+        &mut result.diagnostics,
+    );
 
-    // Pass 2: apply spine-defined XMIT interaction rules to mutate bands.
-    let mut interaction_effects = Vec::new();
-    for rule in &spine.interaction_rules {
-        if let Some(effect) = apply_xmit_rule(rule, &values, &mut bands) {
-            interaction_effects.push(effect);
-        }
-    }
+    // Pass 2: apply cross-metric XMIT rules, possibly generating additional diagnostics.
+    let xmit_state = apply_all_xmit_rules(
+        spine,
+        object_kind,
+        tier,
+        &invariants,
+        &metrics,
+        &mut result.diagnostics,
+    );
 
-    // Pass 3: re-check values against adjusted bands and emit Diagnostics.
-    let mut diagnostics = Vec::new();
-    for (metric, value) in &values {
-        if let Some(band) = bands.get(metric) {
-            let passed = value >= &band.min && value <= &band.max;
+    // Pass 3: post-XMIT checks, using any adjusted bands from XMIT.
+    apply_post_xmit_checks(
+        spine,
+        object_kind,
+        tier,
+        &invariants,
+        &metrics,
+        &xmit_state,
+        &mut result.diagnostics,
+    );
 
-            // Attach interaction effects for this metric.
-            let effects: Vec<InteractionEffect> = interaction_effects
-                .iter()
-                .filter(|e| e.target_metric == *metric)
-                .cloned()
-                .collect();
-
-            if !passed {
-                let result = InvariantResult {
-                    metric: metric.clone(),
-                    submitted_value: *value,
-                    band: band.clone(),
-                    passed,
-                    interaction_effects: effects.clone(),
-                };
-                let explanation = explain_invariant_failure(&result);
-
-                diagnostics.push(Diagnostic {
-                    code: band.error_code.clone(),
-                    layer: ValidationLayer::Invariant,
-                    severity: Severity::Error,
-                    json_pointer: explanation.json_pointer,
-                    submitted_value: Some(Value::from(result.submitted_value)),
-                    expected: explanation.expected,
-                    remediation: explanation.remediation,
-                    fix_order: 1,
-                });
-            }
-        }
-    }
-
-    // Also run the static per-field rules for contracts that still use invariantBindings/metricTargets.
-    let static_rules = base_invariant_rules();
-    for rule in static_rules
-        .iter()
-        .filter(|r| r.families.contains(&object_kind))
-    {
-        apply_static_invariant_rule(spine, rule, object_kind, tier, artifact, &mut diagnostics);
-    }
-
-    // Optionally, we could down-grade pre-XMIT-only failures into softDiagnostics via CLI,
-    // but here we just return the hard errors.
-    Ok(diagnostics)
+    result
 }
 
-/// Extract invariant/metric values from a contract artifact.
-///
-/// This expects the v1 shapes:
-/// - invariantBindings.{ABBREV}.value for invariants
-/// - metricTargets.{ABBREV}.target for metrics
-fn extract_metric_values(
-    artifact: &Value,
-) -> Result<HashMap<String, f64>, crate::errors::ValidationError> {
-    let mut values = HashMap::new();
-
-    // invariantBindings block
-    if let Some(invariants) = artifact.get("invariantBindings").and_then(|v| v.as_object()) {
-        for (abbr, v) in invariants {
-            if let Some(obj) = v.as_object() {
-                if let Some(num) = obj.get("value").and_then(|x| x.as_f64()) {
-                    values.insert(abbr.clone(), num);
+/// Extract invariant values from the response payload.
+fn extract_invariants(resp: &AiAuthoringResponse) -> HashMap<String, f64> {
+    let mut out = HashMap::new();
+    if let Some(bindings) = resp.payload.get("invariantBindings") {
+        if let Some(obj) = bindings.as_object() {
+            for (name, spec) in obj {
+                if let Some(value) = spec.get("value").and_then(|v| v.as_f64()) {
+                    out.insert(name.clone(), value);
                 }
             }
         }
     }
+    out
+}
 
-    // metricTargets block
-    if let Some(metrics) = artifact.get("metricTargets").and_then(|v| v.as_object()) {
-        for (abbr, v) in metrics {
-            if let Some(obj) = v.as_object() {
-                if let Some(num) = obj.get("target").and_then(|x| x.as_f64()) {
-                    values.insert(abbr.clone(), num);
+/// Extract metric targets from the response payload.
+fn extract_metrics(resp: &AiAuthoringResponse) -> HashMap<String, f64> {
+    let mut out = HashMap::new();
+    if let Some(targets) = resp.payload.get("metricTargets") {
+        if let Some(obj) = targets.as_object() {
+            for (name, spec) in obj {
+                if let Some(value) = spec.get("target").and_then(|v| v.as_f64()) {
+                    out.insert(name.clone(), value);
                 }
             }
         }
     }
-
-    Ok(values)
+    out
 }
 
-/// Get default bands for metrics from spine for given objectKind and tier.
-fn get_default_bands(
-    object_kind: ObjectKind,
-    spine: &SchemaSpine,
-    tier: Tier,
-) -> Result<HashMap<String, InvariantBand>, crate::errors::ValidationError> {
-    let mut bands = HashMap::new();
-
-    // Safe default bands per objectKind/tier where provided.
-    if let Some(defaults) = spine.safe_defaults.get(&object_kind) {
-        if let Some(tier_defaults) = defaults.by_tier.get(&tier) {
-            // Invariant defaults.
-            for (name, range) in &tier_defaults.invariants {
-                bands.insert(
-                    name.clone(),
-                    InvariantBand {
-                        metric: name.clone(),
-                        min: range.min,
-                        max: range.max,
-                        error_code: format!("ERR_{}_RANGE", name.to_uppercase()),
-                    },
-                );
-            }
-            // Metric defaults.
-            for (name, range) in &tier_defaults.metrics {
-                bands.insert(
-                    name.clone(),
-                    InvariantBand {
-                        metric: name.clone(),
-                        min: range.min,
-                        max: range.max,
-                        error_code: format!("ERR_{}_RANGE", name.to_uppercase()),
-                    },
-                );
-            }
-        }
-    }
-
-    // Fallback: canonical invariant ranges with tier overrides.
-    for (name, spec) in &spine.invariants {
-        if !bands.contains_key(name) {
-            let range = spec
-                .tier_overrides
-                .get(&tier)
-                .unwrap_or(&spec.canonical_range);
-            bands.insert(
-                name.clone(),
-                InvariantBand {
-                    metric: name.clone(),
-                    min: range.min,
-                    max: range.max,
-                    error_code: format!("ERR_{}_RANGE", name.to_uppercase()),
-                },
-            );
-        }
-    }
-
-    // Fallback: canonical metric target bands.
-    for (name, spec) in &spine.metrics {
-        if !bands.contains_key(name) {
-            bands.insert(
-                name.clone(),
-                InvariantBand {
-                    metric: name.clone(),
-                    min: spec.target_band.min,
-                    max: spec.target_band.max,
-                    error_code: format!("ERR_{}_RANGE", name.to_uppercase()),
-                },
-            );
-        }
-    }
-
-    Ok(bands)
-}
-
-/// Static table: core invariant and metric range rules for v1 artifacts
-/// that still use invariantBindings/metricTargets paths directly.
-///
-/// All numeric defaults here are fallbacks; spine overrides are applied first.
-fn base_invariant_rules() -> &'static [InvariantRule] {
-    use InvariantKind::{Derived, Metric, Structural};
-
-    const ALL_FAMILIES: &[ObjectKind] = &[
-        ObjectKind::MoodContract,
-        ObjectKind::EventContract,
-        ObjectKind::RegionContractCard,
-        ObjectKind::SeedContractCard,
-    ];
-
-    const MOOD_REGION_SEED: &[ObjectKind] = &[
-        ObjectKind::MoodContract,
-        ObjectKind::RegionContractCard,
-        ObjectKind::SeedContractCard,
-    ];
-
-    const MOOD_EVENT: &[ObjectKind] = &[ObjectKind::MoodContract, ObjectKind::EventContract];
-
-    const EVENT_ONLY: &[ObjectKind] = &[ObjectKind::EventContract];
-
-    const REGION_ONLY: &[ObjectKind] = &[ObjectKind::RegionContractCard];
-
-    &[
-        InvariantRule {
-            code: "ERR_CIC_RANGE",
-            name: "CIC",
-            kind: Structural,
-            json_pointer: "/invariantBindings/CIC/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-        InvariantRule {
-            code: "ERR_MDI_RANGE",
-            name: "MDI",
-            kind: Structural,
-            json_pointer: "/invariantBindings/MDI/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: MOOD_REGION_SEED,
-        },
-        InvariantRule {
-            code: "ERR_AOS_RANGE",
-            name: "AOS",
-            kind: Structural,
-            json_pointer: "/invariantBindings/AOS/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: MOOD_REGION_SEED,
-        },
-        InvariantRule {
-            code: "ERR_LSG_RANGE",
-            name: "LSG",
-            kind: Structural,
-            json_pointer: "/invariantBindings/LSG/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-        InvariantRule {
-            code: "ERR_HVF_RANGE",
-            name: "HVF",
-            kind: Structural,
-            json_pointer: "/invariantBindings/HVF/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: MOOD_REGION_SEED,
-        },
-        InvariantRule {
-            code: "ERR_DET_RANGE",
-            name: "DET",
-            kind: Structural,
-            json_pointer: "/invariantBindings/DET/value",
-            base_range: ScalarRange { min: 0.0, max: 10.0 },
-            families: MOOD_EVENT,
-        },
-        InvariantRule {
-            code: "ERR_FCF_RANGE",
-            name: "FCF",
-            kind: Structural,
-            json_pointer: "/invariantBindings/FCF/value",
-            base_range: ScalarRange { min: 0.0, max: 10.0 },
-            families: MOOD_EVENT,
-        },
-        InvariantRule {
-            code: "ERR_RRM_RANGE",
-            name: "RRM",
-            kind: Structural,
-            json_pointer: "/invariantBindings/RRM/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: REGION_ONLY,
-        },
-        InvariantRule {
-            code: "ERR_SPR_DERIVED",
-            name: "SPR",
-            kind: Derived,
-            json_pointer: "/invariantBindings/SPR/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-        InvariantRule {
-            code: "ERR_SHCI_COUPLING",
-            name: "SHCI",
-            kind: Derived,
-            json_pointer: "/invariantBindings/SHCI/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-        InvariantRule {
-            code: "ERR_RWF_FLOOR",
-            name: "RWF",
-            kind: Derived,
-            json_pointer: "/invariantBindings/RWF/value",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: EVENT_ONLY,
-        },
-        InvariantRule {
-            code: "ERR_UEC_RANGE",
-            name: "UEC",
-            kind: Metric,
-            json_pointer: "/metricTargets/UEC/target",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-        InvariantRule {
-            code: "ERR_EMD_RANGE",
-            name: "EMD",
-            kind: Metric,
-            json_pointer: "/metricTargets/EMD/target",
-            base_range: ScalarRange { min: -1.0, max: 1.0 },
-            families: MOOD_EVENT,
-        },
-        InvariantRule {
-            code: "ERR_STCI_RANGE",
-            name: "STCI",
-            kind: Metric,
-            json_pointer: "/metricTargets/STCI/target",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: EVENT_ONLY,
-        },
-        InvariantRule {
-            code: "ERR_CDL_RANGE",
-            name: "CDL",
-            kind: Metric,
-            json_pointer: "/metricTargets/CDL/target",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: MOOD_EVENT,
-        },
-        InvariantRule {
-            code: "ERR_ARR_FLOOR",
-            name: "ARR",
-            kind: Metric,
-            json_pointer: "/metricTargets/ARR/target",
-            base_range: ScalarRange { min: 0.0, max: 1.0 },
-            families: ALL_FAMILIES,
-        },
-    ]
-}
-
-fn apply_static_invariant_rule(
-    spine: &SchemaSpine,
-    rule: &InvariantRule,
-    object_kind: ObjectKind,
-    tier: Tier,
-    payload: &Value,
-    diagnostics: &mut Vec<Diagnostic>,
+/// Pass 1: strict range checks from spine for each invariant/metric.
+fn apply_raw_range_checks(
+    spine: &SpineIndex,
+    object_kind: crate::model::spine_types::ObjectKind,
+    tier: crate::model::spine_types::Tier,
+    invariants: &HashMap<String, f64>,
+    metrics: &HashMap<String, f64>,
+    diags: &mut Vec<InvariantDiagnostic>,
 ) {
-    let value = match payload.pointer(rule.json_pointer) {
-        Some(Value::Number(n)) => match n.as_f64() {
-            Some(v) => v,
-            None => return,
-        },
-        _ => return,
-    };
+    for (name, value) in invariants {
+        if let Some(spec) = spine.describe_invariant(name) {
+            if let Some((min, max)) = spine.range_for_invariant(&spec, object_kind, tier) {
+                if value < &min || value > &max {
+                    diags.push(out_of_range_invariant(&spec, *value, min, max));
+                }
+            }
+        }
+    }
 
-    // Ask spine for the effective range (including tier overrides) if available.
-    let effective_range = spine
-        .effective_range(rule.name, object_kind, tier)
-        .unwrap_or(ScalarRange {
-            min: rule.base_range.min,
-            max: rule.base_range.max,
-        });
-
-    if value < effective_range.min || value > effective_range.max {
-        diagnostics.push(Diagnostic {
-            code: rule.code.to_string(),
-            layer: ValidationLayer::Invariant,
-            severity: Severity::Error,
-            json_pointer: rule.json_pointer.to_string(),
-            submitted_value: Some(Value::from(value)),
-            expected: format!(
-                "{} <= {} <= {} for {:?} at {:?}",
-                effective_range.min, rule.name, effective_range.max, object_kind, tier
-            ),
-            remediation: "Adjust value into the allowed range or change tier.".to_string(),
-            fix_order: 1,
-        });
+    for (name, value) in metrics {
+        if let Some(spec) = spine.describe_metric(name) {
+            let (min, max) = spine.target_band_for_metric(&spec, object_kind, tier);
+            if value < &min || value > &max {
+                diags.push(out_of_range_metric(&spec, *value, min, max));
+            }
+        }
     }
 }
 
-/// Apply a single spine-defined XMIT interaction rule; returns an InteractionEffect if triggered.
-///
-/// The concrete semantics (thresholds, effect type, target metric) come from the spine.
-fn apply_xmit_rule(
-    rule: &crate::model::spine_types::InteractionRule,
-    values: &HashMap<String, f64>,
-    bands: &mut HashMap<String, InvariantBand>,
-) -> Option<InteractionEffect> {
-    let source_value = values.get(&rule.source_metric)?;
+/// Pass 2: apply all XMIT_XXX cross-metric rules; may record adjusted bands and diagnostics.
+fn apply_all_xmit_rules(
+    spine: &SpineIndex,
+    object_kind: crate::model::spine_types::ObjectKind,
+    tier: crate::model::spine_types::Tier,
+    invariants: &HashMap<String, f64>,
+    metrics: &HashMap<String, f64>,
+    diags: &mut Vec<InvariantDiagnostic>,
+) -> XmitState {
+    let mut state = XmitState::default();
 
-    // Threshold checks.
-    if let Some(threshold) = rule.condition.source_threshold {
-        if *source_value <= threshold {
-            return None;
+    // XMIT_001: DET amplifies CDL floor when DET >= 8.0
+    if let (Some(det), Some(cdl)) = (invariants.get("DET"), metrics.get("CDL")) {
+        if *det >= 8.0 {
+            let (floor, _) = spine.cdl_floor_for_det(object_kind, tier, *det);
+            if *cdl < floor {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_XMIT_001".to_string(),
+                    json_pointer: "/metricTargets/CDL/target".to_string(),
+                    submitted_value: Some(serde_json::json!(cdl)),
+                    expected: format!("CDL >= {:.2} when DET >= 8.0", floor),
+                    remediation: format!(
+                        "Increase CDL to at least {:.2} or lower DET below 8.0.",
+                        floor
+                    ),
+                    severity: Severity::Error,
+                    fix_order: 2,
+                    interaction_effects: vec![InteractionEffect {
+                        interaction_id: "XMIT_001".to_string(),
+                        description:
+                            "High DET raises the minimum acceptable CDL floor for mood/event contracts."
+                                .to_string(),
+                    }],
+                });
+            }
         }
     }
-    
+
+    // XMIT_002: CIC widens SHCI bands when CIC >= 0.7
+    if let (Some(cic), Some(shci)) = (invariants.get("CIC"), invariants.get("SHCI")) {
+        if *cic >= 0.7 {
+            let (base_min, base_max) = spine.shci_band_for_object_kind(object_kind, tier);
+            let (adj_min, adj_max) =
+                spine.shci_band_with_cic(object_kind, tier, *cic, base_min, base_max);
+            state
+                .adjusted_metric_bands
+                .insert("SHCI".to_string(), (adj_min, adj_max));
+
+            if *shci < adj_min || *shci > adj_max {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_XMIT_002".to_string(),
+                    json_pointer: "/invariantBindings/SHCI/value".to_string(),
+                    submitted_value: Some(serde_json::json!(shci)),
+                    expected: format!(
+                        "SHCI in [{:.2}, {:.2}] when CIC >= 0.7",
+                        adj_min, adj_max
+                    ),
+                    remediation:
+                        "Adjust SHCI into the widened band or reduce CIC below 0.7.".to_string(),
+                    severity: Severity::Warning,
+                    fix_order: 3,
+                    interaction_effects: vec![InteractionEffect {
+                        interaction_id: "XMIT_002".to_string(),
+                        description:
+                            "High CIC widens acceptable SHCI bands; out-of-range SHCI weakens spectral-history coupling."
+                                .to_string(),
+                    }],
+                });
+            }
+        }
+    }
+
+    // XMIT_003: DET suppresses ARR floor for certain archetypes.
+    if let (Some(det), Some(arr)) = (invariants.get("DET"), metrics.get("ARR")) {
+        let (floor, suppressed_floor) = spine.arr_floor_for_det(object_kind, tier, *det);
+        let effective_floor = suppressed_floor.unwrap_or(floor);
+        if *arr < effective_floor {
+            diags.push(InvariantDiagnostic {
+                code: "ERR_XMIT_003".to_string(),
+                json_pointer: "/metricTargets/ARR/target".to_string(),
+                submitted_value: Some(serde_json::json!(arr)),
+                expected: format!("ARR >= {:.2} for DET {:.2}", effective_floor, det),
+                remediation: format!(
+                    "Increase ARR to at least {:.2}, or lower DET to reduce suppression.",
+                    effective_floor
+                ),
+                severity: Severity::Warning,
+                fix_order: 4,
+                interaction_effects: vec![InteractionEffect {
+                    interaction_id: "XMIT_003".to_string(),
+                    description:
+                        "Very high DET may suppress ARR floor; extreme horror accepts lower audience retention."
+                            .to_string(),
+                }],
+            });
+        }
+    }
+
+    // XMIT_004: AOS amplifies EMD band.
+    if let (Some(aos), Some(emd)) = (invariants.get("AOS"), metrics.get("EMD")) {
+        if *aos >= 0.6 {
+            let (min, max) = spine.emd_band_for_aos(object_kind, tier, *aos);
+            state
+                .adjusted_metric_bands
+                .insert("EMD".to_string(), (min, max));
+            if *emd < min || *emd > max {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_XMIT_004".to_string(),
+                    json_pointer: "/metricTargets/EMD/target".to_string(),
+                    submitted_value: Some(serde_json::json!(emd)),
+                    expected: format!("EMD in [{:.2}, {:.2}] when AOS >= 0.6", min, max),
+                    remediation:
+                        "Adjust EMD into the amplified band or reduce AOS below 0.6.".to_string(),
+                    severity: Severity::Error,
+                    fix_order: 2,
+                    interaction_effects: vec![InteractionEffect {
+                        interaction_id: "XMIT_004".to_string(),
+                        description:
+                            "High AOS amplifies EMD targets; entertainment variance must track ambient oscillation."
+                                .to_string(),
+                    }],
+                });
+            }
+        }
+    }
+
+    // XMIT_005: LSG gates HVF floor.
+    if let (Some(lsg), Some(hvf)) = (invariants.get("LSG"), invariants.get("HVF")) {
+        if *lsg <= 0.2 {
+            let floor = spine.hvf_floor_for_lsg(object_kind, tier, *lsg);
+            if *hvf < floor {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_XMIT_005".to_string(),
+                    json_pointer: "/invariantBindings/HVF/value".to_string(),
+                    submitted_value: Some(serde_json::json!(hvf)),
+                    expected: format!("HVF >= {:.2} when LSG <= 0.2", floor),
+                    remediation: format!(
+                        "Increase HVF to at least {:.2} or raise LSG to a more stable value.",
+                        floor
+                    ),
+                    severity: Severity::Error,
+                    fix_order: 1,
+                    interaction_effects: vec![InteractionEffect {
+                        interaction_id: "XMIT_005".to_string(),
+                        description:
+                            "Unstable liminal spaces enforce a higher horror viscosity floor."
+                                .to_string(),
+                    }],
+                });
+            }
+        }
+    }
+
+    state
+}
+
+/// Pass 3: post-XMIT re-checks; ensures diagnostics are aware of adjusted bands.
+fn apply_post_xmit_checks(
+    spine: &SpineIndex,
+    object_kind: crate::model::spine_types::ObjectKind,
+    tier: crate::model::spine_types::Tier,
+    invariants: &HashMap<String, f64>,
+    _metrics: &HashMap<String, f64>,
+    xmit_state: &XmitState,
+    diags: &mut Vec<InvariantDiagnostic>,
+) {
+    // Derived metrics like SPR, SHCI plausibility checks.
+    if let Some(derived) = spine.compute_derived_metrics(invariants) {
+        if let Some(spr) = derived.spr {
+            let (min, max) = spine.spr_band(object_kind, tier);
+            if spr < min || spr > max {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_SPR_DERIVED".to_string(),
+                    json_pointer: "/invariantBindings/SPR/value".to_string(),
+                    submitted_value: Some(serde_json::json!(spr)),
+                    expected: format!("SPR in [{:.2}, {:.2}]", min, max),
+                    remediation:
+                        "Adjust CIC, MDI, AOS, LSG, or FCF so that derived SPR falls in the plausible band."
+                            .to_string(),
+                    severity: Severity::Error,
+                    fix_order: 3,
+                    interaction_effects: vec![],
+                });
+            }
+        }
+
+        if let Some(shci) = derived.shci {
+            let (min, max) = xmit_state
+                .adjusted_metric_bands
+                .get("SHCI")
+                .cloned()
+                .unwrap_or_else(|| spine.shci_band_for_object_kind(object_kind, tier));
+            if shci < min || shci > max {
+                diags.push(InvariantDiagnostic {
+                    code: "ERR_SHCI_COUPLING".to_string(),
+                    json_pointer: "/invariantBindings/SHCI/value".to_string(),
+                    submitted_value: Some(serde_json::json!(shci)),
+                    expected: format!("SHCI in [{:.2}, {:.2}]", min, max),
+                    remediation:
+                        "Align SHCI with referenced history bundles or adjust CIC/MDI to more plausible values."
+                            .to_string(),
+                    severity: Severity::Error,
+                    fix_order: 2,
+                    interaction_effects: vec![InteractionEffect {
+                        interaction_id: "XMIT_SHCI".to_string(),
+                        description:
+                            "SHCI must remain consistent with local history and CIC-driven coupling."
+                                .to_string(),
+                    }],
+                });
+            }
+        }
+    }
+}
+
+fn out_of_range_invariant(
+    spec: &InvariantSpec,
+    value: f64,
+    min: f64,
+    max: f64,
+) -> InvariantDiagnostic {
+    InvariantDiagnostic {
+        code: format!("ERR_{}_RANGE", spec.abbreviation.to_uppercase()),
+        json_pointer: format!("/invariantBindings/{}/value", spec.abbreviation),
+        submitted_value: Some(serde_json::json!(value)),
+        expected: format!(
+            "{} in [{:.2}, {:.2}] for this objectKind and tier",
+            spec.abbreviation, min, max
+        ),
+        remediation: format!(
+            "Clamp {} into [{:.2}, {:.2}] or change tier/objectKind to one that permits {:.2}.",
+            spec.abbreviation, min, max, value
+        ),
+        severity: Severity::Error,
+        fix_order: 1,
+        interaction_effects: vec![],
+    }
+}
+
+fn out_of_range_metric(
+    spec: &MetricSpec,
+    value: f64,
+    min: f64,
+    max: f64,
+) -> InvariantDiagnostic {
+    InvariantDiagnostic {
+        code: format!("ERR_{}_RANGE", spec.abbreviation.to_uppercase()),
+        json_pointer: format!("/metricTargets/{}/target", spec.abbreviation),
+        submitted_value: Some(serde_json::json!(value)),
+        expected: format!(
+            "{} target in [{:.2}, {:.2}] for this objectKind and tier",
+            spec.abbreviation, min, max
+        ),
+        remediation: format!(
+            "Adjust {} target into [{:.2}, {:.2}] or request a different archetype/tier.",
+            spec.abbreviation, min, max
+        ),
+        severity: Severity::Error,
+        fix_order: 1,
+        interaction_effects: vec![],
+    }
+}
+
+/// Lift an InvariantDiagnostic into the crate-wide ValidationError.
+pub fn as_validation_errors(diags: Vec<InvariantDiagnostic>) -> Vec<ValidationError> {
+    diags
+        .into_iter()
+        .map(|d| ValidationError {
+            code: d.code,
+            layer: ValidationLayer::Invariant,
+            severity: d.severity,
+            json_pointer: d.json_pointer,
+            submitted_value: d.submitted_value,
+            expected: d.expected,
+            remediation: d.remediation,
+            fix_order: d.fix_order,
+            interaction_effects: d.interaction_effects,
+        })
+        .collect()
+}
