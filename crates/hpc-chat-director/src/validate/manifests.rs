@@ -1,6 +1,14 @@
 // crates/hpc-chat-director/src/validate/manifests.rs
 
-use crate::model::manifest_types::{RepoManifest, Tier};
+//! Repository manifest validation: routing, tier rules, and policy checks.
+//!
+//! Validates that AI-generated artifacts comply with repo-level policies:
+//! correct targetRepo for objectKind, tier-appropriate content, one-file-per-request,
+//! mandatory deadledgerRef, minimum RWF, and cross-repo reference rules.
+
+use serde::{Deserialize, Serialize};
+
+use crate::model::manifest_types::{AuthoringHints, RepoManifest, Tier};
 use crate::model::request_types::AiAuthoringRequest;
 use crate::model::response_types::AiAuthoringResponse;
 
@@ -12,7 +20,8 @@ pub struct ManifestValidationResult {
 }
 
 /// Structured manifest-related diagnostic.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ManifestDiagnostic {
     pub code: ManifestDiagnosticCode,
     pub message: String,
@@ -21,14 +30,16 @@ pub struct ManifestDiagnostic {
     pub suggested_alternative_repo: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ManifestDiagnosticSeverity {
     Error,
     Warning,
     Info,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ManifestDiagnosticCode {
     InvalidTargetRepo,
     ObjectKindNotAllowedInRepo,
@@ -39,22 +50,35 @@ pub enum ManifestDiagnosticCode {
     RwfBelowTierMinimum,
 }
 
-/// Minimal slice of what we need from an evaluated manifest set.
+/// Context for manifest-based validation queries.
 pub struct ManifestContext<'a> {
     /// All known manifests keyed by repo name.
     pub manifests_by_repo: &'a [RepoManifest],
 }
 
 impl<'a> ManifestContext<'a> {
+    /// Find a manifest by repo name.
     pub fn find_manifest(&self, repo_name: &str) -> Option<&'a RepoManifest> {
-        self.manifests_by_repo
-            .iter()
-            .find(|m| m.repo == repo_name)
+        self.manifests_by_repo.iter().find(|m| m.repo == repo_name)
+    }
+
+    /// Resolve which repo owns a given ID (for cross-repo reference validation).
+    ///
+    /// The real implementation should consult registry state; this is a placeholder.
+    pub fn lookup_repo_for_id(&self, id: &str) -> Option<String> {
+        if id.starts_with("event.") {
+            Some("HorrorPlace-Atrocity-Seeds".to_string())
+        } else if id.starts_with("region.") {
+            Some("HorrorPlace-Atrocity-Seeds".to_string())
+        } else if id.starts_with("bundle.") {
+            Some("HorrorPlace-Black-Archivum".to_string())
+        } else {
+            None
+        }
     }
 }
 
-/// Entry point: validate routing and tier/policy rules for a response
-/// against the request and manifest configuration.
+/// Entry point: validate routing and tier/policy rules for a response.
 pub fn validate_manifests(
     ctx: &ManifestContext,
     req: &AiAuthoringRequest,
@@ -64,7 +88,7 @@ pub fn validate_manifests(
     let mut is_fatal = false;
 
     // Determine target repo from the response payload.
-    let target_repo = &resp.target_repo;
+    let target_repo = resp.target_repo();
     let Some(manifest) = ctx.find_manifest(target_repo) else {
         diagnostics.push(ManifestDiagnostic {
             code: ManifestDiagnosticCode::InvalidTargetRepo,
@@ -99,8 +123,10 @@ pub fn validate_manifests(
     }
 
     // Tier policy checks: e.g., Tier 1 = contracts only, no raw narrative.
-    if let Some(d) = check_tier_policy(manifest, req, resp) {
-        is_fatal |= matches!(d.severity, ManifestDiagnosticSeverity::Error);
+    if let Some(d) = check_tier_policy(manifest, req) {
+        if matches!(d.severity, ManifestDiagnosticSeverity::Error) {
+            is_fatal = true;
+        }
         diagnostics.push(d);
     }
 
@@ -112,7 +138,10 @@ pub fn validate_manifests(
                 message: "Response contains more than one artifact in a one-file-per-request repo."
                     .to_string(),
                 severity: ManifestDiagnosticSeverity::Error,
-                charter_rationale: manifest.authoring_hints.one_file_per_request_rationale.clone(),
+                charter_rationale: manifest
+                    .authoring_hints
+                    .one_file_per_request_rationale
+                    .clone(),
                 suggested_alternative_repo: None,
             });
             is_fatal = true;
@@ -136,15 +165,17 @@ pub fn validate_manifests(
 
     // Optional: RWF-gated routing for higher tiers.
     if let Some(d) = check_rwf_threshold(manifest, resp) {
-        is_fatal |= matches!(d.severity, ManifestDiagnosticSeverity::Error);
+        if matches!(d.severity, ManifestDiagnosticSeverity::Error) {
+            is_fatal = true;
+        }
         diagnostics.push(d);
     }
 
     // Optional: cross-repository reference checks.
-    if let Some(d) = validate_cross_refs(manifest, ctx, req) {
-        if !d.is_empty() {
-            diagnostics.extend(d.into_iter());
+    if let Some(diags) = validate_cross_refs(manifest, ctx, req) {
+        if !diags.is_empty() {
             is_fatal = true;
+            diagnostics.extend(diags.into_iter());
         }
     }
 
@@ -158,7 +189,6 @@ pub fn validate_manifests(
 fn check_tier_policy(
     manifest: &RepoManifest,
     req: &AiAuthoringRequest,
-    _resp: &AiAuthoringResponse,
 ) -> Option<ManifestDiagnostic> {
     match manifest.tier {
         Tier::T1 => {
@@ -203,9 +233,7 @@ fn check_rwf_threshold(
             ),
             severity: ManifestDiagnosticSeverity::Error,
             charter_rationale: manifest.authoring_hints.tier_rationale.clone(),
-            suggested_alternative_repo: manifest.authoring_hints
-                .default_staging_repo
-                .clone(),
+            suggested_alternative_repo: manifest.authoring_hints.default_staging_repo.clone(),
         })
     } else {
         None
@@ -213,8 +241,6 @@ fn check_rwf_threshold(
 }
 
 /// Cross-repo dependency validation hook.
-/// This is a thin wrapper; the detailed implementation can live elsewhere
-/// or be expanded as the registry layer solidifies.
 fn validate_cross_refs(
     source_manifest: &RepoManifest,
     ctx: &ManifestContext,
@@ -253,22 +279,15 @@ fn validate_cross_refs(
     }
 }
 
-// Helper methods you would define on your manifest and response types:
+// Helper methods to be implemented on your manifest and response types:
 //
 // impl RepoManifest {
 //     pub fn allows_object_kind(&self, kind: &str) -> bool { /* ... */ }
 //     pub fn is_raw_content_kind(&self, kind: &str) -> bool { /* ... */ }
 //     pub fn tier_violation_hints_for(&self, kind: &str) -> (Option<String>, Option<String>) {
-//         // Look up authoringHints.charter text and suggestedAlternativeRepo
-//         // based on tier and objectKind.
+//         // Look up AuthoringHints charter text and suggestedAlternativeRepo.
 //     }
 //     pub fn allows_cross_ref_to(&self, target_repo: &str) -> bool { /* ... */ }
-// }
-//
-// impl ManifestContext<'_> {
-//     pub fn lookup_repo_for_id(&self, id: &str) -> Option<String> {
-//         // Resolve registry ownership for the given ID.
-//     }
 // }
 //
 // impl AiAuthoringResponse {
