@@ -1,0 +1,79 @@
+{
+  "$id": "https://horrorplace.org/schemas/pcgSeedGenerationv1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PCG Seed Generation Record",
+  "description": "Records the parameters and outcome of a procedural content generation seed.",
+  "type": "object",
+  "required": [
+    "seedId",
+    "generationRequestId",
+    "generatorVersion",
+    "parameters",
+    "seedValue",
+    "sessionId",
+    "initialRegionId"
+  ],
+  "properties": {
+    "seedId": {
+      "type": "string",
+      "description": "Unique identifier for this generated seed and master join key for world state."
+    },
+    "generationRequestId": {
+      "type": "string",
+      "description": "Identifier for the request that triggered seed generation."
+    },
+    "generatorVersion": {
+      "type": "string",
+      "description": "Version identifier for the PCG algorithm used."
+    },
+
+    "sessionId": {
+      "type": "string",
+      "description": "Session identifier for the runtime or meta-session this seed is associated with."
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Optional region identifier if the seed is scoped to a specific region."
+    },
+    "initialRegionId": {
+      "type": "string",
+      "description": "Identifier of the first region the player spawns in for this seed."
+    },
+    "descriptorId": {
+      "type": "string",
+      "description": "Generic descriptor join key linking this seed to higher-level descriptors."
+    },
+    "sessionMetricsEnvelopeId": {
+      "type": "string",
+      "description": "Optional join key linking this seed record to a session metrics envelope."
+    },
+
+    "parameters": {
+      "type": "object",
+      "description": "Input parameters for the PCG algorithm.",
+      "properties": {
+        "worldStyle": {
+          "type": "string",
+          "description": "Aesthetic or thematic style label for the world, such as Lovecraftian or Slasher."
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "description": "Initial difficulty setting label such as Normal or Nightmare."
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "seedValue": {
+      "type": "integer",
+      "description": "Integer seed value produced by the PCG algorithm."
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "Optional statistics or derived properties for the generated seed, such as layout complexity.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
