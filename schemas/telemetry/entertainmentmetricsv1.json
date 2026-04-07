@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace-constellation-contracts.schemas/telemetry/entertainmentmetricsv1.json",
+  "title": "Entertainment Metrics v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metrics"],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
+      }
+    },
+    "rawSignals": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Implementation-defined raw input signals used to derive metrics."
+    }
+  }
+}
