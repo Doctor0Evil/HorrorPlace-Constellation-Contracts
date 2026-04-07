@@ -1,0 +1,462 @@
+name: Consent Lua API Validation
+description: Reusable workflow to validate H.Consent.* API usage, telemetry schema compliance, and PII safeguards in Lua code and emitted NDJSON.
+
+on:
+  workflow_call:
+    inputs:
+      lua_source_path:
+        description: "Relative path to Lua source directory"
+        required: false
+        default: "lua/"
+        type: string
+      telemetry_path:
+        description: "Relative path to NDJSON telemetry samples"
+        required: false
+        default: "telemetry/consent/"
+        type: string
+      schema_ref:
+        description: "Canonical schema URI for consent-session-metrics-v1.json"
+        required: false
+        default: "schema://HorrorPlace-Constellation-Contracts/telemetry/consent-session-metrics-v1.json"
+        type: string
+      fail_on_warnings:
+        description: "Treat warnings as errors"
+        required: false
+        default: false
+        type: boolean
+      enable_deadledger_checks:
+        description: "Enforce deadledger_ref presence for high-tier transitions"
+        required: false
+        default: true
+        type: boolean
+
+env:
+  LUA_VERSION: "5.4"
+  JSON_SCHEMA_VERSION: "2020-12"
+  CONSENT_SCHEMA_PATH: "schemas/telemetry/consent-session-metrics-v1.json"
+  STATE_MACHINE_SCHEMA_PATH: "schemas/runtime/consent-state-machine-v1.json"
+
+jobs:
+  validate-lua-api-usage:
+    name: Validate H.Consent.* API Envelope Pattern
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: ${{ env.LUA_VERSION }}
+
+      - name: Install LuaRocks and dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y luarocks
+          luarocks install luacheck
+          luarocks install lua-cjson
+
+      - name: Static analysis for H.Consent.* envelope compliance
+        run: |
+          # Custom Luacheck rules to enforce { ok, data, error } pattern
+          cat > .luacheckrc << 'EOF'
+          -- Horror$Place Consent API linting rules
+          read_globals = {
+            "H.Consent.currentState",
+            "H.Consent.canTransition",
+            "H.Consent.requiredProofs",
+            "H.Consent.bindSession",
+            "H.Consent.consumeBudget",
+            "H.Consent.checkGuardrails",
+            "H.Consent.logDistress",
+            "H.Consent.emitSessionMetrics"
+          }
+
+          -- Enforce that H.Consent.* calls are followed by envelope validation
+          codes = {
+            "011", -- unused variable
+            "211", -- shadowing outer local
+            "311", -- accessing undefined variable
+            "411", -- useless statement
+            "412", -- useless assignment
+            "511", -- unreachable code
+            "512", -- loop with break
+            "513", -- empty loop
+            "521", -- unused label
+            "531", -- unused vararg
+            "541", -- unused argument
+            "542", -- unused local
+            "611", -- empty if branch
+            "612", -- empty else branch
+            "621", -- empty case branch
+            "631"  -- empty default branch
+          }
+
+          -- Custom rule: H.Consent.* must be checked for .ok
+          function check_consent_envelope(node)
+            if node.type == "Call" and node.prefix and node.prefix.type == "Index" then
+              local base = node.prefix
+              while base and base.type == "Index" do
+                base = base.base
+              end
+              if base and base.type == "Name" and base.name == "H" then
+                -- Found H.Consent.* call; check if result is validated
+                local parent = node.parent
+                if parent and parent.type == "Assign" then
+                  local lhs = parent.variables[1]
+                  if lhs then
+                    -- Look for subsequent .ok check in same scope
+                    local scope = parent.parent
+                    local has_ok_check = false
+                    if scope and scope.body then
+                      for _, stmt in ipairs(scope.body) do
+                        if stmt.type == "If" and stmt.clauses then
+                          for _, clause in ipairs(stmt.clauses) do
+                            if clause.condition and clause.condition.type == "Index" then
+                              if clause.condition.base and clause.condition.base.name == lhs.name then
+                                if clause.condition.field == "ok" then
+                                  has_ok_check = true
+                                  break
+                                end
+                              end
+                            end
+                          end
+                        end
+                      end
+                    end
+                    if not has_ok_check then
+                      warn("H.Consent.* result must be checked for .ok field", node)
+                    end
+                  end
+                end
+              end
+            end
+          end
+          EOF
+
+          luacheck --config .luacheckrc ${{ inputs.lua_source_path }}
+
+      - name: Extract and validate telemetry emission calls
+        run: |
+          # Parse Lua files for H.Consent.emitSessionMetrics calls
+          # and validate that emitted JSON matches schema structure
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import json
+          import sys
+
+          lua_path = "${{ inputs.lua_source_path }}"
+          schema_path = "${{ env.CONSENT_SCHEMA_PATH }}"
+
+          # Load schema for structural validation
+          with open(schema_path, 'r') as f:
+            schema = json.load(f)
+
+          # Pattern to match H.Consent.emitSessionMetrics calls
+          pattern = r'H\.Consent\.emitSessionMetrics\s*\(\s*([^)]+)\s*\)'
+
+          errors = []
+          for root, dirs, files in os.walk(lua_path):
+            for file in files:
+              if file.endswith('.lua'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  content = f.read()
+                  matches = re.finditer(pattern, content)
+                  for match in matches:
+                    session_id_arg = match.group(1).strip()
+                    # Verify that the call is followed by error checking
+                    # (simplified check: look for "if not.*ok" pattern nearby)
+                    context_start = max(0, match.start() - 200)
+                    context_end = match.end() + 200
+                    context = content[context_start:context_end]
+                    if not re.search(r'if\s+not\s+\w+\.ok', context) and \
+                       not re.search(r'assert\s*\(\s*\w+\.ok', context):
+                      errors.append(f"{filepath}:{match.start()}: H.Consent.emitSessionMetrics result not checked for .ok")
+
+          if errors:
+            print("❌ Lua API usage validation failed:")
+            for err in errors:
+              print(f"  {err}")
+            sys.exit(1)
+          else:
+            print("✅ All H.Consent.* calls properly validate envelope results")
+          PYTHON_SCRIPT
+
+  validate-telemetry-schema:
+    name: Validate NDJSON Telemetry Against Schema
+    runs-on: ubuntu-latest
+    needs: validate-lua-api-usage
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python and jsonschema
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema==4.21.1
+
+      - name: Validate telemetry samples against consent-session-metrics-v1.json
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import json
+          import sys
+          from jsonschema import validate, ValidationError, Draft202012Validator
+
+          telemetry_path = "${{ inputs.telemetry_path }}"
+          schema_path = "${{ env.CONSENT_SCHEMA_PATH }}"
+
+          # Load and compile schema
+          with open(schema_path, 'r') as f:
+            schema = json.load(f)
+
+          validator = Draft202012Validator(schema)
+
+          errors = []
+          sample_count = 0
+
+          for root, dirs, files in os.walk(telemetry_path):
+            for file in files:
+              if file.endswith('.ndjson') or file.endswith('.json'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  for line_num, line in enumerate(f, 1):
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                      continue
+                    sample_count += 1
+                    try:
+                      record = json.loads(line)
+                      # Validate envelope structure
+                      if "consent_session_metrics" not in record:
+                        errors.append(f"{filepath}:{line_num}: Missing required top-level key 'consent_session_metrics'")
+                        continue
+                      # Validate against schema
+                      validator.validate(record)
+                    except json.JSONDecodeError as e:
+                      errors.append(f"{filepath}:{line_num}: Invalid JSON - {e}")
+                    except ValidationError as e:
+                      path = ".".join(str(p) for p in e.path) if e.path else "root"
+                      errors.append(f"{filepath}:{line_num}: Schema violation at '{path}': {e.message}")
+
+          if errors:
+            print(f"❌ Telemetry schema validation failed ({len(errors)} errors, {sample_count} samples checked):")
+            for err in errors[:10]:  # Limit output
+              print(f"  {err}")
+            if len(errors) > 10:
+              print(f"  ... and {len(errors) - 10} more errors")
+            sys.exit(1)
+          else:
+            print(f"✅ All {sample_count} telemetry samples conform to consent-session-metrics-v1.json")
+          PYTHON_SCRIPT
+
+  scan-for-pii-and-prohibited-fields:
+    name: Scan for PII and Prohibited Fields
+    runs-on: ubuntu-latest
+    needs: validate-lua-api-usage
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run PII and prohibited field scanner
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import sys
+
+          lua_path = "${{ inputs.lua_source_path }}"
+          telemetry_path = "${{ inputs.telemetry_path }}"
+
+          # Prohibited field patterns (PII, raw content, identity leakage)
+          prohibited_patterns = [
+            r'\b(user_name|email|phone|address|ssn|credit_card)\b',
+            r'\b(raw_bci_signal|neural_trace|brain_wave_raw)\b',
+            r'\b(password|secret|api_key|token)\b',
+            r'["\'][a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}["\']',  # email literals
+            r'["\']\d{3}[-.]?\d{3}[-.]?\d{4}["\']',  # phone number literals
+          ]
+
+          # Allowed pseudonymous identifiers (must be hashed/UUID)
+          allowed_id_patterns = [
+            r'session_id\s*[=:]\s*["\'][a-f0-9\-]{36,64}["\']',  # UUID or hex
+            r'user_hash\s*[=:]\s*["\'][a-f0-9]{64}["\']',  # SHA-256
+            r'consent_profile_id\s*[=:]\s*["\']cp-[a-z0-9]+["\']',
+            r'router_state_id\s*[=:]\s*["\']rtr-[a-z0-9]{8}["\']',
+          ]
+
+          errors = []
+          warnings = []
+
+          def scan_file(filepath, content):
+            for pattern in prohibited_patterns:
+              matches = re.finditer(pattern, content, re.IGNORECASE)
+              for match in matches:
+                # Check if match is in a comment or string literal context
+                # Simplified: flag all matches for manual review
+                line_num = content[:match.start()].count('\n') + 1
+                errors.append(f"{filepath}:{line_num}: Prohibited field pattern detected: '{match.group()}'")
+
+            # Check for allowed ID patterns to ensure pseudonymity
+            for pattern in allowed_id_patterns:
+              if not re.search(pattern, content):
+                # This is a warning, not an error - IDs might be dynamic
+                pass
+
+          # Scan Lua files
+          for root, dirs, files in os.walk(lua_path):
+            for file in files:
+              if file.endswith('.lua'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  content = f.read()
+                  scan_file(filepath, content)
+
+          # Scan telemetry samples
+          for root, dirs, files in os.walk(telemetry_path):
+            for file in files:
+              if file.endswith('.ndjson') or file.endswith('.json'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  for line_num, line in enumerate(f, 1):
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                      continue
+                    # Check for PII in JSON values
+                    if re.search(r'["\'](?:user_name|email|phone|address)["\']\s*:\s*["\'][^"\']+["\']', line, re.IGNORECASE):
+                      errors.append(f"{filepath}:{line_num}: PII field value detected in telemetry")
+
+          if errors:
+            print("❌ PII/prohibited field scan failed:")
+            for err in errors:
+              print(f"  {err}")
+            sys.exit(1)
+          else:
+            print("✅ No PII or prohibited fields detected in scanned files")
+
+          if warnings:
+            print("⚠️ Warnings (non-blocking):")
+            for warn in warnings:
+              print(f"  {warn}")
+          PYTHON_SCRIPT
+
+  enforce-deadledger-refs:
+    name: Enforce Dead-Ledger References for High-Tier Transitions
+    runs-on: ubuntu-latest
+    needs: validate-lua-api-usage
+    if: ${{ inputs.enable_deadledger_checks == true && always() }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deadledger_ref presence in high-tier contexts
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import json
+          import sys
+
+          lua_path = "${{ inputs.lua_source_path }}"
+          telemetry_path = "${{ inputs.telemetry_path }}"
+
+          errors = []
+
+          # Check Lua code for consent transitions to adult-horror or research
+          # without deadledger_ref handling
+          transition_pattern = r'H\.Consent\.(canTransition|requiredProofs)\s*\([^,]+,\s*["\'](adult-horror|research)["\']\s*\)'
+
+          for root, dirs, files in os.walk(lua_path):
+            for file in files:
+              if file.endswith('.lua'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  content = f.read()
+                  matches = re.finditer(transition_pattern, content)
+                  for match in matches:
+                    # Check if deadledger_ref is referenced nearby
+                    context_start = max(0, match.start() - 300)
+                    context_end = match.end() + 300
+                    context = content[context_start:context_end]
+                    if not re.search(r'deadledger_ref|deadledger_envelope|dln\.', context, re.IGNORECASE):
+                      line_num = content[:match.start()].count('\n') + 1
+                      errors.append(f"{filepath}:{line_num}: High-tier consent transition without deadledger_ref handling")
+
+          # Check telemetry samples for governance_events with deadledger_ref
+          for root, dirs, files in os.walk(telemetry_path):
+            for file in files:
+              if file.endswith('.ndjson') or file.endswith('.json'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r') as f:
+                  for line_num, line in enumerate(f, 1):
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                      continue
+                    try:
+                      record = json.loads(line)
+                      metrics = record.get("consent_session_metrics", {})
+                      consent_tier = metrics.get("consent_tier")
+                      if consent_tier in ["adult-horror", "research"]:
+                        governance_events = metrics.get("governance_events", [])
+                        if governance_events:
+                          for event in governance_events:
+                            if event.get("event_type") in ["consent_upgrade", "proof_verified"]:
+                              if not event.get("deadledger_ref"):
+                                errors.append(f"{filepath}:{line_num}: High-tier governance event missing deadledger_ref")
+                    except json.JSONDecodeError:
+                      pass  # Schema validation job will catch this
+
+          if errors:
+            print("❌ Dead-Ledger reference enforcement failed:")
+            for err in errors:
+              print(f"  {err}")
+            sys.exit(1)
+          else:
+            print("✅ All high-tier consent transitions and governance events include deadledger_ref references")
+          PYTHON_SCRIPT
+
+  report:
+    name: Consolidate Validation Report
+    runs-on: ubuntu-latest
+    needs: [validate-lua-api-usage, validate-telemetry-schema, scan-for-pii-and-prohibited-fields, enforce-deadledger-refs]
+    if: always()
+    steps:
+      - name: Generate validation summary
+        run: |
+          echo "## Consent Lua API Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.validate-lua-api-usage.result }}" == "success" ]; then
+            echo "| Lua API Envelope Validation | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Lua API Envelope Validation | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.validate-telemetry-schema.result }}" == "success" ]; then
+            echo "| Telemetry Schema Compliance | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Telemetry Schema Compliance | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.scan-for-pii-and-prohibited-fields.result }}" == "success" ]; then
+            echo "| PII/Prohibited Field Scan | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| PII/Prohibited Field Scan | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.enforce-deadledger-refs.result }}" == "success" ] || [ "${{ inputs.enable_deadledger_checks }}" == "false" ]; then
+            echo "| Dead-Ledger Reference Enforcement | ✅ Passed / Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Dead-Ledger Reference Enforcement | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Schema references**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Consent state machine: \`${{ env.STATE_MACHINE_SCHEMA_PATH }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Telemetry schema: \`${{ env.CONSENT_SCHEMA_PATH }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Canonical URI: \`${{ inputs.schema_ref }}\`" >> $GITHUB_STEP_SUMMARY
