@@ -1,0 +1,8 @@
+"Module","Schema $id suffix","Required shared fields","Module-specific data focus"
+"4","Module4GovernanceEvent.v1","sessionId, regionId, seedId, descriptorId, consentTier, routerStateId, selectorPatternId, sessionMetricsEnvelopeId","Governance events, policies, RWF, diagnostics"
+"5","Module5PolicyManifest.v1","same as above","Repo policies, tiers, allowed objectKinds"
+"6","Module6PhaseState.v1","same as above","Phase, promotion predicates, validation log"
+"7","Module7SkeletonPlan.v1","same as above","Archetypes, invariant bands, metric targets"
+"8","Module8CliContract.v1","same as above","CLI commands, args, exit codes, error schema"
+"9","Module9RegistryEntry.v1","same as above","Paths, hashes, safetytier, intensityband"
+"10","Module10SessionEnvelope.v1","same as above","Persona, AI agent, BCI envelope refs"
