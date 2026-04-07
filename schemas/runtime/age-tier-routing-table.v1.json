@@ -1,124 +1,428 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horrorplace-constellation-contracts.schemas/runtime/age-tier-routing-table.v1.json",
+  "$id": "https://horror.place/schemas/runtime/age-tier-routing-table.v1.json",
   "title": "Age-Gated Horror Tier Routing Table",
+  "description": "Runtime routing table mapping consent tier, age gate, and capability constraints to effective tier, invariant caps, and allowed content surfaces. Aligns with Consent Profile (Module 1), Content Boundary (Module 4), and Tier Router (Module 5).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["tiers", "fallbackTier"],
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "tierDefinitions",
+    "routingRules",
+    "invariantCaps",
+    "repoAccessRules",
+    "fallbackPolicy",
+    "prismMeta"
+  ],
   "properties": {
-    "fallbackTier": {
+    "id": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^rtr-[a-z0-9]{6,12}$"
     },
-    "tiers": {
+    "schemaRef": {
+      "type": "string",
+      "const": "age-tier-routing-table.v1"
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "ageTierRoutingTable"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$"
+    },
+
+    "tierDefinitions": {
       "type": "object",
-      "minProperties": 1,
-      "additionalProperties": {
+      "additionalProperties": false,
+      "required": ["enums", "pegimapping", "consentalignment"],
+      "properties": {
+        "enums": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"]
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "pegimapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "CHILD": {
+              "type": "string",
+              "enum": ["PEGI_3", "PEGI_7", "ESRB_E"]
+            },
+            "TEEN": {
+              "type": "string",
+              "enum": ["PEGI_12", "PEGI_16", "ESRB_T"]
+            },
+            "MATURE": {
+              "type": "string",
+              "enum": ["PEGI_18", "ESRB_M"]
+            },
+            "RESEARCH": {
+              "type": "string",
+              "const": "ENTITLEMENT_REQUIRED"
+            }
+          }
+        },
+        "consentalignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minor": {
+              "type": "string",
+              "enum": ["CHILD", "TEEN"]
+            },
+            "adult-basic": {
+              "type": "string",
+              "enum": ["TEEN", "MATURE"]
+            },
+            "adult-horror": {
+              "type": "string",
+              "enum": ["MATURE"]
+            },
+            "research": {
+              "type": "string",
+              "enum": ["RESEARCH"]
+            }
+          }
+        }
+      }
+    },
+
+    "routingRules": {
+      "type": "array",
+      "description": "Ordered rules for computing effectiveTier = min(ageGateTier, consentTier, capabilityTierMax). Evaluated top-down; first match wins.",
+      "minItems": 1,
+      "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "description",
-          "allowedRepos",
-          "allowedStyles",
-          "allowedEventTypes",
-          "maxInvariants"
-        ],
+        "required": ["ruleId", "priority", "conditions", "action"],
         "properties": {
-          "description": {
+          "ruleId": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 512
+            "pattern": "^RTR-[0-9]{3}$"
           },
-          "allowedRepos": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "Horror.Place",
-                "Horror.Place-Orchestrator",
-                "HorrorPlace-Constellation-Contracts",
-                "HorrorPlace-Codebase-of-Death",
-                "HorrorPlace-Black-Archivum",
-                "HorrorPlace-Spectral-Foundry",
-                "HorrorPlace-Atrocity-Seeds",
-                "HorrorPlace-Obscura-Nexus",
-                "HorrorPlace-Liminal-Continuum",
-                "HorrorPlace-Process-Gods-Research",
-                "HorrorPlace-Redacted-Chronicles",
-                "HorrorPlace-Neural-Resonance-Lab",
-                "HorrorPlace-Dead-Ledger-Network"
-              ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
           },
-          "allowedStyles": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "minItems": 0,
-            "uniqueItems": true
-          },
-          "allowedEventTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "minItems": 0,
-            "uniqueItems": true
-          },
-          "maxInvariants": {
+          "conditions": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["CIC", "AOS", "DET", "SHCI"],
+            "required": ["ageGateTier", "consentTier"],
             "properties": {
-              "CIC": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "ageGateTier": {
+                "type": "string",
+                "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH", "ANY"]
               },
-              "AOS": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "consentTier": {
+                "type": "string",
+                "enum": ["minor", "adult-basic", "adult-horror", "research", "ANY"]
               },
-              "DET": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 10.0
+              "regionId": {
+                "type": "string"
               },
-              "SHCI": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "capabilityFlags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                }
+              }
+            }
+          },
+          "action": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["effectiveTier", "invariantCapRef"],
+            "properties": {
+              "effectiveTier": {
+                "type": "string",
+                "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"]
               },
-              "MDI": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "invariantCapRef": {
+                "type": "string",
+                "minLength": 1
               },
-              "RRM": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "allowedRepos": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Horror.Place",
+                    "Horror.Place-Orchestrator",
+                    "HorrorPlace-Constellation-Contracts",
+                    "HorrorPlace-Codebase-of-Death",
+                    "HorrorPlace-Black-Archivum",
+                    "HorrorPlace-Spectral-Foundry",
+                    "HorrorPlace-Atrocity-Seeds",
+                    "HorrorPlace-Obscura-Nexus",
+                    "HorrorPlace-Liminal-Continuum",
+                    "HorrorPlace-Process-Gods-Research",
+                    "HorrorPlace-Redacted-Chronicles",
+                    "HorrorPlace-Neural-Resonance-Lab",
+                    "HorrorPlace-Dead-Ledger-Network"
+                  ]
+                },
+                "minItems": 1,
+                "uniqueItems": true
               },
-              "HVF": {
-                "type": "number"
-              },
-              "LSG": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0
+              "downshiftOnFailure": {
+                "type": "boolean"
               }
             }
           }
         }
       }
+    },
+
+    "invariantCaps": {
+      "type": "object",
+      "description": "Per-tier numeric ceilings for spine invariants; referenced by routingRules.action.invariantCapRef.",
+      "additionalProperties": false,
+      "required": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+      "properties": {
+        "CHILD": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.4
+            },
+            "AOS": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.3
+            },
+            "DET": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 2.0
+            },
+            "SHCI": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.3
+            }
+          }
+        },
+        "TEEN": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.6
+            },
+            "AOS": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.5
+            },
+            "DET": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 4.0
+            },
+            "SHCI": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.6
+            }
+          }
+        },
+        "MATURE": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.8
+            },
+            "AOS": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.8
+            },
+            "DET": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 6.0
+            },
+            "SHCI": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.9
+            }
+          }
+        },
+        "RESEARCH": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "AOS": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "DET": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 10.0
+            },
+            "SHCI": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    },
+
+    "repoAccessRules": {
+      "type": "object",
+      "description": "Maps effective tier to allowed repo access patterns; enforced by manifest routing and H.Registry.",
+      "additionalProperties": false,
+      "required": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+      "properties": {
+        "CHILD": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowedPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "forbiddenPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "TEEN": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowedPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "forbiddenPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "MATURE": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowedPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "forbiddenPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "RESEARCH": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowedPatterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "requiresProofEnvelope": {
+              "type": "boolean",
+              "const": true
+            }
+          }
+        }
+      }
+    },
+
+    "fallbackPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["onNoMatch", "onCapViolation", "onProofMissing"],
+      "properties": {
+        "onNoMatch": {
+          "type": "string",
+          "enum": ["downshift_to_child", "downshift_to_teen", "hard_deny"]
+        },
+        "onCapViolation": {
+          "type": "string",
+          "enum": ["clamp_to_cap", "downshift_tier", "hard_deny"]
+        },
+        "onProofMissing": {
+          "type": "string",
+          "enum": ["downshift_to_mature", "hard_deny"]
+        }
+      }
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "reviewed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "governanceRef": {
+          "type": "string"
+        }
+      }
+    },
+
+    "deadLedgerRef": {
+      "type": "string"
     }
   }
 }
