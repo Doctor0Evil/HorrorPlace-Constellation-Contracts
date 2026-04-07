@@ -10,6 +10,12 @@
     "schemaRef",
     "objectKind",
     "version",
+    "sessionId",
+    "regionId",
+    "descriptorId",
+    "consentTier",
+    "routerStateId",
+    "sessionMetricsEnvelopeId",
     "scoringModel",
     "ruleCatalog",
     "sessionStateContract",
@@ -37,6 +43,33 @@
       "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
       "description": "Semantic version; minor bumps add optional rules, patch bumps adjust thresholds."
     },
+
+    "sessionId": {
+      "type": "string",
+      "description": "Globally-unique session identifier for telemetry joins."
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Stable region/POI identifier; shared with seed and region contracts."
+    },
+    "descriptorId": {
+      "type": "string",
+      "description": "ID of the authored selector descriptor using this rule set."
+    },
+    "consentTier": {
+      "type": "string",
+      "enum": ["minor", "adult-basic", "adult-horror", "research"],
+      "description": "Consent tier for this selector configuration; must align with Consent Profile Module."
+    },
+    "routerStateId": {
+      "type": "string",
+      "description": "Foreign key into Age-Gated Tier Router state for this session."
+    },
+    "sessionMetricsEnvelopeId": {
+      "type": "string",
+      "description": "Foreign key into telemetry session-metrics-envelope for this selector configuration."
+    },
+
     "scoringModel": {
       "type": "object",
       "description": "Defines the additive scoring model: base score, modifiers, clamping, and exclusion semantics.",
@@ -85,6 +118,7 @@
         }
       }
     },
+
     "ruleCatalog": {
       "type": "array",
       "description": "Ordered array of 9 selector rules evaluated in strict phase sequence. Exclusion is final; scoring modifiers are additive.",
@@ -136,6 +170,7 @@
         }
       }
     },
+
     "sessionStateContract": {
       "type": "object",
       "description": "Fields H.Selector requires from the active session to evaluate rules; aligns with CHAT_DIRECTOR shared identity layer.",
@@ -207,6 +242,7 @@
         }
       }
     },
+
     "crossSessionStateContract": {
       "type": "object",
       "description": "Persistent state carried across sessions for lore thread tracking and long-term diversity; stored in registry/vault, referenced by ID.",
@@ -268,6 +304,7 @@
         }
       }
     },
+
     "prismMeta": {
       "type": "object",
       "description": "Standard prismMeta block for schema spine alignment; shape defined in prismMeta.v1.json.",
@@ -278,6 +315,7 @@
         "governanceRef": { "type": "string" }
       }
     },
+
     "deadLedgerRef": {
       "type": "string",
       "description": "Optional Dead-Ledger attestation reference for selector rule configurations that require external verification."
@@ -289,7 +327,11 @@
         "properties": {
           "ruleCatalog": {
             "contains": {
-              "properties": { "ruleId": { "const": "SEL-R001" }, "phase": { "const": "safety_prefilter" } }
+              "properties": {
+                "ruleId": { "const": "SEL-R001" },
+                "phase": { "const": "safety_prefilter" }
+              },
+              "required": ["ruleId", "phase"]
             }
           }
         }
@@ -303,9 +345,74 @@
                 "phase": { "const": "safety_prefilter" },
                 "action": { "const": "EXCLUDE" },
                 "mandatory": { "const": true }
-              }
+              },
+              "required": ["ruleId", "phase", "action", "mandatory"]
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ruleCatalog": {
+            "contains": {
+              "properties": {
+                "ruleId": { "const": "SEL-R009" }
+              },
+              "required": ["ruleId"]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "ruleCatalog": {
+            "contains": {
+              "properties": {
+                "ruleId": { "const": "SEL-R009" },
+                "phase": { "const": "final_rank" },
+                "action": { "const": "RANK" },
+                "mandatory": { "const": true }
+              },
+              "required": ["ruleId", "phase", "action", "mandatory"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "ruleCatalog": {
+          "allOf": [
+            {
+              "contains": { "properties": { "phase": { "const": "safety_prefilter" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "cooldown_exclusion" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "repetition_penalty" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "escalation_curve" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "budget_fit" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "pattern_match" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "diversity_bonus" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "regional_affinity" } }, "required": ["phase"] }
+            },
+            {
+              "contains": { "properties": { "phase": { "const": "final_rank" } }, "required": ["phase"] }
+            }
+          ]
         }
       }
     }
