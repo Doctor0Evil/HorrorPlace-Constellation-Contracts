@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/age-tier-router-policy.v1.json",
+  "title": "AgeTierRouterPolicy",
+  "description": "Policy definition for computing effective tier from age gate, consent state, and capability constraints. Implements effectiveTier = min(ageGateTier, consentTier, capabilityTierMax) with fallback and escalation rules. Aligns with Consent Profile Module (Module 1) and Age-Gated Tier Router (Module 5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "tierComputation",
+    "fallbackRules",
+    "escalationPolicy",
+    "proofRequirements",
+    "telemetryBinding",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^rtp-[a-z0-9]{6,12}$",
+      "description": "Stable identifier for this router policy instance."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "age-tier-router-policy.v1",
+      "description": "Schema version identifier for validator binding."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "ageTierRouterPolicy",
+      "description": "Object kind for CHAT_DIRECTOR routing and manifest validation."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps add non-breaking rules, patch bumps fix validation logic."
+    },
+    "tierComputation": {
+      "type": "object",
+      "description": "Defines how effectiveTier is computed from input signals. Implements effectiveTier = min(ageGateTier, consentTier, capabilityTierMax).",
+      "additionalProperties": false,
+      "required": ["formula", "tierOrder", "inputSources", "overrideRules"],
+      "properties": {
+        "formula": {
+          "type": "string",
+          "const": "min(ageGateTier, consentTier, capabilityTierMax)",
+          "description": "Canonical formula for effective tier computation; evaluated left-to-right with short-circuit on hard deny."
+        },
+        "tierOrder": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"]
+          },
+          "description": "Ordered list defining tier precedence for min() evaluation; lower index = more restrictive.",
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "inputSources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ageGateTier", "consentTier", "capabilityTierMax"],
+          "properties": {
+            "ageGateTier": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sourceRef", "validationRule"],
+              "properties": {
+                "sourceRef": {
+                  "type": "string",
+                  "const": "consent-state-machine-v1.ageVerificationResult",
+                  "description": "Reference to consent module field providing age gate tier."
+                },
+                "validationRule": {
+                  "type": "string",
+                  "enum": ["strict", "soft_with_warning"],
+                  "description": "How to handle missing or invalid age verification data."
+                }
+              }
+            },
+            "consentTier": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sourceRef", "proofRequired"],
+              "properties": {
+                "sourceRef": {
+                  "type": "string",
+                  "const": "consent-state-machine-v1.currentState.consentTier",
+                  "description": "Reference to consent module field providing active consent tier."
+                },
+                "proofRequired": {
+                  "type": "boolean",
+                  "description": "If true, consentTier changes require Dead-Ledger proof envelope."
+                }
+              }
+            },
+            "capabilityTierMax": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sourceRef", "defaultIfMissing"],
+              "properties": {
+                "sourceRef": {
+                  "type": "string",
+                  "const": "repo-access-capability.v1.maxAllowedTier",
+                  "description": "Reference to capability schema field providing repo-access tier ceiling."
+                },
+                "defaultIfMissing": {
+                  "type": "string",
+                  "enum": ["CHILD", "TEEN"],
+                  "description": "Fallback tier if capability proof is absent or invalid."
+                }
+              }
+            }
+          }
+        },
+        "overrideRules": {
+          "type": "array",
+          "description": "Optional rules that can override the min() formula under specific conditions; evaluated after base computation.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["condition", "action", "requiresProof"],
+            "properties": {
+              "condition": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "regionId": { "type": "string", "description": "Optional region filter." },
+                  "descriptorId": { "type": "string", "description": "Optional content descriptor filter." },
+                  "sessionFlags": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Session-level flags that must all be present (e.g., 'research_entitled', 'vault_access')."
+                  }
+                }
+              },
+              "action": {
+                "type": "string",
+                "enum": ["force_tier", "cap_at_tier", "downshift_one"],
+                "description": "How to modify the computed effectiveTier."
+              },
+              "targetTier": {
+                "type": "string",
+                "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+                "description": "Target tier for force_tier or cap_at_tier actions."
+              },
+              "requiresProof": {
+                "type": "boolean",
+                "description": "If true, override requires valid repo-access-proof-envelope attachment."
+              }
+            }
+          }
+        }
+      }
+    },
+    "fallbackRules": {
+      "type": "object",
+      "description": "Behavior when tier computation inputs are missing, invalid, or conflicting.",
+      "additionalProperties": false,
+      "required": ["onMissingAgeGate", "onMissingConsent", "onMissingCapability", "onConflict"],
+      "properties": {
+        "onMissingAgeGate": {
+          "type": "string",
+          "enum": ["default_to_child", "require_verification", "hard_deny"],
+          "description": "Action when age verification data is absent."
+        },
+        "onMissingConsent": {
+          "type": "string",
+          "enum": ["default_to_minor", "prompt_for_consent", "hard_deny"],
+          "description": "Action when consent state is uninitialized."
+        },
+        "onMissingCapability": {
+          "type": "string",
+          "enum": ["use_default_tier", "require_proof_envelope", "hard_deny"],
+          "description": "Action when repo-access capability proof is absent."
+        },
+        "onConflict": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "logLevel"],
+          "properties": {
+            "strategy": {
+              "type": "string",
+              "enum": ["most_restrictive", "least_restrictive", "require_override_proof"],
+              "description": "How to resolve conflicting tier signals."
+            },
+            "logLevel": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"],
+              "description": "Telemetry severity for conflict events."
+            }
+          }
+        }
+      }
+    },
+    "escalationPolicy": {
+      "type": "object",
+      "description": "Rules for tier escalation (downgrading to more restrictive tier) during a session.",
+      "additionalProperties": false,
+      "required": ["triggers", "actions", "cooldownRules"],
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["triggerId", "condition", "severity"],
+            "properties": {
+              "triggerId": { "type": "string", "pattern": "^ESCAL-[0-9]{3}$" },
+              "condition": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "invariantViolation": { "type": "string", "description": "Reference to violated invariant ID (e.g., SAF-010)." },
+                  "budgetOverdraft": { "type": "boolean", "description": "True if horror intensity budget exceeded." },
+                  "distressSignal": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+                  "banterRiskScore": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+                }
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["observe", "warn", "downshift", "hard_deny"],
+                "description": "Escalation severity for this trigger."
+              }
+            }
+          }
+        },
+        "actions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["onDownshift", "onHardDeny"],
+          "properties": {
+            "onDownshift": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "targetTier": {
+                  "type": "string",
+                  "enum": ["CHILD", "TEEN", "MATURE"],
+                  "description": "Tier to downshift to; RESEARCH cannot be a downshift target."
+                },
+                "notifyUser": { "type": "boolean" },
+                "inCharacterMessage": {
+                  "type": "string",
+                  "description": "Optional diegetic message template for in-world downshift notification."
+                },
+                "resetBudget": { "type": "boolean", "description": "If true, reinitialize horror budget for new tier." }
+              }
+            },
+            "onHardDeny": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "terminateSession": { "type": "boolean" },
+                "logToDeadLedger": { "type": "boolean" },
+                "emitIncident": { "type": "boolean", "description": "If true, emit governance incident for review." }
+              }
+            }
+          }
+        },
+        "cooldownRules": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "postDownshiftCooldownMinutes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "Minimum time before tier can be re-evaluated for escalation."
+            },
+            "allowUserRequest": {
+              "type": "boolean",
+              "description": "If true, user may request tier re-evaluation after cooldown."
+            }
+          }
+        }
+      }
+    },
+    "proofRequirements": {
+      "type": "object",
+      "description": "Dead-Ledger/ALN proof envelope requirements for tier overrides and RESEARCH access.",
+      "additionalProperties": false,
+      "required": ["researchTierProof", "overrideProof", "verificationEndpoint"],
+      "properties": {
+        "researchTierProof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["envelopeSchemaRef", "requiredClaims"],
+          "properties": {
+            "envelopeSchemaRef": {
+              "type": "string",
+              "const": "repo-access-proof-envelope.v1",
+              "description": "Schema reference for RESEARCH-tier proof envelope."
+            },
+            "requiredClaims": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Required claims in proof envelope (e.g., 'age_verified', 'explicit_opt_in', 'research_entitlement')."
+            }
+          }
+        },
+        "overrideProof": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "envelopeSchemaRef": {
+              "type": "string",
+              "const": "repo-access-proof-envelope.v1",
+              "description": "Schema reference for override proof envelope."
+            },
+            "allowedOverrides": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Override rule IDs that require proof attachment."
+            }
+          }
+        },
+        "verificationEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional endpoint for runtime proof verification; if omitted, verification is local via schema validation."
+        }
+      }
+    },
+    "telemetryBinding": {
+      "type": "object",
+      "description": "Fields emitted to telemetry for router policy decisions; aligns with session-metrics-envelope-v1.json.",
+      "additionalProperties": false,
+      "required": ["eventSchemaRef", "requiredFields", "optionalFields"],
+      "properties": {
+        "eventSchemaRef": {
+          "type": "string",
+          "const": "router-decision-event.v1",
+          "description": "Reference to telemetry event schema for router decisions."
+        },
+        "requiredFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "sessionId",
+              "regionId",
+              "descriptorId",
+              "routerStateId",
+              "computedEffectiveTier",
+              "inputTiers",
+              "appliedOverrides",
+              "timestamp"
+            ]
+          },
+          "description": "Fields that must be present in every router decision event."
+        },
+        "optionalFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "proofEnvelopeId",
+              "overrideReason",
+              "escalationTriggerId",
+              "downshiftCooldownRemaining",
+              "userNotified"
+            ]
+          },
+          "description": "Fields emitted conditionally based on decision path."
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for schema spine alignment; shape defined in prismMeta.v1.json.",
+      "additionalProperties": true,
+      "properties": {
+        "author": { "type": "string" },
+        "reviewed": { "type": "array", "items": { "type": "string" } },
+        "governanceRef": { "type": "string", "description": "Reference to promotion-proposal or governance artifact that approved this policy." }
+      }
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for policies that require external verification."
+    }
+  }
+}
