@@ -1,0 +1,105 @@
+{
+  "$id": "https://horrorplace.org/schemas/governanceEventv1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Governance Event",
+  "description": "Standardized event representing a proposal, vote, or administrative governance action.",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "proposerId",
+    "timestamp"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique identifier for this governance event."
+    },
+    "eventType": {
+      "type": "string",
+      "description": "Category of governance event.",
+      "enum": [
+        "proposal",
+        "vote",
+        "lock",
+        "unlock",
+        "deprecation"
+      ]
+    },
+    "proposerId": {
+      "type": "string",
+      "description": "Identifier for the user or agent that initiated the event."
+    },
+
+    "sessionId": {
+      "type": "string",
+      "description": "Optional session identifier if the governance action is tied to a specific authoring or runtime session."
+    },
+    "descriptorId": {
+      "type": "string",
+      "description": "Generic descriptor join key linking this event to a higher-level descriptor or bundle."
+    },
+
+    "targetDescriptorId": {
+      "type": "string",
+      "description": "Join key linking this event to the descriptor, template, or pattern it concerns."
+    },
+    "targetRulesetId": {
+      "type": "string",
+      "description": "Join key linking this event to a specific ruleset or policy being modified."
+    },
+
+    "proposalDetails": {
+      "type": "object",
+      "description": "Details specific to proposal events, such as rationale or proposed policy text.",
+      "additionalProperties": true
+    },
+
+    "voteResults": {
+      "type": "object",
+      "description": "Structured results of a vote, including individual choices.",
+      "properties": {
+        "totalVotes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of votes counted."
+        },
+        "votes": {
+          "type": "array",
+          "description": "Per-voter choices as recorded by the governance system.",
+          "items": {
+            "type": "object",
+            "required": [
+              "voterId",
+              "choice"
+            ],
+            "properties": {
+              "voterId": {
+                "type": "string",
+                "description": "Identifier for the voter, which may map to an agent or human profile."
+              },
+              "choice": {
+                "type": "string",
+                "description": "Recorded vote choice.",
+                "enum": [
+                  "yes",
+                  "no",
+                  "abstain"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp indicating when this event occurred."
+    }
+  },
+  "additionalProperties": false
+}
