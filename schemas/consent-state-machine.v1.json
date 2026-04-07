@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/consent-state-machine.v1.json",
+  "title": "Horror.Place Consent State Machine",
+  "description": "Canonical consent state machine for user accounts, defining tiers, transitions, and proof requirements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "states",
+    "transitions",
+    "defaultState"
+  ],
+  "properties": {
+    "defaultState": {
+      "type": "string",
+      "description": "Name of the default consent state for new or unverified users.",
+      "examples": [
+        "minor",
+        "adult-basic"
+      ]
+    },
+    "states": {
+      "type": "array",
+      "description": "List of all consent states available in the constellation.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label",
+          "ageTier",
+          "policyTier",
+          "allowedContentProfile"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Machine-readable identifier for this consent state.",
+            "pattern": "^[a-z0-9\\-]+$",
+            "examples": [
+              "minor",
+              "adult-basic",
+              "adult-horror",
+              "research"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label for this state."
+          },
+          "ageTier": {
+            "type": "string",
+            "description": "Age classification associated with this state.",
+            "enum": [
+              "minor",
+              "adult"
+            ]
+          },
+          "policyTier": {
+            "type": "string",
+            "description": "High-level policy envelope tier this state maps to.",
+            "enum": [
+              "standard",
+              "mature",
+              "research"
+            ]
+          },
+          "allowedContentProfile": {
+            "type": "object",
+            "description": "Summary of content allowances for this state.",
+            "additionalProperties": false,
+            "required": [
+              "allowPsychologicalHorror",
+              "allowImpliedViolence",
+              "allowExplicitViolence",
+              "allowNonSexualNudity",
+              "allowSexualContent",
+              "allowSexualViolence"
+            ],
+            "properties": {
+              "allowPsychologicalHorror": {
+                "type": "boolean",
+                "description": "Whether atmospheric and psychological horror is allowed."
+              },
+              "allowImpliedViolence": {
+                "type": "boolean",
+                "description": "Whether implied or off-screen violence is allowed."
+              },
+              "allowExplicitViolence": {
+                "type": "boolean",
+                "description": "Whether explicit, on-screen violence is allowed."
+              },
+              "allowNonSexualNudity": {
+                "type": "boolean",
+                "description": "Whether non-sexual nudity is allowed."
+              },
+              "allowSexualContent": {
+                "type": "boolean",
+                "description": "Whether consensual, non-violent sexual content is allowed."
+              },
+              "allowSexualViolence": {
+                "type": "boolean",
+                "description": "Whether sexual violence is allowed. This should remain false in all shipped configurations."
+              }
+            }
+          },
+          "explicitnessCapsRef": {
+            "type": "string",
+            "description": "Optional reference to an explicitness caps object or schema (e.g., consent-explicitness-caps) for this state.",
+            "examples": [
+              "consent-explicitness-caps.v1#adult-basic"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional human-readable notes for governance and documentation."
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "description": "Allowed transitions between consent states, including proof and opt-in requirements.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to",
+          "requiresExplicitOptIn",
+          "allowedForAgeTier"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Source consent state id.",
+            "pattern": "^[a-z0-9\\-]+$"
+          },
+          "to": {
+            "type": "string",
+            "description": "Target consent state id.",
+            "pattern": "^[a-z0-9\\-]+$"
+          },
+          "allowedForAgeTier": {
+            "type": "array",
+            "description": "Age tiers for which this transition is legally/ethically allowed.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "minor",
+                "adult"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "requiresExplicitOptIn": {
+            "type": "boolean",
+            "description": "If true, user must perform an explicit opt-in action (e.g., acknowledgment screen) for this transition."
+          },
+          "requiresProof": {
+            "type": "array",
+            "description": "List of proof roles required to approve this transition.",
+            "items": {
+              "type": "string",
+              "description": "Proof role identifier, e.g., age-gating, jurisdiction-compliance, research-charter."
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "cooldownDays": {
+            "type": "integer",
+            "description": "Minimum number of days that must elapse before this transition can be requested again after a downgrade or refusal.",
+            "minimum": 0,
+            "default": 0
+          },
+          "requiresHumanReview": {
+            "type": "boolean",
+            "description": "If true, transition must be approved by a human governance process (e.g., for research-tier access)."
+          },
+          "autoDowngradeOnBreach": {
+            "type": "boolean",
+            "description": "If true, policy breaches at the target state may trigger automatic downgrade back to the source or a safer state."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional human-readable notes for this transition."
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata for versioning and governance of the state machine.",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "description": "Semantic version of this consent state machine definition.",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "examples": [
+            "1.0.0"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this state machine definition was first created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this state machine definition was last updated."
+        },
+        "author": {
+          "type": "string",
+          "description": "Identifier for the author or tool that produced this configuration."
+        },
+        "jurisdictionProfile": {
+          "type": "string",
+          "description": "Optional identifier for a jurisdictional or regulatory profile this machine is tuned for.",
+          "examples": [
+            "global-default",
+            "us-18plus",
+            "eu-gdpr"
+          ]
+        }
+      }
+    }
+  }
+}
