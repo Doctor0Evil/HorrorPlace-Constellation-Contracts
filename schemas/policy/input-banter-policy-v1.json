@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/policy/input-banter-policy-v1.json",
+  "title": "Input Pattern & Banter Policy v1",
+  "description": "Machine-checkable rule file mapping input labels to response policies per consent tier, including risk thresholds and session-level adaptation limits.",
+  "type": "object",
+  "required": ["input_banter_policy"],
+  "additionalProperties": false,
+  "properties": {
+    "input_banter_policy": {
+      "type": "object",
+      "required": ["version", "canonical_labels", "tier_policies", "session_adaptation"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "canonical_labels": {
+          "type": "array",
+          "description": "Canonical safety labels used by the Input Pattern & Banter Classifier.",
+          "items": {
+            "type": "object",
+            "required": ["label_id", "content_domain", "base_risk_score"],
+            "additionalProperties": false,
+            "properties": {
+              "label_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]+$"
+              },
+              "content_domain": {
+                "type": "string",
+                "enum": ["horror", "self_harm", "sexual", "non_consensual_violence", "mundane"]
+              },
+              "intensity_band": {
+                "type": "string",
+                "enum": ["none", "light", "moderate", "severe", "disallowed"]
+              },
+              "base_risk_score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "contextual_keywords": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Words that may elevate risk when combined (e.g., 'wound' + 'explicit')."
+              }
+            }
+          }
+        },
+        "tier_policies": {
+          "type": "object",
+          "description": "Mapping from consent tiers to allowed response policies for each label.",
+          "additionalProperties": false,
+          "properties": {
+            "minor": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["response_strategy", "max_turn_risk"],
+                "additionalProperties": false,
+                "properties": {
+                  "response_strategy": {
+                    "type": "string",
+                    "enum": ["answer_allowed", "answer_redacted", "refuse", "downshift_style", "hand_off_to_safety_persona"]
+                  },
+                  "max_turn_risk": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            },
+            "adult-basic": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["response_strategy", "max_turn_risk"],
+                "additionalProperties": false,
+                "properties": {
+                  "response_strategy": {
+                    "type": "string",
+                    "enum": ["answer_allowed", "answer_redacted", "refuse", "downshift_style", "hand_off_to_safety_persona"]
+                  },
+                  "max_turn_risk": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            },
+            "adult-horror": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["response_strategy", "max_turn_risk"],
+                "additionalProperties": false,
+                "properties": {
+                  "response_strategy": {
+                    "type": "string",
+                    "enum": ["answer_allowed", "answer_redacted", "refuse", "downshift_style", "hand_off_to_safety_persona"]
+                  },
+                  "max_turn_risk": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            },
+            "research": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["response_strategy", "max_turn_risk"],
+                "additionalProperties": false,
+                "properties": {
+                  "response_strategy": {
+                    "type": "string",
+                    "enum": ["answer_allowed", "answer_redacted", "refuse", "downshift_style", "hand_off_to_safety_persona"]
+                  },
+                  "max_turn_risk": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "session_adaptation": {
+          "type": "object",
+          "description": "Rolling window adaptation rules to down-shift intensity when risky patterns repeat.",
+          "required": ["window_turns", "downshift_rules"],
+          "additionalProperties": false,
+          "properties": {
+            "window_turns": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            },
+            "downshift_rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["domain", "count_threshold", "action"],
+                "additionalProperties": false,
+                "properties": {
+                  "domain": {
+                    "type": "string",
+                    "enum": ["horror", "self_harm", "sexual", "non_consensual_violence", "mundane"]
+                  },
+                  "count_threshold": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": ["reduce_intensity", "switch_to_implied", "force_cool_down", "refuse"]
+                  }
+                }
+              }
+            },
+            "hard_refusal_limit": {
+              "type": "integer",
+              "description": "Number of hard refusals in the window before a mandatory session cool-down."
+            }
+          }
+        }
+      }
+    }
+  }
+}
