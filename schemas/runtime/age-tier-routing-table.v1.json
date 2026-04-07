@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace-constellation-contracts.schemas/runtime/age-tier-routing-table.v1.json",
+  "title": "Age-Gated Horror Tier Routing Table",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tiers", "fallbackTier"],
+  "properties": {
+    "fallbackTier": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tiers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "description",
+          "allowedRepos",
+          "allowedStyles",
+          "allowedEventTypes",
+          "maxInvariants"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "allowedRepos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Horror.Place",
+                "Horror.Place-Orchestrator",
+                "HorrorPlace-Constellation-Contracts",
+                "HorrorPlace-Codebase-of-Death",
+                "HorrorPlace-Black-Archivum",
+                "HorrorPlace-Spectral-Foundry",
+                "HorrorPlace-Atrocity-Seeds",
+                "HorrorPlace-Obscura-Nexus",
+                "HorrorPlace-Liminal-Continuum",
+                "HorrorPlace-Process-Gods-Research",
+                "HorrorPlace-Redacted-Chronicles",
+                "HorrorPlace-Neural-Resonance-Lab",
+                "HorrorPlace-Dead-Ledger-Network"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "allowedStyles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "allowedEventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "maxInvariants": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["CIC", "AOS", "DET", "SHCI"],
+            "properties": {
+              "CIC": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "AOS": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "DET": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 10.0
+              },
+              "SHCI": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "MDI": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "RRM": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "HVF": {
+                "type": "number"
+              },
+              "LSG": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
