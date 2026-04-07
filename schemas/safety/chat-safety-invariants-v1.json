@@ -1,0 +1,442 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/safety/chat-safety-invariants-v1.json",
+  "title": "ChatSafetyInvariants.v1",
+  "description": "Physics layer defining 16 safety invariants across 3 enforcement classes for AI-chat horror outputs. Implements a 5-phase evaluation pipeline with short-circuit semantics and a 3-level violation escalation model. Aligns with Content Boundary & Policy Engine (Module 4), Consent Profile, Horror Intensity Budget, History Selector, and CHAT_DIRECTOR governance spine.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "evaluationPipeline",
+    "invariantCatalog",
+    "escalationMatrix",
+    "prismMeta"
+  ],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^cinv-[a-z0-9]{6,12}$",
+      "description": "Stable identifier for this chat safety invariants configuration object."
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "const": "chat-safety-invariants.v1",
+      "description": "Schema reference identifier used by CHAT_DIRECTOR and validation pipelines."
+    },
+
+    "objectKind": {
+      "type": "string",
+      "const": "chatSafetyInvariants",
+      "description": "Object kind for CHAT_DIRECTOR routing and manifest validation."
+    },
+
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps extend invariant metadata without changing SAF-IDs, patch bumps adjust thresholds."
+    },
+
+    "evaluationPipeline": {
+      "type": "object",
+      "description": "Ordered 5-phase evaluation pipeline with short-circuit semantics. ABSOLUTE violations halt evaluation immediately; CONSENT_GATED and BUDGET_GATED violations trigger deterministic fallbacks.",
+      "additionalProperties": false,
+      "required": [
+        "phaseOrder",
+        "shortCircuitRules"
+      ],
+      "properties": {
+        "phaseOrder": {
+          "type": "array",
+          "description": "Strict evaluation sequence. All ABSOLUTE invariants must be assigned to phases that run before consent and budget gates.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "absolute_precheck",
+              "session_context_check",
+              "consent_gate",
+              "budget_gate",
+              "output_gate"
+            ]
+          },
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "shortCircuitRules": {
+          "type": "object",
+          "description": "Defines how the pipeline reacts to violations per enforcement class.",
+          "additionalProperties": false,
+          "required": [
+            "ABSOLUTE",
+            "CONSENT_GATED",
+            "BUDGET_GATED"
+          ],
+          "properties": {
+            "ABSOLUTE": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "haltPipeline",
+                "logLevel",
+                "deadLedgerFlag"
+              ],
+              "properties": {
+                "haltPipeline": {
+                  "type": "boolean",
+                  "const": true,
+                  "description": "ABSOLUTE violations always halt the evaluation pipeline."
+                },
+                "logLevel": {
+                  "type": "string",
+                  "const": "critical"
+                },
+                "deadLedgerFlag": {
+                  "type": "boolean",
+                  "const": true,
+                  "description": "Indicates that ABSOLUTE violations must be recorded with Dead-Ledger attestation."
+                }
+              }
+            },
+            "CONSENT_GATED": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "haltPipeline",
+                "fallbackAction"
+              ],
+              "properties": {
+                "haltPipeline": {
+                  "type": "boolean",
+                  "const": false,
+                  "description": "CONSENT_GATED violations do not halt; they trigger tier or intensity adjustments."
+                },
+                "fallbackAction": {
+                  "type": "string",
+                  "enum": [
+                    "downshift_tier",
+                    "soften_output",
+                    "refuse"
+                  ]
+                }
+              }
+            },
+            "BUDGET_GATED": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "haltPipeline",
+                "fallbackAction"
+              ],
+              "properties": {
+                "haltPipeline": {
+                  "type": "boolean",
+                  "const": false,
+                  "description": "BUDGET_GATED violations adjust budget-driven intensity and cooldown behavior."
+                },
+                "fallbackAction": {
+                  "type": "string",
+                  "enum": [
+                    "clamp_intensity",
+                    "trigger_cooldown",
+                    "downshift_tier"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "invariantCatalog": {
+      "type": "array",
+      "description": "Catalog of 16 safety invariants (SAF-001..SAF-016) mapped to enforcement classes, phases, and metric thresholds.",
+      "minItems": 16,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "invariantId",
+          "code",
+          "enforcementClass",
+          "evaluationPhase",
+          "spineMetrics",
+          "actionOnViolation",
+          "description"
+        ],
+        "properties": {
+          "invariantId": {
+            "type": "string",
+            "pattern": "^SAF-[0-9]{3}$",
+            "description": "Stable SAF identifier, SAF-001 through SAF-016."
+          },
+
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]+$",
+            "description": "Machine-friendly symbolic code e.g., REAL_HARM_PREVENTION, DIRECTOR_PERSONA_LEASH."
+          },
+
+          "enforcementClass": {
+            "type": "string",
+            "enum": [
+              "ABSOLUTE",
+              "CONSENT_GATED",
+              "BUDGET_GATED"
+            ]
+          },
+
+          "evaluationPhase": {
+            "type": "string",
+            "enum": [
+              "absolute_precheck",
+              "session_context_check",
+              "consent_gate",
+              "budget_gate",
+              "output_gate"
+            ],
+            "description": "Phase in which this invariant is evaluated."
+          },
+
+          "spineMetrics": {
+            "type": "array",
+            "description": "Core spine metrics this invariant monitors or constrains.",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "CIC",
+                "MDI",
+                "AOS",
+                "RRM",
+                "FCF",
+                "SPR",
+                "RWF",
+                "DET",
+                "HVF",
+                "LSG",
+                "SHCI",
+                "CDL",
+                "ARR"
+              ]
+            }
+          },
+
+          "thresholds": {
+            "type": "object",
+            "description": "Numeric or categorical bounds for evaluation. Concrete values are defined per invariant.",
+            "additionalProperties": false,
+            "properties": {
+              "minTier": {
+                "type": "string",
+                "enum": [
+                  "CHILD",
+                  "TEEN",
+                  "MATURE",
+                  "RESEARCH"
+                ],
+                "description": "Minimum consent tier required before this invariant may be active."
+              },
+              "maxTier": {
+                "type": "string",
+                "enum": [
+                  "CHILD",
+                  "TEEN",
+                  "MATURE",
+                  "RESEARCH"
+                ],
+                "description": "Maximum consent tier where this invariant applies."
+              },
+              "maxIntensityDelta": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum allowed change in intensity between consecutive beats (SAF-016)."
+              },
+              "reserveFloorPercent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Reserve budget floor percentage that must remain available (SAF-015)."
+              },
+              "consentRequirement": {
+                "type": "string",
+                "description": "Human-readable consent precondition label, aligned with Consent Profile module."
+              }
+            }
+          },
+
+          "actionOnViolation": {
+            "type": "string",
+            "enum": [
+              "hard_deny",
+              "soften_output",
+              "downshift_tier",
+              "clamp_intensity",
+              "trigger_cooldown",
+              "log_and_monitor"
+            ],
+            "description": "Primary action hint when this invariant is violated; mapped to concrete behavior by H.Safety and downstream modules."
+          },
+
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          }
+        }
+      }
+    },
+
+    "escalationMatrix": {
+      "type": "object",
+      "description": "3-level violation escalation model governing system response over rolling time windows.",
+      "additionalProperties": false,
+      "required": [
+        "observe",
+        "throttle",
+        "halt"
+      ],
+      "properties": {
+        "observe": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxOccurrencesPerWindow",
+            "windowMinutes",
+            "action"
+          ],
+          "properties": {
+            "maxOccurrencesPerWindow": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "windowMinutes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "action": {
+              "type": "string",
+              "const": "log_to_telemetry_and_emit_warning"
+            }
+          }
+        },
+        "throttle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxOccurrencesPerWindow",
+            "cooldownMinutes",
+            "action"
+          ],
+          "properties": {
+            "maxOccurrencesPerWindow": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "cooldownMinutes": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 60
+            },
+            "action": {
+              "type": "string",
+              "const": "force_downshift_and_suspend_high_det_content"
+            }
+          }
+        },
+        "halt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "triggers",
+            "action"
+          ],
+          "properties": {
+            "triggers": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "ANY_ABSOLUTE_VIOLATION",
+                  "REPEATED_CONSENT_BREACHES",
+                  "BUDGET_RESERVE_EXHAUSTION"
+                ]
+              }
+            },
+            "action": {
+              "type": "string",
+              "const": "terminate_session_and_emit_incident_to_dead_ledger"
+            }
+          }
+        }
+      }
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for schema spine alignment; precise shape is defined in prismMeta.v1.json.",
+      "additionalProperties": true,
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "reviewed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "governanceRef": {
+          "type": "string"
+        }
+      }
+    }
+  },
+
+  "allOf": [
+    {
+      "description": "SAF-001 REAL_HARM_PREVENTION must be an ABSOLUTE invariant, evaluated during absolute_precheck, and must hard-deny on violation.",
+      "if": {
+        "properties": {
+          "invariantCatalog": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "invariantId": { "const": "SAF-001" }
+              },
+              "required": [ "invariantId" ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "invariantCatalog": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "invariantId": { "const": "SAF-001" },
+                "enforcementClass": { "const": "ABSOLUTE" },
+                "evaluationPhase": { "const": "absolute_precheck" },
+                "actionOnViolation": { "const": "hard_deny" }
+              },
+              "required": [
+                "invariantId",
+                "enforcementClass",
+                "evaluationPhase",
+                "actionOnViolation"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
