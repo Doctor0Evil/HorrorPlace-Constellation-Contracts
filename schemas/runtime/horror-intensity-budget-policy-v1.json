@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/runtime/horror-intensity-budget-policy-v1.json",
+  "title": "Horror Intensity Budget Policy v1",
+  "description": "Machine-readable policy defining per-session explicitness budgets for horror content, keyed by consent tier, invariant caps, and modality-specific constraints. Enables deterministic intensity gating across AI-Chat, engine runtime, and telemetry systems.",
+  "type": "object",
+  "required": ["horror_intensity_budget_policy"],
+  "additionalProperties": false,
+  "properties": {
+    "horror_intensity_budget_policy": {
+      "type": "object",
+      "required": ["version", "policy_id", "tiers", "modalities", "scaling", "over_budget_behavior"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of this budget policy definition."
+        },
+        "policy_id": {
+          "type": "string",
+          "pattern": "^budget_policy_[a-z][a-z0-9_]{2,63}$",
+          "description": "Unique identifier for this policy instance."
+        },
+        "tiers": {
+          "type": "object",
+          "description": "Budget configuration per consent tier, aligned with consent-state-machine-v1.json.",
+          "additionalProperties": false,
+          "properties": {
+            "minor": {
+              "type": "object",
+              "required": ["base_budget", "modality_caps", "regeneration_rate"],
+              "additionalProperties": false,
+              "properties": {
+                "base_budget": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.3,
+                  "description": "Starting explicitness budget for this tier (0-1 scale)."
+                },
+                "modality_caps": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "violence": { "$ref": "#/$defs/modalityCap" },
+                    "gore": { "$ref": "#/$defs/modalityCap" },
+                    "sexual": { "$ref": "#/$defs/modalityCap" },
+                    "psychological": { "$ref": "#/$defs/modalityCap" }
+                  },
+                  "description": "Per-modality explicitness ceilings; sexual content capped at 0.0 for minor tier."
+                },
+                "regeneration_rate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.1,
+                  "description": "Budget restored per minute of low-intensity engagement."
+                },
+                "invariant_constraints": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "max_CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
+                    "max_DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 4.0 },
+                    "max_SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 }
+                  },
+                  "description": "Hard invariant ceilings that override budget if exceeded."
+                }
+              }
+            },
+            "adult-basic": {
+              "type": "object",
+              "required": ["base_budget", "modality_caps", "regeneration_rate", "requires_proof"],
+              "additionalProperties": false,
+              "properties": {
+                "base_budget": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.6
+                },
+                "modality_caps": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "violence": { "$ref": "#/$defs/modalityCap" },
+                    "gore": { "$ref": "#/$defs/modalityCap" },
+                    "sexual": { "$ref": "#/$defs/modalityCap" },
+                    "psychological": { "$ref": "#/$defs/modalityCap" }
+                  }
+                },
+                "regeneration_rate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.15
+                },
+                "requires_proof": {
+                  "type": "object",
+                  "required": ["age_verification", "explicit_opt_in"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_verification": { "type": "boolean", "const": true },
+                    "explicit_opt_in": { "type": "boolean", "const": true },
+                    "proof_type": { "type": "string", "enum": ["did_kyc", "zkp_age_over_18", "charter_agreement_v1"] }
+                  }
+                },
+                "invariant_constraints": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "max_CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
+                    "max_DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 7.0 },
+                    "max_SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.6 }
+                  }
+                }
+              }
+            },
+            "adult-horror": {
+              "type": "object",
+              "required": ["base_budget", "modality_caps", "regeneration_rate", "requires_proof", "deadledger_binding"],
+              "additionalProperties": false,
+              "properties": {
+                "base_budget": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.85
+                },
+                "modality_caps": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "violence": { "$ref": "#/$defs/modalityCap" },
+                    "gore": { "$ref": "#/$defs/modalityCap" },
+                    "sexual": { "$ref": "#/$defs/modalityCap" },
+                    "psychological": { "$ref": "#/$defs/modalityCap" }
+                  }
+                },
+                "regeneration_rate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "default": 0.2
+                },
+                "requires_proof": {
+                  "type": "object",
+                  "required": ["age_verification", "explicit_opt_in", "charter_signature"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_verification": { "type": "boolean", "const": true },
+                    "explicit_opt_in": { "type": "boolean", "const": true },
+                    "charter_signature": { "type": "boolean", "const": true },
+                    "proof_type": { "type": "string", "enum": ["did_kyc", "zkp_age_over_18", "charter_agreement_v1", "multi_sig_approval"] }
+                  }
+                },
+                "deadledger_binding": {
+                  "type": "object",
+                  "required": ["proof_envelope_id", "verifier_ref"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "proof_envelope_id": { "type": "string", "pattern": "^dln\\.envelope\\.[a-z0-9_.\\-]+$" },
+                    "verifier_ref": { "type": "string", "pattern": "^dln\\.verifier\\.[a-z0-9_.\\-]+$" },
+                    "circuit_type": { "type": "string", "enum": ["age_gate", "charter_agreement", "consent_attestation"] }
+                  }
+                },
+                "invariant_constraints": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "max_CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.9 },
+                    "max_DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 9.0 },
+                    "max_SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "modalities": {
+          "type": "object",
+          "description": "Canonical modality definitions with classifier mappings and consumption rules.",
+          "additionalProperties": false,
+          "properties": {
+            "violence": {
+              "type": "object",
+              "required": ["classifier_labels", "consumption_formula"],
+              "additionalProperties": false,
+              "properties": {
+                "classifier_labels": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Labels from Input Pattern & Banter Classifier that map to this modality."
+                },
+                "consumption_formula": {
+                  "type": "string",
+                  "description": "Expression for computing budget delta from classifier confidence and invariant values."
+                }
+              }
+            },
+            "gore": {
+              "type": "object",
+              "required": ["classifier_labels", "consumption_formula"],
+              "additionalProperties": false,
+              "properties": {
+                "classifier_labels": { "type": "array", "items": { "type": "string" } },
+                "consumption_formula": { "type": "string" }
+              }
+            },
+            "sexual": {
+              "type": "object",
+              "required": ["classifier_labels", "consumption_formula", "hard_prohibition"],
+              "additionalProperties": false,
+              "properties": {
+                "classifier_labels": { "type": "array", "items": { "type": "string" } },
+                "consumption_formula": { "type": "string" },
+                "hard_prohibition": { "type": "boolean", "const": true, "description": "Sexual content is prohibited in all tiers; budget cap is informational only." }
+              }
+            },
+            "psychological": {
+              "type": "object",
+              "required": ["classifier_labels", "consumption_formula"],
+              "additionalProperties": false,
+              "properties": {
+                "classifier_labels": { "type": "array", "items": { "type": "string" } },
+                "consumption_formula": { "type": "string" }
+              }
+            }
+          }
+        },
+        "scaling": {
+          "type": "object",
+          "description": "Dynamic scaling factors applied to base budgets based on session history and real-time metrics.",
+          "additionalProperties": false,
+          "properties": {
+            "history_length_factor": {
+              "type": "object",
+              "required": ["min_sessions", "max_sessions", "scaling_curve"],
+              "additionalProperties": false,
+              "properties": {
+                "min_sessions": { "type": "integer", "minimum": 0 },
+                "max_sessions": { "type": "integer", "minimum": 1 },
+                "scaling_curve": { "type": "string", "enum": ["linear", "logarithmic", "step"], "default": "logarithmic" }
+              }
+            },
+            "recent_det_factor": {
+              "type": "object",
+              "required": ["window_turns", "threshold", "penalty_multiplier"],
+              "additionalProperties": false,
+              "properties": {
+                "window_turns": { "type": "integer", "minimum": 1, "default": 10 },
+                "threshold": { "type": "number", "minimum": 0, "maximum": 10, "default": 6.0 },
+                "penalty_multiplier": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 }
+              }
+            },
+            "uec_comfort_factor": {
+              "type": "object",
+              "required": ["target_band", "adjustment_rate"],
+              "additionalProperties": false,
+              "properties": {
+                "target_band": {
+                  "type": "object",
+                  "required": ["min", "max"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "min": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.55 },
+                    "max": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 }
+                  }
+                },
+                "adjustment_rate": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.1 }
+              }
+            }
+          }
+        },
+        "over_budget_behavior": {
+          "type": "object",
+          "description": "Deterministic responses when budget thresholds are approached or exceeded.",
+          "additionalProperties": false,
+          "properties": {
+            "bands": {
+              "type": "object",
+              "required": ["near_soft_cap", "at_soft_cap", "near_hard_cap", "over_hard_cap"],
+              "additionalProperties": false,
+              "properties": {
+                "near_soft_cap": {
+                  "type": "object",
+                  "required": ["threshold_percent", "response_hints"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "threshold_percent": { "type": "number", "minimum": 0, "maximum": 100, "default": 75 },
+                    "response_hints": {
+                      "type": "array",
+                      "items": { "type": "string", "enum": ["prefer_implied", "reduce_modality_weight", "log_warning"] },
+                      "default": ["prefer_implied"]
+                    }
+                  }
+                },
+                "at_soft_cap": {
+                  "type": "object",
+                  "required": ["threshold_percent", "response_hints"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "threshold_percent": { "type": "number", "minimum": 0, "maximum": 100, "default": 90 },
+                    "response_hints": {
+                      "type": "array",
+                      "items": { "type": "string", "enum": ["enforce_implied_only", "insert_cool_down_prompt", "redirect_to_psychological"] }
+                    }
+                  }
+                },
+                "near_hard_cap": {
+                  "type": "object",
+                  "required": ["threshold_percent", "response_hints"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "threshold_percent": { "type": "number", "minimum": 0, "maximum": 100, "default": 95 },
+                    "response_hints": {
+                      "type": "array",
+                      "items": { "type": "string", "enum": ["refuse_explicit_content", "offer_alternative_region", "trigger_guardrail_review"] }
+                    }
+                  }
+                },
+                "over_hard_cap": {
+                  "type": "object",
+                  "required": ["response_hints", "cooldown_turns"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "response_hints": {
+                      "type": "array",
+                      "items": { "type": "string", "enum": ["hard_refuse", "fallback_to_safe_template", "log_distress_signal"] },
+                      "default": ["hard_refuse", "fallback_to_safe_template"]
+                    },
+                    "cooldown_turns": { "type": "integer", "minimum": 1, "default": 5 }
+                  }
+                }
+              }
+            },
+            "modality_specific_overrides": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sexual": {
+                  "type": "object",
+                  "required": ["always_refuse"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "always_refuse": { "type": "boolean", "const": true, "description": "Sexual content is refused regardless of budget state." }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "telemetry_binding": {
+          "type": "object",
+          "required": ["metrics_schema_ref", "event_schema_ref"],
+          "additionalProperties": false,
+          "properties": {
+            "metrics_schema_ref": {
+              "type": "string",
+              "const": "schema://HorrorPlace-Constellation-Contracts/telemetry/consent-session-metrics-v1.json"
+            },
+            "event_schema_ref": {
+              "type": "string",
+              "const": "schema://HorrorPlace-Constellation-Contracts/telemetry/budget-consumption-event-v1.json"
+            }
+          }
+        },
+        "policy_bindings": {
+          "type": "object",
+          "required": ["invariant_schema_ref", "consent_state_machine_ref", "content_boundary_ruleset_pattern"],
+          "additionalProperties": false,
+          "properties": {
+            "invariant_schema_ref": {
+              "type": "string",
+              "const": "schema://Horror.Place/invariants_v1.json"
+            },
+            "consent_state_machine_ref": {
+              "type": "string",
+              "const": "schema://HorrorPlace-Constellation-Contracts/runtime/consent-state-machine-v1.json"
+            },
+            "content_boundary_ruleset_pattern": {
+              "type": "string",
+              "pattern": "^schema://HorrorPlace-Constellation-Contracts/policy/content-boundary-ruleset-.*\\.json$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "modalityCap": {
+      "type": "object",
+      "required": ["max", "soft_cap"],
+      "additionalProperties": false,
+      "properties": {
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Hard ceiling for this modality; never exceeded regardless of budget state."
+        },
+        "soft_cap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Preferred ceiling; triggers response hints when approached."
+        },
+        "consumption_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "default": 1.0,
+          "description": "Multiplier applied to classifier confidence when computing budget delta."
+        }
+      }
+    }
+  }
+}
