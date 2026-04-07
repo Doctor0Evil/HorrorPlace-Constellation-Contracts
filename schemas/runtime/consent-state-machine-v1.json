@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/consent-state-machine-v1.json",
+  "title": "Consent State Machine v1",
+  "description": "Formal, machine-readable consent state machine for Horror$Place VM-constellation. Defines allowed states, transitions, and proof requirements for age-gating, horror tiers, and session risk behaviors across all modules.",
+  "type": "object",
+  "required": ["consent_state_machine"],
+  "additionalProperties": false,
+  "properties": {
+    "consent_state_machine": {
+      "type": "object",
+      "required": ["version", "states", "transitions", "policy_bindings"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of this state machine definition."
+        },
+        "states": {
+          "type": "object",
+          "description": "Allowed consent states with their capabilities and constraints.",
+          "additionalProperties": false,
+          "properties": {
+            "minor": {
+              "type": "object",
+              "required": ["tier", "allowed_content_modalities", "hard_prohibitions", "max_invariants", "max_metrics"],
+              "additionalProperties": false,
+              "properties": {
+                "tier": { "type": "string", "const": "T1_public" },
+                "allowed_content_modalities": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["psychological_horror", "folklore", "implication_only", "ambient_dread"] },
+                  "description": "Content types permitted in this state."
+                },
+                "hard_prohibitions": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["explicit_violence", "sexual_content", "sexual_violence", "graphic_gore", "self_harm_detail", "real_world_hate"] },
+                  "description": "Content categories that must never be generated."
+                },
+                "max_invariants": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 },
+                    "MDI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
+                    "AOS": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+                    "DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 3.0 },
+                    "SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.2 }
+                  },
+                  "description": "Maximum invariant values allowed for this state."
+                },
+                "max_metrics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "UEC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
+                    "EMD": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.6 },
+                    "CDL": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
+                    "ARR": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.8 }
+                  },
+                  "description": "Target entertainment metric bands for this state."
+                }
+              }
+            },
+            "adult-basic": {
+              "type": "object",
+              "required": ["tier", "allowed_content_modalities", "hard_prohibitions", "max_invariants", "max_metrics", "requires_proof"],
+              "additionalProperties": false,
+              "properties": {
+                "tier": { "type": "string", "const": "T2_private" },
+                "allowed_content_modalities": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["psychological_horror", "folklore", "implication_only", "ambient_dread", "implied_violence", "disturbing_themes"] }
+                },
+                "hard_prohibitions": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["sexual_content", "sexual_violence", "graphic_gore", "self_harm_detail", "real_world_hate"] }
+                },
+                "requires_proof": {
+                  "type": "object",
+                  "required": ["age_verification", "explicit_opt_in"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_verification": { "type": "boolean", "const": true },
+                    "explicit_opt_in": { "type": "boolean", "const": true },
+                    "proof_type": { "type": "string", "enum": ["did_kyc", "zkp_age_over_18", "charter_agreement_v1"] }
+                  }
+                },
+                "max_invariants": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.6 },
+                    "MDI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
+                    "AOS": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
+                    "DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 6.0 },
+                    "SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 }
+                  }
+                },
+                "max_metrics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "UEC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.8 },
+                    "EMD": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.75 },
+                    "CDL": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.6 },
+                    "ARR": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.75 }
+                  }
+                }
+              }
+            },
+            "adult-horror": {
+              "type": "object",
+              "required": ["tier", "allowed_content_modalities", "hard_prohibitions", "max_invariants", "max_metrics", "requires_proof", "deadledger_binding"],
+              "additionalProperties": false,
+              "properties": {
+                "tier": { "type": "string", "const": "T2_private" },
+                "allowed_content_modalities": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["psychological_horror", "folklore", "implication_only", "ambient_dread", "implied_violence", "disturbing_themes", "concrete_violence", "abstracted_gore"] }
+                },
+                "hard_prohibitions": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["sexual_violence", "sexual_content", "real_world_hate", "minors_in_harm"] }
+                },
+                "requires_proof": {
+                  "type": "object",
+                  "required": ["age_verification", "explicit_opt_in", "charter_signature"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_verification": { "type": "boolean", "const": true },
+                    "explicit_opt_in": { "type": "boolean", "const": true },
+                    "charter_signature": { "type": "boolean", "const": true },
+                    "proof_type": { "type": "string", "enum": ["did_kyc", "zkp_age_over_18", "charter_agreement_v1", "multi_sig_approval"] }
+                  }
+                },
+                "deadledger_binding": {
+                  "type": "object",
+                  "required": ["proof_envelope_id", "verifier_ref"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "proof_envelope_id": { "type": "string", "pattern": "^dln\\.envelope\\.[a-z0-9_.\\-]+$" },
+                    "verifier_ref": { "type": "string", "pattern": "^dln\\.verifier\\.[a-z0-9_.\\-]+$" },
+                    "circuit_type": { "type": "string", "enum": ["age_gate", "charter_agreement", "consent_attestation"] }
+                  }
+                },
+                "max_invariants": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "CIC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 },
+                    "MDI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.9 },
+                    "AOS": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 },
+                    "DET": { "type": "number", "minimum": 0, "maximum": 10, "default": 8.5 },
+                    "SHCI": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.75 }
+                  }
+                },
+                "max_metrics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "UEC": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.9 },
+                    "EMD": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 },
+                    "CDL": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.75 },
+                    "ARR": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 }
+                  }
+                }
+              }
+            },
+            "research": {
+              "type": "object",
+              "required": ["tier", "allowed_content_modalities", "hard_prohibitions", "requires_proof", "deadledger_binding", "governance_approval"],
+              "additionalProperties": false,
+              "properties": {
+                "tier": { "type": "string", "const": "T3_private" },
+                "allowed_content_modalities": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["psychological_horror", "folklore", "implication_only", "ambient_dread", "implied_violence", "disturbing_themes", "concrete_violence", "abstracted_gore", "experimental_bci", "neural_resonance"] }
+                },
+                "hard_prohibitions": {
+                  "type": "array",
+                  "items": { "type": "string", "enum": ["sexual_violence", "real_world_hate", "minors_in_harm", "non_consensual_content"] }
+                },
+                "requires_proof": {
+                  "type": "object",
+                  "required": ["age_verification", "explicit_opt_in", "charter_signature", "institutional_affiliation"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "age_verification": { "type": "boolean", "const": true },
+                    "explicit_opt_in": { "type": "boolean", "const": true },
+                    "charter_signature": { "type": "boolean", "const": true },
+                    "institutional_affiliation": { "type": "boolean", "const": true },
+                    "proof_type": { "type": "string", "enum": ["did_kyc", "zkp_age_over_18", "charter_agreement_v1", "multi_sig_approval", "irb_approval"] }
+                  }
+                },
+                "deadledger_binding": {
+                  "type": "object",
+                  "required": ["proof_envelope_id", "verifier_ref", "required_proofs"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "proof_envelope_id": { "type": "string", "pattern": "^dln\\.envelope\\.[a-z0-9_.\\-]+$" },
+                    "verifier_ref": { "type": "string", "pattern": "^dln\\.verifier\\.[a-z0-9_.\\-]+$" },
+                    "circuit_type": { "type": "string", "enum": ["age_gate", "charter_agreement", "consent_attestation", "irb_compliance"] },
+                    "required_proofs": {
+                      "type": "array",
+                      "items": { "type": "string", "enum": ["age_over_18", "charter_agreement_v1", "irb_approval_v1", "data_retention_consent"] }
+                    }
+                  }
+                },
+                "governance_approval": {
+                  "type": "object",
+                  "required": ["approval_id", "approver_role", "timestamp"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "approval_id": { "type": "string", "pattern": "^gov\\.approval\\.[a-z0-9_.\\-]+$" },
+                    "approver_role": { "type": "string", "enum": ["safety_council", "bci_ethics_board", "research_oversight"] },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "description": "Allowed state transitions with requirements and constraints.",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "requires_proof", "requires_explicit_opt_in", "cooldown_days"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string", "enum": ["minor", "adult-basic", "adult-horror", "research"] },
+              "to": { "type": "string", "enum": ["minor", "adult-basic", "adult-horror", "research"] },
+              "requires_proof": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["age_verification", "explicit_opt_in", "charter_signature", "institutional_affiliation", "irb_approval"] }
+              },
+              "requires_explicit_opt_in": { "type": "boolean" },
+              "cooldown_days": { "type": "integer", "minimum": 0, "description": "Minimum days before this transition can be attempted again." },
+              "auto_revert_conditions": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["proof_expiry", "policy_breach", "user_request", "governance_revocation"] },
+                "description": "Conditions that automatically revert to a lower tier."
+              }
+            }
+          }
+        },
+        "policy_bindings": {
+          "type": "object",
+          "required": ["invariant_schema_ref", "metrics_schema_ref", "content_boundary_ruleset_ref"],
+          "additionalProperties": false,
+          "properties": {
+            "invariant_schema_ref": {
+              "type": "string",
+              "const": "schema://Horror.Place/invariants_v1.json",
+              "description": "Canonical schema for invariant validation."
+            },
+            "metrics_schema_ref": {
+              "type": "string",
+              "const": "schema://Horror.Place/entertainment_metrics_v1.json",
+              "description": "Canonical schema for entertainment metrics."
+            },
+            "content_boundary_ruleset_ref": {
+              "type": "string",
+              "pattern": "^schema://HorrorPlace-Constellation-Contracts/content-boundary-ruleset-.*\\.json$",
+              "description": "Reference to applicable content boundary ruleset."
+            },
+            "telemetry_binding": {
+              "type": "object",
+              "required": ["session_metrics_schema"],
+              "additionalProperties": false,
+              "properties": {
+                "session_metrics_schema": {
+                  "type": "string",
+                  "const": "schema://HorrorPlace-Constellation-Contracts/telemetry/consent-session-metrics-v1.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
