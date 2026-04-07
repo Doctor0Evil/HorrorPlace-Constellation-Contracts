@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/telemetry/budget-consumption-event-v1.json",
+  "title": "Budget Consumption Event v1",
+  "description": "Telemetry schema for logging per-turn explicitness budget consumption in Horror$Place sessions. Enables correlation between budget usage, invariant caps, and entertainment metrics without storing PII or raw content.",
+  "type": "object",
+  "required": ["budget_consumption_event"],
+  "additionalProperties": false,
+  "properties": {
+    "budget_consumption_event": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "session_id",
+        "timestamp",
+        "turn_index",
+        "consent_tier",
+        "policy_tier",
+        "budget_state",
+        "consumption_deltas"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this budget consumption event."
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Opaque session UUID; non-reversible and non-linkable across sessions without external mapping."
+        },
+        "user_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of user identifier with salt; pseudonymous, non-reversible."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the event."
+        },
+        "turn_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based index of the turn within the session."
+        },
+        "consent_tier": {
+          "type": "string",
+          "enum": ["minor", "adult-basic", "adult-horror", "research"],
+          "description": "Effective consent state for this turn, from consent-state-machine-v1.json."
+        },
+        "policy_tier": {
+          "type": "string",
+          "enum": ["standard", "mature", "research"],
+          "description": "Policy envelope tier governing content rules for this turn."
+        },
+        "region_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]{2,63}$",
+          "description": "Optional region identifier where the content was generated."
+        },
+        "selector_pattern_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]{2,63}$",
+          "description": "Optional reference to the narrative pattern selected by the History-Aware Content Selector."
+        },
+        "template_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]{2,63}$",
+          "description": "Optional reference to the AI-Chat template used for this turn."
+        },
+        "budget_state": {
+          "type": "object",
+          "required": ["budget_total", "budget_remaining", "over_budget"],
+          "additionalProperties": false,
+          "properties": {
+            "budget_total": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Total explicitness budget allocated for this session at this turn."
+            },
+            "budget_remaining": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Remaining budget after this turn's consumption."
+            },
+            "over_budget": {
+              "type": "boolean",
+              "description": "True if budget_remaining < 0 (should trigger over-budget behavior)."
+            },
+            "budget_band": {
+              "type": "string",
+              "enum": ["near_soft_cap", "at_soft_cap", "near_hard_cap", "over_hard_cap"],
+              "description": "Current budget consumption band from horror-intensity-budget-policy-v1.json."
+            }
+          },
+          "description": "Snapshot of the explicitness budget state after this turn."
+        },
+        "consumption_deltas": {
+          "type": "object",
+          "required": ["total_delta"],
+          "additionalProperties": false,
+          "properties": {
+            "total_delta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Total explicitness consumed this turn (0-1 scale)."
+            },
+            "by_modality": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "violence": { "$ref": "#/$defs/modalityDelta" },
+                "gore": { "$ref": "#/$defs/modalityDelta" },
+                "sexual": { "$ref": "#/$defs/modalityDelta" },
+                "psychological": { "$ref": "#/$defs/modalityDelta" }
+              },
+              "description": "Breakdown of consumption by content modality."
+            },
+            "classifier_confidence": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "properties": {
+                "violence": { "type": "number", "minimum": 0, "maximum": 1 },
+                "gore": { "type": "number", "minimum": 0, "maximum": 1 },
+                "sexual": { "type": "number", "minimum": 0, "maximum": 1 },
+                "psychological": { "type": "number", "minimum": 0, "maximum": 1 }
+              },
+              "description": "Classifier confidence scores that informed the consumption calculation."
+            }
+          },
+          "description": "Explicitness consumed during this turn, with modality breakdown."
+        },
+        "invariant_snapshot": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "$ref": "#/$defs/invariantValue" },
+            "MDI": { "$ref": "#/$defs/invariantValue" },
+            "AOS": { "$ref": "#/$defs/invariantValue" },
+            "RRM": { "$ref": "#/$defs/invariantValue" },
+            "FCF": { "$ref": "#/$defs/invariantValue" },
+            "SPR": { "$ref": "#/$defs/invariantValue" },
+            "RWF": { "$ref": "#/$defs/invariantValue" },
+            "DET": { "$ref": "#/$defs/invariantValueDET" },
+            "HVF": { "$ref": "#/$defs/invariantValue" },
+            "LSG": { "$ref": "#/$defs/invariantValue" },
+            "SHCI": { "$ref": "#/$defs/invariantValue" }
+          },
+          "description": "Snapshot of geo-historical invariants at the time of content generation."
+        },
+        "metrics_snapshot": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "$ref": "#/$defs/metricValue" },
+            "EMD": { "$ref": "#/$defs/metricValue" },
+            "STCI": { "$ref": "#/$defs/metricValue" },
+            "CDL": { "$ref": "#/$defs/metricValue" },
+            "ARR": { "$ref": "#/$defs/metricValue" }
+          },
+          "description": "Entertainment metrics values at the time of this turn (may be post-hoc estimates)."
+        },
+        "boundary_decision": {
+          "type": ["string", "null"],
+          "enum": ["allow", "soften", "imply", "refuse"],
+          "description": "Final decision from Content Boundary & Policy Engine for this turn."
+        },
+        "redaction_applied": {
+          "type": "boolean",
+          "description": "True if any redaction tokens were applied to the output."
+        },
+        "over_budget_behavior": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "triggered": { "type": "boolean" },
+            "band": { "type": "string", "enum": ["near_soft_cap", "at_soft_cap", "near_hard_cap", "over_hard_cap"] },
+            "response_hints": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "prefer_implied",
+                  "reduce_modality_weight",
+                  "log_warning",
+                  "enforce_implied_only",
+                  "insert_cool_down_prompt",
+                  "redirect_to_psychological",
+                  "refuse_explicit_content",
+                  "offer_alternative_region",
+                  "trigger_guardrail_review",
+                  "hard_refuse",
+                  "fallback_to_safe_template",
+                  "log_distress_signal"
+                ]
+              }
+            },
+            "cooldown_turns_remaining": { "type": "integer", "minimum": 0 }
+          },
+          "description": "Details of over-budget behavior if triggered this turn."
+        },
+        "distress_signal": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "signal_type": {
+              "type": "string",
+              "enum": ["user_abort", "comfort_drop", "explicitness_spike", "guardrail_trigger"]
+            },
+            "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+            "context": {
+              "type": ["string", "null"],
+              "maxLength": 256,
+              "description": "Optional opaque context tag (no PII or raw content)."
+            }
+          },
+          "description": "Optional distress indicator logged for this turn."
+        },
+        "deadledger_ref": {
+          "type": ["string", "null"],
+          "pattern": "^dln\\.[a-z0-9_.\\-]+$",
+          "description": "Optional reference to a Dead-Ledger proof envelope for governance-auditable high-intensity turns."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "modalityDelta": {
+      "type": "object",
+      "required": ["delta", "capped"],
+      "additionalProperties": false,
+      "properties": {
+        "delta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Amount of explicitness consumed for this modality this turn."
+        },
+        "capped": {
+          "type": "boolean",
+          "description": "True if this modality hit its per-tier cap this turn."
+        },
+        "weight_applied": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Optional consumption weight multiplier applied (from horror-intensity-budget-policy-v1.json)."
+        }
+      }
+    },
+    "invariantValue": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Normalized invariant value (0-1 scale) as defined in Horror.Place invariants_v1.json."
+    },
+    "invariantValueDET": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "DET invariant value (0-10 scale) as defined in Horror.Place invariants_v1.json."
+    },
+    "metricValue": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Entertainment metric value (0-1 scale) as defined in Horror.Place entertainment_metrics_v1.json."
+    }
+  }
+}
