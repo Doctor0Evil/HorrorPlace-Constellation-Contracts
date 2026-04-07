@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema://HorrorPlace-Constellation-Contracts/ai_file_envelope_v1.json",
   "title": "AI File Envelope v1",
-  "description": "Standard envelope describing target repository, path, schemas, and content for AI-generated files in the Horror$Place VM-constellation. Enables deterministic, schema-first authoring with explicit cross-repo linkage and CI validation.",
+  "description": "Standard envelope describing target repository, path, schemas, and content for AI-generated files in the Horror$Place VM-constellation. Enforces schema-first, repo-role-aligned, implication-only authoring across all constellation repositories.",
   "type": "object",
   "required": ["ai_file_envelope"],
   "additionalProperties": false,
@@ -22,7 +22,7 @@
       "properties": {
         "target_repo": {
           "type": "string",
-          "description": "Logical repository name in the VM-constellation.",
+          "description": "Logical repository name in the VM-constellation. Must match one of the canonical repo identifiers.",
           "enum": [
             "Horror.Place",
             "Horror.Place-Orchestrator",
@@ -41,24 +41,30 @@
         },
         "target_path": {
           "type": "string",
-          "description": "Relative path within target_repo; must be GitHub-compatible and follow repo directory conventions.",
-          "pattern": "^[A-Za-z0-9_.\\-\\/]+$",
+          "description": "Repository-relative file path; must be GitHub-compatible and match canonical directory conventions for the target repo.",
+          "pattern": "^[A-Za-z0-9_.\\-\\/]+\\.[A-Za-z0-9]+$",
           "minLength": 1,
-          "maxLength": 255
+          "maxLength": 255,
+          "examples": [
+            "schemas/invariants_v1.json",
+            "registry/events.json",
+            "lua/horror_invariants.lua",
+            "docs/ai_authoring_guidelines_v1.md"
+          ]
         },
         "schemaref": {
           "type": ["string", "null"],
-          "description": "Canonical schema URI for JSON/NDJSON content; null for free-form text, code, or Markdown files.",
-          "pattern": "^schema://[A-Za-z0-9._\\-/:]+$"
+          "description": "Canonical schema URI for JSON/NDJSON content; null for free-form text, code, or Markdown files. Must reference a schema defined in Horror.Place or HorrorPlace-Constellation-Contracts.",
+          "pattern": "^schema://[A-Za-z0-9._\\-\\/]+$"
         },
         "tier": {
           "type": "string",
-          "description": "Constellation tier classification for the artifact.",
+          "description": "Constellation tier classification for the artifact, determining visibility and governance constraints.",
           "enum": ["T1_public", "T2_private", "T3_private"]
         },
         "intended_audience": {
           "type": "string",
-          "description": "Primary audience for the artifact.",
+          "description": "Primary audience for the artifact; informs CI validation strictness and documentation tone.",
           "enum": [
             "engineers",
             "engineers_and_pipelines",
@@ -71,13 +77,13 @@
         },
         "description": {
           "type": "string",
-          "description": "Concise summary of the artifact's purpose and scope.",
+          "description": "Concise summary of the artifact's purpose and alignment with constellation doctrine.",
           "minLength": 10,
           "maxLength": 512
         },
         "cross_repo_links": {
           "type": "array",
-          "description": "Explicit cross-repository references required by this artifact.",
+          "description": "Explicit cross-repository references required by this artifact. Used for dependency tracking and CI validation.",
           "items": {
             "type": "object",
             "required": ["type", "target_repo", "path"],
@@ -85,7 +91,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "description": "Semantic type of the cross-repo link (e.g., invariant_bundle, seed_file, schema, deadledger_ref).",
+                "description": "Semantic type of the cross-repo link (e.g., invariant_bundle, seed_file, schema, deadledger_ref, registry_entry).",
                 "minLength": 1
               },
               "target_repo": {
@@ -110,7 +116,7 @@
               "path": {
                 "type": "string",
                 "description": "Relative path to the referenced artifact within target_repo.",
-                "pattern": "^[A-Za-z0-9_.\\-\\/]+$",
+                "pattern": "^[A-Za-z0-9_.\\-\\/]+\\.[A-Za-z0-9]+$",
                 "minLength": 1,
                 "maxLength": 255
               }
@@ -120,7 +126,7 @@
         },
         "content_language": {
           "type": "string",
-          "description": "Language/format of the body content.",
+          "description": "Language/format of the body content; determines validation and linting rules.",
           "enum": [
             "json",
             "ndjson",
@@ -132,22 +138,67 @@
             "text"
           ]
         },
+        "invariants_used": {
+          "type": "array",
+          "description": "List of canonical invariant keys referenced by this artifact. Must match keys from the Horror.Place invariants schema.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "MDI",
+              "AOS",
+              "RRM",
+              "FCF",
+              "SPR",
+              "RWF",
+              "DET",
+              "HVF",
+              "LSG",
+              "SHCI"
+            ]
+          },
+          "default": []
+        },
+        "metrics_used": {
+          "type": "array",
+          "description": "List of canonical entertainment metric keys referenced by this artifact.",
+          "items": {
+            "type": "string",
+            "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"]
+          },
+          "default": []
+        },
+        "deadledger_surface": {
+          "type": "array",
+          "description": "List of Dead-Ledger surface types referenced (e.g., for high-intensity or restricted artifacts).",
+          "items": {
+            "type": "string",
+            "enum": [
+              "zkpproofv1_schema",
+              "verifiers_registry",
+              "bundle_attestation",
+              "agent_attestation",
+              "charter_agreement"
+            ]
+          },
+          "default": []
+        },
         "body": {
-          "description": "Actual file content, shaped according to content_language.",
+          "description": "Actual file content, structured according to content_language. For JSON/NDJSON, this is the parsed object; for text/code, it is an object with a 'text' field.",
           "oneOf": [
             {
-              "description": "Structured content for JSON/NDJSON files.",
+              "description": "Structured content for JSON/NDJSON files. Must validate against schemaref if non-null.",
               "type": "object"
             },
             {
-              "description": "Text-based files (Markdown, code, etc.).",
+              "description": "Text-based files (Markdown, code, config). Content goes in the 'text' field.",
               "type": "object",
               "required": ["text"],
               "additionalProperties": false,
               "properties": {
                 "text": {
                   "type": "string",
-                  "description": "Raw text content for non-JSON artifacts."
+                  "description": "Raw file content; must be GitHub-ready with no inline citations or tool markers."
                 }
               }
             }
