@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/selector/history-selector-rule-v1.json",
+  "title": "HistorySelectorRule",
+  "description": "Scoring engine rules for history-aware content selection. Defines 9 rules in strict phase order that filter, score, and rank content candidates based on safety, cooldowns, repetition, escalation curves, budget fit, pattern matching, diversity, regional affinity, and final ranking. Aligns with Module 7 (History-Aware Content Selector) and CHAT_DIRECTOR governance spine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "scoringModel",
+    "ruleCatalog",
+    "sessionStateContract",
+    "crossSessionStateContract",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^hsr-[a-z0-9]{6,12}$",
+      "description": "Stable identifier for this selector rule configuration."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "history-selector-rule.v1",
+      "description": "Schema version identifier for validator binding."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "historySelectorRule",
+      "description": "Object kind for CHAT_DIRECTOR routing and manifest validation."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps add optional rules, patch bumps adjust thresholds."
+    },
+    "scoringModel": {
+      "type": "object",
+      "description": "Defines the additive scoring model: base score, modifiers, clamping, and exclusion semantics.",
+      "additionalProperties": false,
+      "required": ["baseScore", "scoreRange", "exclusionSemantics", "tiebreakStrategy"],
+      "properties": {
+        "baseScore": {
+          "type": "number",
+          "const": 1.0,
+          "description": "Starting score for all candidates before rule application."
+        },
+        "scoreRange": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "const": 0.0 },
+            "max": { "type": "number", "const": 5.0 }
+          },
+          "description": "Final score clamped to [0.0, 5.0] after all modifiers applied."
+        },
+        "exclusionSemantics": {
+          "type": "string",
+          "enum": ["final", "overrideable"],
+          "const": "final",
+          "description": "If 'final', exclusion by any rule is irreversible; no downstream boost can resurrect."
+        },
+        "tiebreakStrategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["primary", "secondary"],
+          "properties": {
+            "primary": {
+              "type": "string",
+              "enum": ["freshness", "invariantFit", "budgetEfficiency"],
+              "const": "freshness",
+              "description": "Primary tiebreaker: prefer candidates not served recently."
+            },
+            "secondary": {
+              "type": "string",
+              "enum": ["invariantFit", "budgetEfficiency", "random"],
+              "const": "invariantFit",
+              "description": "Secondary tiebreaker: prefer candidates whose invariant targets best match current session caps."
+            }
+          }
+        }
+      }
+    },
+    "ruleCatalog": {
+      "type": "array",
+      "description": "Ordered array of 9 selector rules evaluated in strict phase sequence. Exclusion is final; scoring modifiers are additive.",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ruleId", "phase", "action", "mandatory", "description"],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "pattern": "^SEL-R[0-9]{3}$"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "safety_prefilter",
+              "cooldown_exclusion",
+              "repetition_penalty",
+              "escalation_curve",
+              "budget_fit",
+              "pattern_match",
+              "diversity_bonus",
+              "regional_affinity",
+              "final_rank"
+            ],
+            "description": "Evaluation phase; rules executed in this order."
+          },
+          "action": {
+            "type": "string",
+            "enum": ["EXCLUDE", "SCORE_MODIFY", "EXCLUDE_OR_BOOST", "RANK"],
+            "description": "Rule action type: hard exclude, additive score modifier, conditional exclude/boost, or final ranking."
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "If true, rule cannot be disabled by config; required for safety/spine alignment."
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Rule-specific configuration; schema varies by ruleId."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "sessionStateContract": {
+      "type": "object",
+      "description": "Fields H.Selector requires from the active session to evaluate rules; aligns with CHAT_DIRECTOR shared identity layer.",
+      "additionalProperties": false,
+      "required": [
+        "sessionId",
+        "regionId",
+        "descriptorId",
+        "consentTier",
+        "routerStateId",
+        "servedContentIds",
+        "cooldownRegistry",
+        "activePatterns",
+        "lastIntensity",
+        "sessionDepth"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "pattern": "^sess-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$"
+        },
+        "regionId": {
+          "type": "string",
+          "pattern": "^reg-[a-z0-9_-]{3,24}$"
+        },
+        "descriptorId": {
+          "type": "string",
+          "pattern": "^desc-[a-z0-9_-]{3,32}$"
+        },
+        "consentTier": {
+          "type": "string",
+          "enum": ["minor", "adult-basic", "adult-horror", "research"]
+        },
+        "routerStateId": {
+          "type": "string",
+          "pattern": "^rtr-[a-z0-9]{6,12}$"
+        },
+        "servedContentIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of content already served this session; used by SEL-R003 repetition penalty."
+        },
+        "cooldownRegistry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Maps content type to last-served timestamp; used by SEL-R002 cooldown exclusion.",
+          "properties": {
+            "jumpscare": { "type": "string", "format": "date-time" },
+            "lore_reveal": { "type": "string", "format": "date-time" },
+            "puzzle_clue": { "type": "string", "format": "date-time" },
+            "ambient_shift": { "type": "string", "format": "date-time" }
+          }
+        },
+        "activePatterns": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^PAT-[A-Z]{3}-[0-9]{3}$" },
+          "description": "Currently active pattern IDs from history-selector-pattern-v1.json."
+        },
+        "lastIntensity": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Normalized intensity of last served content; used by SEL-R004 escalation curve."
+        },
+        "sessionDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of turns/beats served in current session; used by escalation and pattern matching."
+        }
+      }
+    },
+    "crossSessionStateContract": {
+      "type": "object",
+      "description": "Persistent state carried across sessions for lore thread tracking and long-term diversity; stored in registry/vault, referenced by ID.",
+      "additionalProperties": false,
+      "required": ["userId", "encounterHistory", "loreThreadProgress", "lifetimeTypeCounts"],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "pattern": "^usr-[a-z0-9]{6,20}$",
+          "description": "Opaque user identifier; never contains PII."
+        },
+        "encounterHistory": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sessionId", "contentTypeId", "timestamp", "intensity"],
+            "properties": {
+              "sessionId": { "type": "string" },
+              "contentTypeId": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "intensity": { "type": "number" }
+            }
+          },
+          "description": "Last 10 sessions of content encounters for SEL-R003 repetition penalty."
+        },
+        "loreThreadProgress": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Tracks completion state of LORE_THREAD patterns across sessions.",
+          "patternProperties": {
+            "^PAT-LORE-[0-9]{3}$": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["completedBeats", "unlockedTags"],
+              "properties": {
+                "completedBeats": { "type": "integer", "minimum": 0 },
+                "unlockedTags": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Tags unlocked by completing this lore thread (e.g., 'mature_lore', 'depth-2')."
+                }
+              }
+            }
+          }
+        },
+        "lifetimeTypeCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Aggregate counts of content types served across all sessions; used by SEL-R007 diversity bonus.",
+          "properties": {
+            "jumpscare": { "type": "integer", "minimum": 0 },
+            "lore_reveal": { "type": "integer", "minimum": 0 },
+            "puzzle_clue": { "type": "integer", "minimum": 0 },
+            "ambient_shift": { "type": "integer", "minimum": 0 },
+            "escalation_peak": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for schema spine alignment; shape defined in prismMeta.v1.json.",
+      "additionalProperties": true,
+      "properties": {
+        "author": { "type": "string" },
+        "reviewed": { "type": "array", "items": { "type": "string" } },
+        "governanceRef": { "type": "string" }
+      }
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for selector rule configurations that require external verification."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ruleCatalog": {
+            "contains": {
+              "properties": { "ruleId": { "const": "SEL-R001" }, "phase": { "const": "safety_prefilter" } }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "ruleCatalog": {
+            "contains": {
+              "properties": {
+                "ruleId": { "const": "SEL-R001" },
+                "phase": { "const": "safety_prefilter" },
+                "action": { "const": "EXCLUDE" },
+                "mandatory": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
