@@ -1,0 +1,80 @@
+{
+  "id": "run.zemonth.example.t1.v1",
+  "schemaRef": "runContract.v1",
+  "objectKind": "runContract",
+  "version": "1.0.0",
+  "sessionTemplateId": "zemonth.beginner-session",
+  "personaRef": "persona.zemonth.v1",
+  "tier": "Tier1Public",
+  "regionRef": "region.spectral-thresholds.ridge.v1",
+  "routerEnvelope": {
+    "ageTierHint": "standard",
+    "requestedTier": "Tier1Public",
+    "fallbackTier": "Tier1Public"
+  },
+  "giftEnvelope": {
+    "giftTableId": "zemonth.gifts.v1",
+    "visibleGiftCount": 3,
+    "maxGiftsPerSession": 1,
+    "categoriesAllowed": [
+      "mood-twists",
+      "puzzling-adventures",
+      "boons-protection",
+      "lore-revelation"
+    ]
+  },
+  "hiddenBindingEnvelope": {
+    "hiddenTraitPoolId": "zemonth.hidden-traits.v1",
+    "hiddenStatusPoolId": "zemonth.hidden-status.v1",
+    "selectionMode": "random-per-session"
+  },
+  "metricsEnvelope": {
+    "invariantTargets": {
+      "CIC": 0.5,
+      "AOS": 0.7,
+      "SHCI": 0.6,
+      "DET": 0.4
+    },
+    "metricTargets": {
+      "UEC": 0.65,
+      "EMD": 0.5,
+      "CDL": 0.4,
+      "ARR": 0.7
+    }
+  },
+  "budgetEnvelope": {
+    "policyRef": "horror-intensity-budget-policy.default.standard.v1",
+    "perModality": {
+      "violence": {
+        "max": 0.4,
+        "softCap": 0.3,
+        "hardCap": 0.4
+      },
+      "gore": {
+        "max": 0.0,
+        "softCap": 0.0,
+        "hardCap": 0.0
+      },
+      "sexual": {
+        "max": 0.0,
+        "softCap": 0.0,
+        "hardCap": 0.0
+      },
+      "psychological": {
+        "max": 0.7,
+        "softCap": 0.5,
+        "hardCap": 0.7
+      }
+    }
+  },
+  "safetyEnvelope": {
+    "consentStateRef": "consent-state-machine.standard.v1",
+    "banterPolicyRef": "input-banter-policy.standard.v1",
+    "chatSafetyRulesetId": "content-boundary.standard.v1"
+  },
+  "telemetryEnvelope": {
+    "sessionMetricsEnvelopeId": "session-metrics-envelope.default.v1",
+    "routingMetricsRef": "age-tier-routing-metrics.v1",
+    "templateMetricsRef": "ai-chat-template-metrics.v1"
+  }
+}
