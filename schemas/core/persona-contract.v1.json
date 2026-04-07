@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/core/persona-contract.v1.json",
+  "title": "personaContract v1",
+  "description": "Persona contract describing AI voice, safety posture, invariant bands, and chat-safety invariants for a single persona.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "phase",
+    "personaId",
+    "role",
+    "styleProfile",
+    "invariantBindings",
+    "metricTargets",
+    "chatSafetyInvariants",
+    "routingEnvelope",
+    "consentEnvelope",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this persona contract artifact."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "persona-contract.v1",
+      "description": "Schema identifier for this persona contract."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "personaContract",
+      "description": "Object kind used by CHATDIRECTOR routing."
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ],
+      "description": "Governance tier associated with this persona."
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [2],
+      "description": "Lifecycle phase; persona contracts are Phase 2 Bundles artifacts."
+    },
+
+    "personaId": {
+      "type": "string",
+      "description": "Logical persona identifier; referenced by runContract and session envelopes."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable persona name."
+    },
+    "role": {
+      "type": "string",
+      "description": "Primary narrative role for this persona (archivist, custodian, specter, operator, etc.)."
+    },
+    "archetypeId": {
+      "type": "string",
+      "description": "Optional archetype key linking this persona to a style or behavior archetype library."
+    },
+
+    "styleProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "styleContractRef",
+        "tone",
+        "pacing",
+        "lexiconHints"
+      ],
+      "properties": {
+        "styleContractRef": {
+          "type": "string",
+          "description": "Reference to a mood/style contract this persona aligns with."
+        },
+        "tone": {
+          "type": "string",
+          "description": "High-level tone description (clinical, conspiratorial, sympathetic, cold, etc.)."
+        },
+        "pacing": {
+          "type": "string",
+          "description": "Pacing preference (slow-burn, procedural, terse, digressive, etc.)."
+        },
+        "lexiconHints": {
+          "type": "array",
+          "description": "Keywords and phrases that guide persona-specific vocabulary.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+
+    "invariantBindings": {
+      "type": "object",
+      "description": "Numeric invariant bindings that characterize this persona's horror posture; uses the same invariant catalog as other contracts.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "MDI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "AOS": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "DET": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "LSG": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "HVF": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" },
+            "range": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "SPR": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" }
+          }
+        },
+        "SHCI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "metricTargets": {
+      "type": "object",
+      "description": "Persona-level entertainment metric targets; used as soft guidance rather than hard validation.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target": { "type": "number" },
+            "band": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target": { "type": "number" },
+            "band": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target": { "type": "number" },
+            "band": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target": { "type": "number" },
+            "band": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target": { "type": "number" },
+            "band": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
+      }
+    },
+
+    "chatSafetyInvariants": {
+      "type": "object",
+      "description": "Persona-specific caps for chat safety invariants (SVI, HVI, SHI, GXI, NSI, etc.), aligned with chat-safety-invariants-v1.",
+      "additionalProperties": false,
+      "properties": {
+        "SVI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "number" }
+          }
+        },
+        "HVI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "number" }
+          }
+        },
+        "SHI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "number" }
+          }
+        },
+        "GXI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "number" }
+          }
+        },
+        "NSI": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "routingEnvelope": {
+      "type": "object",
+      "description": "Routing and manifest hints for persona contracts within the constellation.",
+      "additionalProperties": false,
+      "required": [
+        "defaultRepo",
+        "defaultPathPattern",
+        "allowedProducts"
+      ],
+      "properties": {
+        "defaultRepo": {
+          "type": "string",
+          "description": "Canonical target repository for this persona contract."
+        },
+        "defaultPathPattern": {
+          "type": "string",
+          "description": "Filesystem path pattern within the target repo for persona contracts."
+        },
+        "allowedProducts": {
+          "type": "array",
+          "description": "List of product or surface IDs where this persona may appear.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+
+    "consentEnvelope": {
+      "type": "object",
+      "description": "Consent and explicitness constraints that must be satisfied before this persona is activated.",
+      "additionalProperties": false,
+      "required": [
+        "minConsentTier",
+        "policyTier",
+        "maxExplicitnessPerSession"
+      ],
+      "properties": {
+        "minConsentTier": {
+          "type": "string",
+          "description": "Minimum consent state machine tier required (e.g., minor, adult-basic, adult-horror, research)."
+        },
+        "policyTier": {
+          "type": "string",
+          "description": "Policy tier label aligned with policyEnvelope (standard, mature, research)."
+        },
+        "maxExplicitnessPerSession": {
+          "type": "number",
+          "description": "Upper bound on explicitness budget per session for this persona."
+        },
+        "maxCICxDET": {
+          "type": "number",
+          "description": "Optional combined cap on CIC × DET product for runs involving this persona."
+        }
+      }
+    },
+
+    "telemetryHints": {
+      "type": "object",
+      "description": "Optional hints for telemetry modules about what to log when this persona is active.",
+      "additionalProperties": false,
+      "properties": {
+        "sessionMetricsEnvelopeId": {
+          "type": "string",
+          "description": "Schema ID for session metrics envelopes that should be used with this persona."
+        },
+        "preferredEventTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Preferred telemetry event types to emit during sessions."
+        }
+      }
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block, as defined in prismMeta.v1.json.",
+      "additionalProperties": true
+    },
+
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this persona contract."
+    },
+
+    "registryReady": {
+      "type": "boolean",
+      "description": "Flag indicating readiness for promotion to active registry entries."
+    }
+  }
+}
