@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/telemetry/consent-session-metrics-v1.json",
+  "title": "Consent Session Metrics v1",
+  "description": "PII-free telemetry envelope for correlating consent state, explicitness budget usage, and entertainment metrics across Horror$Place sessions. Designed for NDJSON streaming and aggregate analysis without identity leakage.",
+  "type": "object",
+  "required": ["consent_session_metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "consent_session_metrics": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "user_hash",
+        "consent_tier",
+        "policy_tier",
+        "session_start",
+        "session_end",
+        "metrics_aggregates",
+        "explicitness_budget"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Opaque UUID for this session; non-reversible and non-linkable across sessions without external mapping."
+        },
+        "user_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of user identifier with salt; pseudonymous, non-reversible, and not linkable to PII without external key."
+        },
+        "consent_tier": {
+          "type": "string",
+          "enum": ["minor", "adult-basic", "adult-horror", "research"],
+          "description": "Effective consent state for this session, as defined in consent-state-machine-v1.json."
+        },
+        "policy_tier": {
+          "type": "string",
+          "enum": ["standard", "mature", "research"],
+          "description": "Policy envelope tier governing content rules for this session."
+        },
+        "age_tier": {
+          "type": "string",
+          "enum": ["minor", "adult"],
+          "description": "Age-derived tier used in consent state resolution."
+        },
+        "session_start": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of session start."
+        },
+        "session_end": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of session end; may be null if session is still active."
+        },
+        "router_state_id": {
+          "type": ["string", "null"],
+          "pattern": "^(rtr|router)-[a-z0-9]{8}$",
+          "description": "Optional reference to the Age-Gated Tier Router decision that established this session's effective tier."
+        },
+        "consent_profile_id": {
+          "type": ["string", "null"],
+          "description": "Optional reference to the consent profile object used for this session."
+        },
+        "metrics_aggregates": {
+          "type": "object",
+          "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+          "additionalProperties": false,
+          "properties": {
+            "UEC": {
+              "$ref": "#/$defs/metricBand"
+            },
+            "EMD": {
+              "$ref": "#/$defs/metricBand"
+            },
+            "STCI": {
+              "$ref": "#/$defs/metricBand"
+            },
+            "CDL": {
+              "$ref": "#/$defs/metricBand"
+            },
+            "ARR": {
+              "$ref": "#/$defs/metricBand"
+            }
+          },
+          "description": "Aggregated entertainment metrics for the session, referencing canonical Horror.Place entertainment_metrics_v1.json bands."
+        },
+        "explicitness_budget": {
+          "type": "object",
+          "required": ["budget_max", "budget_used", "budget_remaining"],
+          "additionalProperties": false,
+          "properties": {
+            "budget_max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Maximum explicitness budget allocated for this session, derived from consent tier and regional caps."
+            },
+            "budget_used": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Cumulative explicitness consumed during the session."
+            },
+            "budget_remaining": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Remaining explicitness budget at session end (budget_max - budget_used)."
+            },
+            "modality_breakdown": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "properties": {
+                "violence": { "$ref": "#/$defs/modalityUsage" },
+                "gore": { "$ref": "#/$defs/modalityUsage" },
+                "sexual": { "$ref": "#/$defs/modalityUsage" },
+                "psychological": { "$ref": "#/$defs/modalityUsage" }
+              },
+              "description": "Optional breakdown of budget consumption by content modality."
+            }
+          },
+          "description": "Explicitness budget tracking aligned with Intensity Budget module semantics."
+        },
+        "invariant_caps_applied": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "$ref": "#/$defs/invariantCap" },
+            "MDI": { "$ref": "#/$defs/invariantCap" },
+            "AOS": { "$ref": "#/$defs/invariantCap" },
+            "DET": { "$ref": "#/$defs/invariantCapDET" },
+            "SHCI": { "$ref": "#/$defs/invariantCap" }
+          },
+          "description": "The invariant caps from consent-state-machine-v1.json that were active for this session."
+        },
+        "distress_signals": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["signal_type", "timestamp", "severity"],
+            "additionalProperties": false,
+            "properties": {
+              "signal_type": {
+                "type": "string",
+                "enum": ["user_abort", "comfort_drop", "explicitness_spike", "guardrail_trigger"]
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "context": {
+                "type": ["string", "null"],
+                "maxLength": 256,
+                "description": "Optional opaque context tag (no PII or raw content)."
+              }
+            }
+          },
+          "description": "Optional array of distress indicators logged during the session for comfort analysis."
+        },
+        "segment_summaries": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["segment_id", "start_offset", "end_offset", "metrics"],
+            "additionalProperties": false,
+            "properties": {
+              "segment_id": {
+                "type": "string",
+                "enum": ["pre_horror", "build_up", "peak", "cool_down", "epilogue"]
+              },
+              "start_offset": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Seconds from session_start."
+              },
+              "end_offset": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Seconds from session_start."
+              },
+              "metrics": {
+                "type": "object",
+                "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+                "additionalProperties": false,
+                "properties": {
+                  "UEC": { "$ref": "#/$defs/metricValue" },
+                  "EMD": { "$ref": "#/$defs/metricValue" },
+                  "STCI": { "$ref": "#/$defs/metricValue" },
+                  "CDL": { "$ref": "#/$defs/metricValue" },
+                  "ARR": { "$ref": "#/$defs/metricValue" }
+                }
+              }
+            }
+          },
+          "description": "Optional per-segment metric aggregates aligned with session-segmentation-v1.json."
+        },
+        "governance_events": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["event_type", "timestamp"],
+            "additionalProperties": false,
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "enum": ["consent_upgrade", "consent_downgrade", "proof_verified", "guardrail_enforced"]
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "deadledger_ref": {
+                "type": ["string", "null"],
+                "pattern": "^dln\\.[a-z0-9_.\\-]+$",
+                "description": "Optional reference to a Dead-Ledger proof envelope for governance-auditable events."
+              }
+            }
+          },
+          "description": "Optional log of consent state changes or governance actions during the session."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metricBand": {
+      "type": "object",
+      "required": ["min", "max", "mean"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max": { "type": "number", "minimum": 0, "maximum": 1 },
+        "mean": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "description": "Aggregated band for a single entertainment metric over the session."
+    },
+    "metricValue": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Single-point metric value for segment-level aggregates."
+    },
+    "invariantCap": {
+      "type": "object",
+      "required": ["max"],
+      "additionalProperties": false,
+      "properties": {
+        "max": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "description": "Maximum allowed value for an invariant (0-1 scale) as defined in consent-state-machine-v1.json."
+    },
+    "invariantCapDET": {
+      "type": "object",
+      "required": ["max"],
+      "additionalProperties": false,
+      "properties": {
+        "max": { "type": "number", "minimum": 0, "maximum": 10 }
+      },
+      "description": "Maximum allowed DET value (0-10 scale) as defined in consent-state-machine-v1.json."
+    },
+    "modalityUsage": {
+      "type": "object",
+      "required": ["used", "capped"],
+      "additionalProperties": false,
+      "properties": {
+        "used": { "type": "number", "minimum": 0, "maximum": 1 },
+        "capped": { "type": "boolean", "description": "Whether this modality hit its cap during the session." }
+      }
+    }
+  }
+}
