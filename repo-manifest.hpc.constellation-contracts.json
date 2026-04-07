@@ -1,0 +1,89 @@
+{
+  "repoName": "HorrorPlace-Constellation-Contracts",
+  "tier": "Tier1Public",
+  "implicitDeny": true,
+
+  "allowedObjectKinds": [
+    "chatSafetyInvariants",
+    "consentCapsPolicy",
+    "consentSessionMetrics",
+    "inputLabelTaxonomy",
+    "inputBanterPolicy",
+    "banterAdaptationPolicy",
+    "horrorIntensityBudgetPolicy",
+    "horrorIntensityBudgetMetrics",
+    "horrorIntensityOverbudgetPolicy",
+    "historySelectorRule",
+    "historySelectorPattern",
+    "ageTierRoutingTable",
+    "ageTierRouterPolicy",
+    "telemetrySchema",
+    "registrySpec",
+    "governancePolicy"
+  ],
+
+  "schemaWhitelist": [
+    "chat-safety-invariants.v1",
+    "consent-caps-policy.v1",
+    "consent-session-metrics.v1",
+    "input-label-taxonomy.v1",
+    "input-banter-policy.v1",
+    "banter-adaptation-policy.v1",
+    "horror-intensity-budget-policy.v1",
+    "horror-intensity-budget-metrics.v1",
+    "horror-intensity-overbudget-policy.v1",
+    "history-selector-rule.v1",
+    "history-selector-pattern.v1",
+    "age-tier-routing-table.v1",
+    "age-tier-router-policy.v1",
+    "telemetry-schema.v1",
+    "registry-spec.v1",
+    "governance-policy.v1"
+  ],
+
+  "defaultPaths": {
+    "chatSafetyInvariants": "schemas/safety/chat-safety-invariants-v1.json",
+    "consentCapsPolicy": "schemas/consent/consent-caps-policy.v1.json",
+    "consentSessionMetrics": "schemas/consent/consent-session-metrics.v1.json",
+    "inputLabelTaxonomy": "schemas/classifier/input-label-taxonomy.v1.json",
+    "inputBanterPolicy": "schemas/classifier/input-banter-policy.v1.json",
+    "banterAdaptationPolicy": "schemas/classifier/banter-adaptation-policy.v1.json",
+    "horrorIntensityBudgetPolicy": "schemas/budget/horror-intensity-budget-policy.v1.json",
+    "horrorIntensityBudgetMetrics": "schemas/budget/horror-intensity-budget-metrics.v1.json",
+    "horrorIntensityOverbudgetPolicy": "schemas/budget/horror-intensity-overbudget-policy.v1.json",
+    "historySelectorRule": "schemas/selector/history-selector-rule-v1.json",
+    "historySelectorPattern": "schemas/selector/history-selector-pattern-v1.json",
+    "ageTierRoutingTable": "schemas/runtime/age-tier-routing-table.v1.json",
+    "ageTierRouterPolicy": "schemas/runtime/age-tier-router-policy.v1.json",
+    "telemetrySchema": "schemas/telemetry/telemetry-schema.v1.json",
+    "registrySpec": "schemas/registry/registry-spec.v1.json",
+    "governancePolicy": "schemas/governance/governance-policy.v1.json"
+  },
+
+  "policies": [
+    "OneFilePerRequest",
+    "NoRawNarrativeInTier",
+    "RequireDeadLedgerRef",
+    "MaxFileSizeBytes",
+    "MandatoryPrismMeta",
+    "ForbiddenFields"
+  ],
+
+  "ciChecks": [
+    "schemaValidate",
+    "invariantEnforce",
+    "manifestValidate",
+    "envelopeValidate"
+  ],
+
+  "authoringHints": [
+    {
+      "ruleId": "AH-SAF-001",
+      "description": "chatSafetyInvariants objects must use schemas/safety/, never schemas/content-boundary/."
+    },
+    {
+      "ruleId": "AH-SAF-002",
+      "description": "Paths are derived from defaultPaths; AI agents should not invent new directories."
+    }
+  ]
+}
