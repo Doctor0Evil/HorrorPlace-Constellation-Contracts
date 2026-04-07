@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/security/repo-access-capability.v1.json",
+  "title": "RepoAccessCapability",
+  "description": "Capability definition for repository access entitlements, binding consent tier, age verification, and Dead-Ledger proofs to allowed repos, invariant caps, and tier ceilings. Used by age-tier-router-policy.v1.json to compute capabilityTierMax. Aligns with Consent Profile Module (Module 1), Age-Gated Tier Router (Module 5), and Dead-Ledger/ALN entitlement hooks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "holderIdentity",
+    "capabilityScope",
+    "tierCeilings",
+    "repoAccessRules",
+    "invariantCaps",
+    "proofBinding",
+    "validityWindow",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^cap-[a-z0-9]{8,16}$",
+      "description": "Stable identifier for this capability instance; referenced by router policy and Dead-Ledger proofs."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "repo-access-capability.v1",
+      "description": "Schema version identifier for validator binding."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "repoAccessCapability",
+      "description": "Object kind for CHAT_DIRECTOR routing and manifest validation."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps add non-breaking fields, patch bumps fix validation logic."
+    },
+    "holderIdentity": {
+      "type": "object",
+      "description": "Identity fields linking this capability to a session, region, or account; shared join keys with CHAT_DIRECTOR spine.",
+      "additionalProperties": false,
+      "required": ["sessionId", "regionId", "descriptorId"],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "pattern": "^sess-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$",
+          "description": "Opaque session UUID; binds capability to active consent state."
+        },
+        "regionId": {
+          "type": "string",
+          "pattern": "^reg-[a-z0-9_-]{3,24}$",
+          "description": "Region contract identifier; used for geo-policy enforcement."
+        },
+        "descriptorId": {
+          "type": "string",
+          "pattern": "^desc-[a-z0-9_-]{3,32}$",
+          "description": "Content descriptor identifier; used for invariant and style filtering."
+        },
+        "accountId": {
+          "type": "string",
+          "pattern": "^acc-[a-z0-9]{6,20}$",
+          "description": "Optional account-level identifier for persistent entitlements."
+        },
+        "routerStateId": {
+          "type": "string",
+          "pattern": "^rtr-[a-z0-9]{6,12}$",
+          "description": "Reference to age-tier-routing-table.v1.json instance; enables router-policy binding."
+        }
+      }
+    },
+    "capabilityScope": {
+      "type": "object",
+      "description": "Defines the scope of access this capability grants: tier ceiling, repo patterns, and style/event filters.",
+      "additionalProperties": false,
+      "required": ["maxAllowedTier", "allowedRepoPatterns", "forbiddenRepoPatterns"],
+      "properties": {
+        "maxAllowedTier": {
+          "type": "string",
+          "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+          "description": "Maximum tier this capability permits; used by router policy as capabilityTierMax in effectiveTier = min(ageGateTier, consentTier, capabilityTierMax)."
+        },
+        "allowedRepoPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._/-]+(\\*|[a-zA-Z0-9._/-])*$"
+          },
+          "description": "Glob patterns for repos/paths this capability allows access to; e.g., 'Horror.Place/schemas/runtime/*', 'HorrorPlace-Spectral-Foundry/lua/**'."
+        },
+        "forbiddenRepoPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "const": "**/atrocity-seeds/**",
+            "const": "**/vault/**",
+            "const": "**/underground/**",
+            "const": "**/raw-content/**"
+          },
+          "description": "Glob patterns that are always forbidden regardless of tier; enforced by manifest routing."
+        },
+        "allowedStyleIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^style-[a-z0-9_-]{3,24}$" },
+          "description": "Optional whitelist of styleContract IDs this capability permits."
+        },
+        "allowedEventTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["ambient", "liminal", "threshold", "locus", "rupture", "fallout", "sanctuary"]
+          },
+          "description": "Optional whitelist of eventContract stage types this capability permits."
+        }
+      }
+    },
+    "tierCeilings": {
+      "type": "object",
+      "description": "Per-tier numeric ceilings for invariants; referenced by router policy and H.Safety evaluation.",
+      "additionalProperties": false,
+      "required": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+      "properties": {
+        "CHILD": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 0.4 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 0.3 },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 0.3 }
+          }
+        },
+        "TEEN": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 0.6 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 0.5 },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 4.0 },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 0.6 }
+          }
+        },
+        "MATURE": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI"],
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 0.8 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 0.8 },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 6.0 },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 0.9 }
+          }
+        },
+        "RESEARCH": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CIC", "AOS", "DET", "SHCI", "requiresProof"],
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "requiresProof": {
+              "type": "boolean",
+              "const": true,
+              "description": "RESEARCH tier access requires valid repo-access-proof-envelope.v1.json attachment."
+            }
+          }
+        }
+      }
+    },
+    "repoAccessRules": {
+      "type": "object",
+      "description": "Fine-grained repo/path access rules; enforced by manifest routing and H.Registry.",
+      "additionalProperties": false,
+      "required": ["defaultAction", "explicitGrants", "explicitDenies"],
+      "properties": {
+        "defaultAction": {
+          "type": "string",
+          "enum": ["allow", "deny"],
+          "description": "Default action for paths not matched by explicit rules."
+        },
+        "explicitGrants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pattern", "tierMin", "tierMax"],
+            "properties": {
+              "pattern": { "type": "string", "description": "Glob pattern for repo/path." },
+              "tierMin": { "type": "string", "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"] },
+              "tierMax": { "type": "string", "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"] },
+              "requiresProof": { "type": "boolean", "description": "If true, access requires Dead-Ledger proof envelope." }
+            }
+          }
+        },
+        "explicitDenies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pattern", "reason"],
+            "properties": {
+              "pattern": { "type": "string", "description": "Glob pattern for repo/path to deny." },
+              "reason": { "type": "string", "enum": ["safety", "consent", "jurisdiction", "entitlement"] },
+              "overrideRequiresProof": { "type": "boolean", "description": "If true, denial can only be overridden with valid proof envelope." }
+            }
+          }
+        }
+      }
+    },
+    "invariantCaps": {
+      "type": "object",
+      "description": "Capability-level invariant caps that further constrain tier ceilings; used by H.Safety for final evaluation.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Optional override cap for Contextual Integrity Coherence." },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Optional override cap for Ambient Oscillation Strength." },
+        "DET": { "type": "number", "minimum": 0.0, "maximum": 10.0, "description": "Optional override cap for Dread Exposure Threshold." },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Optional override cap for Spectral History Coupling Intensity." }
+      }
+    },
+    "proofBinding": {
+      "type": "object",
+      "description": "Dead-Ledger/ALN proof requirements for this capability; referenced by age-tier-router-policy.v1.json proofRequirements.",
+      "additionalProperties": false,
+      "required": ["proofType", "requiredClaims"],
+      "properties": {
+        "proofType": {
+          "type": "string",
+          "enum": ["age_verification", "consent_opt_in", "research_entitlement", "jurisdictional_compliance"],
+          "description": "Type of proof required to activate this capability."
+        },
+        "requiredClaims": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Claims that must be present in the proof envelope (e.g., 'age_verified', 'explicit_opt_in', 'region_us_az')."
+        },
+        "proofSchemaRef": {
+          "type": "string",
+          "const": "repo-access-proof-envelope.v1",
+          "description": "Reference to proof envelope schema; used for runtime validation."
+        },
+        "verificationEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional endpoint for runtime proof verification; if omitted, verification is local via schema validation."
+        }
+      }
+    },
+    "validityWindow": {
+      "type": "object",
+      "description": "Temporal validity for this capability; used for session-scoped entitlements.",
+      "additionalProperties": false,
+      "required": ["issuedAt", "expiresAt"],
+      "properties": {
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when this capability was issued."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when this capability expires; session ends or re-validation required after."
+        },
+        "renewalPolicy": {
+          "type": "string",
+          "enum": ["auto_renew", "manual_renew", "no_renewal"],
+          "description": "Policy for capability renewal after expiration."
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for schema spine alignment; shape defined in prismMeta.v1.json.",
+      "additionalProperties": true,
+      "properties": {
+        "author": { "type": "string" },
+        "reviewed": { "type": "array", "items": { "type": "string" } },
+        "governanceRef": { "type": "string", "description": "Reference to promotion-proposal or governance artifact that approved this capability." }
+      }
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this capability; required if proofBinding.proofType is 'research_entitlement'."
+    }
+  }
+}
