@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/security/repo-access-proof-envelope.v1.json",
+  "title": "RepoAccessProofEnvelope",
+  "description": "Cryptographic proof envelope for Dead-Ledger/ALN-attested repository access, tier overrides, and RESEARCH entitlements. Provides zero-trust verification signals to age-tier-router-policy.v1.json and repo-access-capability.v1.json. Aligns with Consent Profile (Module 1), Age-Gated Tier Router (Module 5), and Zero-Trust Security Spine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "identityContext",
+    "proofMetadata",
+    "entitlementScope",
+    "deadLedgerAttestation",
+    "complianceAndAudit",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^env-[a-f0-9]{12,24}$",
+      "description": "Stable identifier for this proof envelope instance; referenced by router policy and capability manifests."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "repo-access-proof-envelope.v1",
+      "description": "Schema version identifier for validator binding and CI schema-checks."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "repoAccessProofEnvelope",
+      "description": "Object kind for CHAT_DIRECTOR routing, manifest validation, and audit tracing."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version; minor bumps add optional claim fields, patch bumps fix validation or revocation logic."
+    },
+    "identityContext": {
+      "type": "object",
+      "description": "Shared CHAT_DIRECTOR identity join keys; ensures proof binds to a specific session, region, and routing state.",
+      "additionalProperties": false,
+      "required": ["sessionId", "regionId", "descriptorId", "consentTier", "routerStateId"],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "pattern": "^sess-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$",
+          "description": "Opaque session UUID; ties proof to active consent and budget state."
+        },
+        "regionId": {
+          "type": "string",
+          "pattern": "^reg-[a-z0-9_-]{3,24}$",
+          "description": "Region contract identifier; used for geo-policy and jurisdictional compliance."
+        },
+        "descriptorId": {
+          "type": "string",
+          "pattern": "^desc-[a-z0-9_-]{3,32}$",
+          "description": "Content descriptor identifier; scopes proof to specific invariant/style bundles."
+        },
+        "consentTier": {
+          "type": "string",
+          "enum": ["minor", "adult-basic", "adult-horror", "research"],
+          "description": "Consent state at time of issuance; must align with router policy evaluation."
+        },
+        "routerStateId": {
+          "type": "string",
+          "pattern": "^rtr-[a-z0-9]{6,12}$",
+          "description": "Reference to the active age-tier-routing-table instance at issuance time."
+        },
+        "seedId": {
+          "type": "string",
+          "pattern": "^seed-[a-f0-9]{8,16}$",
+          "description": "Optional spectral or narrative seed identifier; used when proof grants bundle-specific access."
+        },
+        "selectorPatternId": {
+          "type": "string",
+          "pattern": "^pat-[a-z0-9_-]{3,24}$",
+          "description": "Optional history-selector pattern ID; binds proof to specific routing paths."
+        },
+        "sessionMetricsEnvelopeId": {
+          "type": "string",
+          "pattern": "^smenv-[a-z0-9]{8,16}$",
+          "description": "Optional telemetry envelope ID for audit correlation."
+        }
+      }
+    },
+    "proofMetadata": {
+      "type": "object",
+      "description": "Cryptographic and issuance metadata; enables zero-knowledge verification and revocation checks.",
+      "additionalProperties": false,
+      "required": ["proofType", "issuer", "issuedAt", "expiresAt", "signatureAlgorithm", "payloadHash"],
+      "properties": {
+        "proofType": {
+          "type": "string",
+          "enum": ["age_verification", "research_entitlement", "jurisdictional_override", "capability_attestation", "director_persona_override"],
+          "description": "Category of attestation; dictates validation path and allowed entitlements."
+        },
+        "issuer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authorityId", "publicKeyRef"],
+          "properties": {
+            "authorityId": {
+              "type": "string",
+              "pattern": "^auth-[a-z0-9_-]{3,20}$",
+              "description": "DID or registry ID of the issuing authority (e.g., regional age verifier, Dead-Ledger node)."
+            },
+            "publicKeyRef": {
+              "type": "string",
+              "format": "uri",
+              "description": "URI to the issuer's verification key or JWKS endpoint."
+            }
+          }
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of proof generation."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 expiration timestamp; proof invalid after this time unless renewed."
+        },
+        "signatureAlgorithm": {
+          "type": "string",
+          "enum": ["ES256", "EdDSA", "RS256", "BLAKE3-BIND"],
+          "description": "Cryptographic algorithm used to sign the envelope payload."
+        },
+        "payloadHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64,128}$",
+          "description": "Cryptographic hash of the entitlementScope and identityContext; prevents tampering."
+        }
+      }
+    },
+    "entitlementScope": {
+      "type": "object",
+      "description": "Explicit permissions granted by this proof; consumed by H.TierRouter and H.Registry.",
+      "additionalProperties": false,
+      "required": ["requestedTier", "allowedRepos", "invariantOverrides"],
+      "properties": {
+        "requestedTier": {
+          "type": "string",
+          "enum": ["CHILD", "TEEN", "MATURE", "RESEARCH"],
+          "description": "Target tier this proof attempts to unlock or override to."
+        },
+        "allowedRepos": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Horror.Place",
+              "HorrorPlace-Constellation-Contracts",
+              "HorrorPlace-Spectral-Foundry",
+              "HorrorPlace-Atrocity-Seeds",
+              "HorrorPlace-Black-Archivum",
+              "Death-Engine",
+              "HorrorPlace-Obscura-Nexus",
+              "Horror.Place-Orchestrator"
+            ]
+          },
+          "description": "Explicit repository access grants; must intersect with age-tier-routing-table.repoAccessRules."
+        },
+        "invariantOverrides": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Temporary numeric ceilings for spine invariants; only active while proof is valid.",
+          "properties": {
+            "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "DET": { "type": "number", "minimum": 0.0, "maximum": 10.0, "description": "Dread Exposure Threshold; strictly clamped by tier ceilings." },
+            "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "maxConcurrentProofs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Maximum number of active proof envelopes allowed per session; prevents stacking."
+        }
+      }
+    },
+    "deadLedgerAttestation": {
+      "type": "object",
+      "description": "Dead-Ledger/ALN-specific attestation references; enables decentralized verification without exposing raw payloads.",
+      "additionalProperties": false,
+      "required": ["bundleId", "attestationChain", "ledgerTxId"],
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "pattern": "^dlb-[a-f0-9]{8,24}$",
+          "description": "Dead-Ledger bundle identifier containing this proof's cryptographic commitments."
+        },
+        "zkProofRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional URI to zero-knowledge proof material (e.g., Groth16, PLONK) verifying claims without revealing PII."
+        },
+        "attestationChain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ordered list of intermediary attestation IDs forming the verification path."
+        },
+        "ledgerTxId": {
+          "type": "string",
+          "pattern": "^ltx-[a-f0-9]{12,32}$",
+          "description": "Immutable ledger transaction ID recording proof issuance; used for audit and revocation checks."
+        },
+        "revocationStatus": {
+          "type": "string",
+          "enum": ["active", "rotated", "revoked", "expired"],
+          "default": "active",
+          "description": "Current lifecycle state of this proof on the ledger."
+        }
+      }
+    },
+    "complianceAndAudit": {
+      "type": "object",
+      "description": "Regulatory, forensic, and policy compliance fields; enables continuous traceability and zero data leakage.",
+      "additionalProperties": false,
+      "required": ["complianceFlags", "auditRef"],
+      "properties": {
+        "complianceFlags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["gdpr_minimized", "hipaa_compatible", "age_verified_25519", "jurisdictional_bound", "no_pi_exposure"]
+          },
+          "description": "Declarative compliance attestations verified at issuance."
+        },
+        "auditRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to immutable audit log or governance proposal that authorized this proof type."
+        },
+        "revocationPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "autoRevokeOnConsentChange": {
+              "type": "boolean",
+              "description": "If true, proof is automatically invalidated if user consent tier shifts downward."
+            },
+            "maxUsageCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Maximum allowed validation cycles before automatic expiration; 0 = unlimited."
+            },
+            "cooldownAfterValidationMinutes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Mandatory wait period between consecutive proof validations to prevent rate abuse."
+            }
+          }
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for schema spine alignment; shape defined in prismMeta.v1.json.",
+      "additionalProperties": true,
+      "properties": {
+        "author": { "type": "string" },
+        "reviewed": { "type": "array", "items": { "type": "string" } },
+        "governanceRef": { "type": "string", "description": "Reference to promotion-proposal or governance artifact that approved this envelope type." }
+      }
+    }
+  }
+}
