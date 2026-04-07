@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/consent/consent-explicitness-caps.v1.json",
+  "title": "ConsentExplicitnessCaps",
+  "description": "Per-tier explicitness and CIC×DET caps for governed horror delivery. Each row binds a consent state and policy tier to maximum explicitness per session, a hard CIC×DET ceiling, and a mandatory cooldown after high-intensity outputs. Aligns with the Account Consent Profile module and the Horror Intensity Budget module, and acts as a hard cap layer above all other intensity calculations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "objectKind",
+    "version",
+    "tiers",
+    "validatorsignature"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "consent-explicitness-caps.v1",
+      "description": "Stable schema identifier used by validators and CI to bind this policy file to the consent-explicitness-caps schema."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "consentExplicitnessCaps",
+      "description": "Object kind used by CHAT_DIRECTOR and repo manifests for routing and policy enforcement."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version for this caps file. Minor/patch bumps may tighten or relax caps within governance rules."
+    },
+    "validatorsignature": {
+      "type": "string",
+      "minLength": 8,
+      "description": "Opaque validator signature or commit hash attesting that this caps file passed review and Charter checks."
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Per-row caps keyed by consent state and policy tier. Engines and Lua APIs must treat the most restrictive matching row as authoritative.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "consentState",
+          "policyTier",
+          "maxExplicitnessPerSession",
+          "maxCICxDET",
+          "cooldownMinutesAfterHighEvent"
+        ],
+        "properties": {
+          "consentState": {
+            "type": "string",
+            "enum": [
+              "minor",
+              "adult-basic",
+              "adult-horror",
+              "research"
+            ],
+            "description": "Effective consent state from the consent-state-machine.v1.json schema."
+          },
+          "policyTier": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "mature",
+              "research"
+            ],
+            "description": "Policy envelope tier for this caps row. Ties into policyEnvelope and descriptor policy attributes."
+          },
+          "regionProfile": {
+            "type": "string",
+            "enum": [
+              "public-all-ages",
+              "registered-adult-standard",
+              "registered-adult-mature",
+              "research-sandbox"
+            ],
+            "description": "Optional coarse field profile describing the deployment context (e.g., Field A/B/C from the consent research). Used for diagnostics and routing hints rather than hard gating."
+          },
+          "jurisdictionId": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]{2,64}$",
+            "description": "Optional jurisdiction or regulatory profile identifier. When present, caps must respect the strictest applicable jurisdiction for a session."
+          },
+          "maxExplicitnessPerSession": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Hard ceiling on effective explicitness score E for the entire session in this consent/policy tier band. Horror Intensity Budget and AI-Chat must clamp their own budgets to never exceed this value."
+          },
+          "maxCICxDET": {
+            "type": "number",
+            "minimum": 0.0,
+            "description": "Hard numeric bound on CIC × DET for any content delivered under this consent/policy tier. Region and seed contracts must respect this ceiling at runtime."
+          },
+          "cooldownMinutesAfterHighEvent": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Mandatory minimum cooldown window, in minutes, after any event whose explicitness E exceeds the highEventThreshold defined in this row. During this window, subsequent content must remain below cooldownExplicitnessCap."
+          },
+          "highEventThreshold": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.7,
+            "description": "Threshold in explicitness E above which an output is treated as high-intensity for cooldown purposes."
+          },
+          "cooldownExplicitnessCap": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.4,
+            "description": "Maximum allowed explicitness E during the cooldown window triggered by a high-intensity event."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "Optional human-readable notes explaining the rationale for these caps (e.g., link to governance decision or ethics review)."
+          }
+        }
+      }
+    },
+    "fallbackPolicy": {
+      "type": "object",
+      "description": "Caps applied when consent state is unknown, expired, or unverifiable. Engines must default to these conservative caps rather than guessing.",
+      "additionalProperties": false,
+      "required": [
+        "maxExplicitnessPerSession",
+        "maxCICxDET",
+        "cooldownMinutesAfterHighEvent"
+      ],
+      "properties": {
+        "maxExplicitnessPerSession": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Global default explicitness ceiling when no valid consent state is available."
+        },
+        "maxCICxDET": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Global default CIC × DET ceiling when consent state cannot be resolved."
+        },
+        "cooldownMinutesAfterHighEvent": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Global default cooldown window after any high-intensity output when consent state is unclear."
+        }
+      }
+    },
+    "deadledgerref": {
+      "type": "string",
+      "minLength": 16,
+      "description": "Optional Dead-Ledger attestation reference binding this caps file to a governance decision bundle."
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Optional prism meta envelope tying this caps policy into the broader constellation manifolds (phase, tier, routing).",
+      "additionalProperties": true
+    }
+  }
+}
