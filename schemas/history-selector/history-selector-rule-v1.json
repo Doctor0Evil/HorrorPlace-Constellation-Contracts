@@ -1,0 +1,199 @@
+{
+  "$id": "https://horrorplace.org/schemas/history-selector/history-selector-rule-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "History Selector Rules v1",
+  "description": "Scoring and filtering rules for history-aware selector, including safety delegation and pacing logic.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "rules"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "rules": {
+      "type": "array",
+      "description": "Selector rules in strict evaluation order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "phaseOrder",
+          "kind",
+          "action",
+          "parameters"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^SEL-R00[1-9]$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phaseOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SAFETY_PREFILTER",
+              "COOLDOWN",
+              "REPETITION_PENALTY",
+              "ESCALATION_CURVE",
+              "BUDGET_FIT",
+              "PATTERN_MATCH",
+              "DIVERSITY_BONUS",
+              "REGIONAL_AFFINITY",
+              "FINAL_RANK"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "EXCLUDE",
+              "SCORE_MODIFY",
+              "RANK"
+            ]
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Rule-specific parameters.",
+            "additionalProperties": false,
+            "properties": {
+              "delegateToSafetySchemaId": {
+                "type": "string",
+                "description": "Schema id of chat-safety-invariants-v1.json for SEL-R001 safety prefilter."
+              },
+              "perTypeCooldownMinutes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "repetitionDecay": {
+                "type": "object",
+                "properties": {
+                  "recentSessions": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "maxPenalty": {
+                    "type": "number"
+                  },
+                  "minPenalty": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "escalationCurve": {
+                "type": "object",
+                "properties": {
+                  "minDepth": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxDepth": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "minScore": {
+                    "type": "number"
+                  },
+                  "maxScore": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "budgetFit": {
+                "type": "object",
+                "properties": {
+                  "hardExcludeIfOverBudget": {
+                    "type": "boolean"
+                  },
+                  "climaxBonusThreshold": {
+                    "type": "number"
+                  },
+                  "climaxBonus": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "patternMatchWeights": {
+                "type": "object",
+                "properties": {
+                  "fullMatch": {
+                    "type": "number"
+                  },
+                  "partialMatch": {
+                    "type": "number"
+                  },
+                  "noMatch": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "diversityBonus": {
+                "type": "object",
+                "properties": {
+                  "targetDistribution": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  },
+                  "maxBonus": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "regionalAffinity": {
+                "type": "object",
+                "properties": {
+                  "exactRegionBonus": {
+                    "type": "number"
+                  },
+                  "adjacentRegionBonus": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "finalRank": {
+                "type": "object",
+                "properties": {
+                  "topK": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "tiebreak": {
+                    "type": "string",
+                    "enum": [
+                      "FRESHNESS",
+                      "RANDOM"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
