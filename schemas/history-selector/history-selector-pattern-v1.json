@@ -1,0 +1,144 @@
+{
+  "$id": "https://horrorplace.org/schemas/history-selector/history-selector-pattern-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "History Selector Patterns v1",
+  "description": "Pacing and narrative patterns used by the history selector to structure horror experiences over time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "patterns"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "patterns": {
+      "type": "array",
+      "description": "Pattern catalogue for escalation arcs, regional narratives, lore threads, cooldown fillers, and thematic clusters.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "patternType",
+          "name",
+          "beats",
+          "budgetRange",
+          "consentGate",
+          "tags"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^PAT-[A-Z]{3}-[0-9]{3}$"
+          },
+          "patternType": {
+            "type": "string",
+            "enum": [
+              "ESCALATION_ARC",
+              "REGIONAL_NARRATIVE",
+              "LORE_THREAD",
+              "COOLDOWN_FILLER",
+              "THEMATIC_CLUSTER"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "beats": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "budgetRange": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "min",
+              "max"
+            ],
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "consentGate": {
+            "type": "string",
+            "enum": [
+              "ACTIVE_CHILD",
+              "ACTIVE_TEEN",
+              "ACTIVE_MATURE"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "description": "Semantic tags: region, theme, intensity bands, lore depth, etc.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activation": {
+            "type": "object",
+            "description": "Activation and persistence semantics for this pattern.",
+            "additionalProperties": false,
+            "properties": {
+              "autoActivateOnRegion": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "requiresPriorPatternIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^PAT-[A-Z]{3}-[0-9]{3}$"
+                }
+              },
+              "persistsAcrossSessions": {
+                "type": "boolean"
+              },
+              "exclusive": {
+                "type": "boolean",
+                "description": "If true, this pattern cannot be active with other patterns of the same type."
+              }
+            }
+          },
+          "beatMatchingContract": {
+            "type": "object",
+            "description": "Formal definition of what constitutes full / partial / no match for this pattern.",
+            "additionalProperties": false,
+            "properties": {
+              "contentTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fullMatchCriteria": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "partialMatchCriteria": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
