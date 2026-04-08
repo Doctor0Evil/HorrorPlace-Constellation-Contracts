@@ -1,0 +1,246 @@
+{
+  "$id": "https://horrorplace.org/schemas/content-boundary/chat-safety-invariants-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chat Safety Invariants v1",
+  "description": "Physics-layer safety invariants SAF-001 .. SAF-016 for AI chat and runtime content, including evaluation pipeline and escalation rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "invariants",
+    "evaluationPipeline",
+    "escalationMatrix"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "description",
+          "classification",
+          "bindings",
+          "thresholds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^SAF-0(0[1-9]|1[0-6])$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "ABSOLUTE",
+              "CONSENT_GATED",
+              "BUDGET_GATED"
+            ]
+          },
+          "bindings": {
+            "type": "array",
+            "description": "Bindings to spine metrics or state machines this invariant governs.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "metric",
+                "role"
+              ],
+              "properties": {
+                "metric": {
+                  "type": "string",
+                  "description": "Metric or state id (e.g., CIC, DET, SHCI, CDL, ARR, BUDGET)."
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "CEILING",
+                    "FLOOR",
+                    "DELTA_LIMIT",
+                    "STATE_REQUIREMENT"
+                  ]
+                }
+              }
+            }
+          },
+          "thresholds": {
+            "type": "object",
+            "description": "Numeric or state thresholds enforced by this invariant.",
+            "additionalProperties": false,
+            "properties": {
+              "maxValue": {
+                "type": "number"
+              },
+              "minValue": {
+                "type": "number"
+              },
+              "maxDelta": {
+                "type": "number"
+              },
+              "reserveFloorPercent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "requiredState": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "evaluationPipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phases"
+      ],
+      "properties": {
+        "phases": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "order",
+              "id",
+              "name",
+              "invariants",
+              "shortCircuitOn"
+            ],
+            "properties": {
+              "order": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "id": {
+                "type": "string",
+                "enum": [
+                  "ABSOLUTE_PRECHECK",
+                  "SESSION_CONTEXT",
+                  "CONSENT_GATE",
+                  "BUDGET_GATE",
+                  "OUTPUT_GATE"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "invariants": {
+                "type": "array",
+                "description": "SAF IDs evaluated in this phase.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^SAF-0(0[1-9]|1[0-6])$"
+                }
+              },
+              "shortCircuitOn": {
+                "type": "array",
+                "description": "Classifications that halt evaluation when violated at this phase.",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ABSOLUTE",
+                    "CONSENT_GATED",
+                    "BUDGET_GATED"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "escalationMatrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "windowMinutes",
+        "nonCriticalThreshold",
+        "actions"
+      ],
+      "properties": {
+        "windowMinutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "nonCriticalThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actions": {
+          "type": "array",
+          "description": "Escalation actions for observe / throttle / halt.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "level",
+              "trigger",
+              "effects"
+            ],
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": [
+                  "OBSERVE",
+                  "THROTTLE",
+                  "HALT"
+                ]
+              },
+              "trigger": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "criticalViolation": {
+                    "type": "boolean"
+                  },
+                  "nonCriticalCountAtLeast": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "effects": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cooldownMinutes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "terminateSession": {
+                    "type": "boolean"
+                  },
+                  "downgradeTier": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
