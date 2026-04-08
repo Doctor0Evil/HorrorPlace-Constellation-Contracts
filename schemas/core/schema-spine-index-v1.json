@@ -1,0 +1,272 @@
+{
+  "$id": "https://horrorplace.org/schemas/core/schema-spine-index-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HorrorPlace Schema Spine Index v1",
+  "description": "Canonical index of core contract schemas, invariant and metric spines, and module families for the HorrorPlace constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "modules",
+    "schemas",
+    "spines"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "modules": {
+      "type": "array",
+      "description": "High-level modules in the ten-module framework and their canonical schema families.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "phase",
+          "contractFamilies"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^MOD-[0-9]{2}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PHASE0_DISCOVERY",
+              "PHASE1_SCOPING",
+              "PHASE2_CONTRACTS",
+              "PHASE3_BINDINGS",
+              "PHASE4_RUNTIME"
+            ]
+          },
+          "contractFamilies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "REGION_CONTRACT",
+                "SEED_CONTRACT",
+                "MOOD_CONTRACT",
+                "EVENT_CONTRACT"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "description": "Index of all first-class JSON Schemas that define contracts, envelopes, and telemetry.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "kind",
+          "objectKind",
+          "moduleId",
+          "ownerRepo"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical $id of the schema."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path to the schema file."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CONTRACT",
+              "ENVELOPE",
+              "TOOLING",
+              "TELEMETRY",
+              "GOVERNANCE",
+              "RUNTIME",
+              "SECURITY"
+            ]
+          },
+          "objectKind": {
+            "type": ["string", "null"],
+            "description": "Contract objectKind this schema governs, if applicable."
+          },
+          "moduleId": {
+            "type": "string",
+            "pattern": "^MOD-[0-9]{2}$"
+          },
+          "ownerRepo": {
+            "type": "string",
+            "description": "Logical repository that owns this schema."
+          }
+        }
+      }
+    },
+    "spines": {
+      "type": "object",
+      "description": "Pointers to shared invariant and metric spines.",
+      "additionalProperties": false,
+      "required": [
+        "invariants",
+        "entertainmentMetrics"
+      ],
+      "properties": {
+        "invariants": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "path"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "const": "https://horrorplace.org/schemas/core/invariants-spine.v1.json"
+            },
+            "path": {
+              "type": "string",
+              "const": "schemas/core/invariants-spine.v1.json"
+            }
+          }
+        },
+        "entertainmentMetrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "path"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "const": "https://horrorplace.org/schemas/core/entertainment-metrics-spine.v1.json"
+            },
+            "path": {
+              "type": "string",
+              "const": "schemas/core/entertainment-metrics-spine.v1.json"
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": "1.0.0",
+      "modules": [
+        {
+          "id": "MOD-02",
+          "name": "Contracts",
+          "phase": "PHASE2_CONTRACTS",
+          "contractFamilies": [
+            "REGION_CONTRACT",
+            "SEED_CONTRACT",
+            "MOOD_CONTRACT",
+            "EVENT_CONTRACT"
+          ]
+        }
+      ],
+      "schemas": [
+        {
+          "id": "https://horrorplace.org/schemas/regionContractCard.v1.json",
+          "path": "schemas/core/regionContractCard.v1.json",
+          "kind": "CONTRACT",
+          "objectKind": "regionContractCard",
+          "moduleId": "MOD-02",
+          "ownerRepo": "Horror.Place"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/seedContractCard.v1.json",
+          "path": "schemas/core/seedContractCard.v1.json",
+          "kind": "CONTRACT",
+          "objectKind": "seedContractCard",
+          "moduleId": "MOD-02",
+          "ownerRepo": "HorrorPlace-Atrocity-Seeds"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/moodContract.v1.json",
+          "path": "schemas/core/moodContract.v1.json",
+          "kind": "CONTRACT",
+          "objectKind": "moodContract",
+          "moduleId": "MOD-02",
+          "ownerRepo": "HorrorPlace-Spectral-Foundry"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/eventContract.v1.json",
+          "path": "schemas/core/eventContract.v1.json",
+          "kind": "CONTRACT",
+          "objectKind": "eventContract",
+          "moduleId": "MOD-02",
+          "ownerRepo": "HorrorPlace-Atrocity-Seeds"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/tooling/ai-authoring-request-v1.json",
+          "path": "schemas/tooling/ai-authoring-request-v1.json",
+          "kind": "TOOLING",
+          "objectKind": null,
+          "moduleId": "MOD-04",
+          "ownerRepo": "HorrorPlace-Constellation-Contracts"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/tooling/ai-authoring-response-v1.json",
+          "path": "schemas/tooling/ai-authoring-response-v1.json",
+          "kind": "TOOLING",
+          "objectKind": null,
+          "moduleId": "MOD-05",
+          "ownerRepo": "HorrorPlace-Constellation-Contracts"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/tooling/prism-envelope-v1.json",
+          "path": "schemas/tooling/prism-envelope-v1.json",
+          "kind": "ENVELOPE",
+          "objectKind": null,
+          "moduleId": "MOD-05",
+          "ownerRepo": "HorrorPlace-Constellation-Contracts"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/content-boundary/chat-safety-invariants-v1.json",
+          "path": "schemas/content-boundary/chat-safety-invariants-v1.json",
+          "kind": "RUNTIME",
+          "objectKind": null,
+          "moduleId": "MOD-04",
+          "ownerRepo": "Horror.Place-Orchestrator"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/history-selector/history-selector-rule-v1.json",
+          "path": "schemas/history-selector/history-selector-rule-v1.json",
+          "kind": "RUNTIME",
+          "objectKind": null,
+          "moduleId": "MOD-07",
+          "ownerRepo": "Horror.Place-Orchestrator"
+        },
+        {
+          "id": "https://horrorplace.org/schemas/history-selector/history-selector-pattern-v1.json",
+          "path": "schemas/history-selector/history-selector-pattern-v1.json",
+          "kind": "RUNTIME",
+          "objectKind": null,
+          "moduleId": "MOD-07",
+          "ownerRepo": "Horror.Place-Orchestrator"
+        }
+      ],
+      "spines": {
+        "invariants": {
+          "id": "https://horrorplace.org/schemas/core/invariants-spine.v1.json",
+          "path": "schemas/core/invariants-spine.v1.json"
+        },
+        "entertainmentMetrics": {
+          "id": "https://horrorplace.org/schemas/core/entertainment-metrics-spine.v1.json",
+          "path": "schemas/core/entertainment-metrics-spine.v1.json"
+        }
+      }
+    }
+  ]
+}
