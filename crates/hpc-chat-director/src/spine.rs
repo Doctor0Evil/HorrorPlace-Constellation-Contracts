@@ -1,181 +1,232 @@
-//! Schema spine loading and querying.
-//!
-//! The spine is the single source of truth for invariants, metrics,
-//! and contract families. This module loads spine JSON files into
-//! typed Rust structures and provides query methods for validation
-//! and generation.
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
 
-use std::path::Path;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+
 use crate::config::Config;
-use crate::errors::Error;
-use crate::model::spine_types::{SchemaSpine, InvariantSpec, MetricSpec, ContractFamily};
+use crate::errors::ChatDirectorError;
 
-/// Load and validate the schema spine from config paths.
-pub fn load(config: &Config) -> Result<SchemaSpine, Error> {
-    let spine_json = std::fs::read_to_string(&config.spine_index)
-        .map_err(|e| Error::SpineLoad {
-            message: format!("Failed to read spine index: {}", e),
-            path: config.spine_index.clone(),
-        })?;
-    
-    let spine: SchemaSpine = serde_json::from_str(&spine_json)
-        .map_err(|e| Error::SpineParse {
-            message: format!("Failed to parse spine index: {}", e),
-            path: config.spine_index.clone(),
-        })?;
-    
-    // Validate spine against its own schema if available
-    // (deferred to jsonschema crate integration)
-    
-    Ok(spine)
+#[derive(Debug, Clone, Deserialize)]
+pub struct InvariantRange {
+    pub min: f64,
+    pub max: f64,
+    pub step: f64,
 }
 
-/// Query helper for objectKind profiles.
-impl SchemaSpine {
-    /// Return a profile for the given objectKind, if known.
-    ///
-    /// Includes required fields, invariant bindings, metric targets,
-    /// allowed phases, and tier restrictions. AI agents can inject
-    /// this JSON blob directly into their prompt context.
-    pub fn describe_object_kind(&self, kind: &str) -> Option<ObjectKindProfile> {
-        self.contract_families
-            .iter()
-            .find(|f| f.kinds.contains(&kind.to_string()))
-            .map(|family| ObjectKindProfile {
-                kind: kind.to_string(),
-                family: family.name.clone(),
-                required_fields: family.required_fields.clone(),
-                optional_fields: family.optional_fields.clone(),
-                invariant_bindings: family.invariant_bindings.clone(),
-                metric_targets: family.metric_targets.clone(),
-                allowed_phases: family.allowed_phases.clone(),
-                tier_restrictions: family.tier_restrictions.clone(),
-            })
+#[derive(Debug, Clone, Deserialize)]
+pub struct TierOverride {
+    pub tier: String,
+    pub min: f64,
+    pub max: f64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DriftSpec {
+    pub allowed: bool,
+    pub maxDeltaPerRelease: f64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct InvariantSpec {
+    pub id: String,
+    pub code: String,
+    pub name: String,
+    pub description: String,
+    pub class: String,
+    pub range: InvariantRange,
+    pub tierOverrides: Vec<TierOverride>,
+    pub drift: DriftSpec,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DerivedMetricSpec {
+    pub code: String,
+    pub inputs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct InteractionRule {
+    pub ruleId: String,
+    pub sourceMetric: String,
+    pub targetMetric: String,
+    pub relationship: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SafeBand {
+    pub min: f64,
+    pub max: f64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SafeDefaultsBands {
+    pub CIC: Option<SafeBand>,
+    pub AOS: Option<SafeBand>,
+    pub DET: Option<SafeBand>,
+    pub UEC: Option<SafeBand>,
+    pub ARR: Option<SafeBand>,
+    pub SHCI: Option<SafeBand>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SafeDefaultsEntry {
+    pub objectKind: String,
+    pub tier: String,
+    pub bands: SafeDefaultsBands,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct InvariantsSpine {
+    pub version: String,
+    pub invariants: Vec<InvariantSpec>,
+    pub derivedMetrics: Vec<DerivedMetricSpec>,
+    pub interactionRules: Vec<InteractionRule>,
+    pub safeDefaults: Vec<SafeDefaultsEntry>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectKindProfile {
+    pub object_kind: String,
+    pub required_invariants: Vec<String>,
+    pub allowed_metrics: Vec<String>,
+    pub tiers: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DefaultBands {
+    pub cic: Option<SafeBand>,
+    pub aos: Option<SafeBand>,
+    pub det: Option<SafeBand>,
+    pub uec: Option<SafeBand>,
+    pub arr: Option<SafeBand>,
+    pub shci: Option<SafeBand>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SuggestedRanges {
+    pub object_kind: String,
+    pub tier: String,
+    pub cic: Option<SafeBand>,
+    pub aos: Option<SafeBand>,
+    pub det: Option<SafeBand>,
+    pub uec: Option<SafeBand>,
+    pub arr: Option<SafeBand>,
+    pub shci: Option<SafeBand>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SpineIndex {
+    invariants_spine: InvariantsSpine,
+}
+
+impl SpineIndex {
+    pub fn load(config: &Config) -> Result<Self, ChatDirectorError> {
+        let path = config
+            .spine_root()
+            .join("invariants-spine.v1.json");
+
+        let mut file = File::open(&path)
+            .map_err(|e| ChatDirectorError::Io(path.clone(), e))?;
+
+        let mut buf = String::new();
+        file.read_to_string(&mut buf)
+            .map_err(|e| ChatDirectorError::Io(path.clone(), e))?;
+
+        let invariants_spine: InvariantsSpine =
+            serde_json::from_str(&buf).map_err(ChatDirectorError::InvalidSpine)?;
+
+        Ok(SpineIndex { invariants_spine })
     }
 
-    /// Return conservative default bands for an objectKind at a given tier.
-    ///
-    /// These bands guarantee validation passage if used as-is. AI agents
-    /// should start with these values and only deviate intentionally.
-    pub fn safe_defaults(&self, kind: &str, tier: crate::model::manifest_types::Tier) 
-        -> Option<DefaultBands> 
-    {
-        self.describe_object_kind(kind).and_then(|profile| {
-            // Look up safe defaults from spine metadata
-            // This is a simplified implementation; real version would
-            // consult spine.safe_defaults map with tier overrides
-            Some(DefaultBands {
-                invariants: profile.invariant_bindings
-                    .iter()
-                    .map(|(name, binding)| {
-                        (name.clone(), binding.safe_range_for_tier(tier))
-                    })
-                    .collect(),
-                metrics: profile.metric_targets
-                    .iter()
-                    .map(|(name, target)| {
-                        (name.clone(), target.safe_band_for_tier(tier))
-                    })
-                    .collect(),
-            })
+    pub fn describe_object_kind(&self, object_kind: &str) -> ObjectKindProfile {
+        // For v1, treat all invariants and tiers as available to every objectKind.
+        let required_invariants = self
+            .invariants_spine
+            .invariants
+            .iter()
+            .map(|inv| inv.code.clone())
+            .collect();
+
+        let allowed_metrics = vec![
+            "UEC".to_string(),
+            "EMD".to_string(),
+            "STCI".to_string(),
+            "CDL".to_string(),
+            "ARR".to_string(),
+        ];
+
+        let tiers = vec![
+            "TIER1_PUBLIC".to_string(),
+            "TIER2_MATURE".to_string(),
+            "TIER3_RESEARCH".to_string(),
+        ];
+
+        ObjectKindProfile {
+            object_kind: object_kind.to_string(),
+            required_invariants,
+            allowed_metrics,
+            tiers,
+        }
+    }
+
+    pub fn safe_defaults(
+        &self,
+        object_kind: &str,
+        tier: &str,
+    ) -> Option<DefaultBands> {
+        let entry = self
+            .invariants_spine
+            .safeDefaults
+            .iter()
+            .find(|entry| entry.objectKind == object_kind && entry.tier == tier)?;
+
+        Some(DefaultBands {
+            cic: entry.bands.CIC.clone(),
+            aos: entry.bands.AOS.clone(),
+            det: entry.bands.DET.clone(),
+            uec: entry.bands.UEC.clone(),
+            arr: entry.bands.ARR.clone(),
+            shci: entry.bands.SHCI.clone(),
         })
     }
 
-    /// Compute derived metrics (SPR, SHCI) from base invariants.
-    ///
-    /// The derivation formula is declared in the spine metadata; this
-    /// function executes the canonical computation. AI agents can call
-    /// this to pre-compute derived values before submission.
-    pub fn compute_derived(&self, invariants: &std::collections::HashMap<String, f64>) 
-        -> DerivedMetrics 
-    {
-        // Placeholder implementation; real version would execute
-        // formula declared in spine.derived_metrics
-        let cic = invariants.get("CIC").copied().unwrap_or(0.5);
-        let aos = invariants.get("AOS").copied().unwrap_or(0.5);
-        let mdi = invariants.get("MDI").copied().unwrap_or(0.5);
-        
-        DerivedMetrics {
-            spr: (cic * 0.4 + aos * 0.3 + mdi * 0.3).clamp(0.0, 1.0),
-            shci: (cic * 0.5 + aos * 0.2 + mdi * 0.3).clamp(0.0, 1.0),
+    pub fn suggest_ranges(
+        &self,
+        object_kind: &str,
+        tier: &str,
+    ) -> SuggestedRanges {
+        let defaults = self.safe_defaults(object_kind, tier);
+
+        match defaults {
+            Some(bands) => SuggestedRanges {
+                object_kind: object_kind.to_string(),
+                tier: tier.to_string(),
+                cic: bands.cic,
+                aos: bands.aos,
+                det: bands.det,
+                uec: bands.uec,
+                arr: bands.arr,
+                shci: bands.shci,
+            },
+            None => SuggestedRanges {
+                object_kind: object_kind.to_string(),
+                tier: tier.to_string(),
+                cic: None,
+                aos: None,
+                det: None,
+                uec: None,
+                arr: None,
+                shci: None,
+            },
         }
     }
-}
 
-/// Profile for a specific objectKind.
-///
-/// Returned by `SchemaSpine::describe_object_kind()` for AI discovery.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ObjectKindProfile {
-    pub kind: String,
-    pub family: String,
-    pub required_fields: Vec<String>,
-    pub optional_fields: Vec<String>,
-    pub invariant_bindings: std::collections::HashMap<String, InvariantBinding>,
-    pub metric_targets: std::collections::HashMap<String, MetricTarget>,
-    pub allowed_phases: Vec<crate::phases::Phase>,
-    pub tier_restrictions: std::collections::HashMap<crate::model::manifest_types::Tier, TierRestriction>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InvariantBinding {
-    pub required: bool,
-    pub default: Option<f64>,
-    pub safe_range_for_tier: std::collections::HashMap<crate::model::manifest_types::Tier, serde_json::Value>,
-}
-
-impl InvariantBinding {
-    pub fn safe_range_for_tier(&self, tier: crate::model::manifest_types::Tier) -> serde_json::Value {
-        self.safe_range_for_tier.get(&tier)
-            .cloned()
-            .unwrap_or_else(|| serde_json::json!({"min": 0.0, "max": 1.0}))
+    pub fn interaction_rules(&self) -> &[InteractionRule] {
+        &self.invariants_spine.interactionRules
     }
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MetricTarget {
-    pub target_min: Option<f64>,
-    pub target_max: Option<f64>,
-    pub safe_band_for_tier: std::collections::HashMap<crate::model::manifest_types::Tier, serde_json::Value>,
-}
-
-impl MetricTarget {
-    pub fn safe_band_for_tier(&self, tier: crate::model::manifest_types::Tier) -> serde_json::Value {
-        self.safe_band_for_tier.get(&tier)
-            .cloned()
-            .unwrap_or_else(|| serde_json::json!({"min": 0.0, "max": 1.0}))
+    pub fn invariant_specs(&self) -> &[InvariantSpec] {
+        &self.invariants_spine.invariants
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TierRestriction {
-    pub allowed: bool,
-    pub notes: Option<String>,
-}
-
-/// Conservative default bands for invariant/metric values.
-///
-/// Returned by `SchemaSpine::safe_defaults()` for AI pre-flight.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DefaultBands {
-    pub invariants: std::collections::HashMap<String, serde_json::Value>,
-    pub metrics: std::collections::HashMap<String, serde_json::Value>,
-}
-
-/// Derived metrics computed from base invariants.
-///
-/// Returned by `SchemaSpine::compute_derived()`.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DerivedMetrics {
-    /// Spectral Plausibility Rating — derived from CIC/AOS/MDI/LSG/FCF
-    pub spr: f64,
-    /// Subjective Horror Coefficient Index — derived from CIC/AOS/MDI/SHCI coupling
-    pub shci: f64,
 }
