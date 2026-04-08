@@ -1,11 +1,314 @@
 {
+  "$id": "https://horrorplace.org/schemas/tooling/ai-authoring-response-v1.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "schema:Horror.Place/constellation/ai-authoring-response-v1",
   "title": "AI Authoring Response v1",
-  "description": "Canonical AI authoring response: a single prism envelope containing up to three artifacts.",
-  "allOf": [
-    {
-      "$ref": "schema:Horror.Place/constellation/prism-envelope.v1"
+  "description": "Standardized envelope for AI- or human-authored contract payloads passing through CHATDIRECTOR.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "responseId",
+    "requestId",
+    "sessionId",
+    "actorId",
+    "objectKind",
+    "phase",
+    "tier",
+    "targetRepo",
+    "schemaRef",
+    "identity",
+    "content",
+    "prism"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "responseId": {
+      "type": "string",
+      "description": "Unique identifier for this authoring response."
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Identifier of the AiAuthoringRequest this response answers."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Join key linking this response to editor telemetry, PCG, and governance streams."
+    },
+    "actorId": {
+      "type": "string",
+      "description": "Identifier for the human editor or AI agent that produced this response."
+    },
+    "objectKind": {
+      "type": "string",
+      "enum": [
+        "regionContractCard",
+        "seedContractCard",
+        "moodContract",
+        "eventContract"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "PHASE0_DISCOVERY",
+        "PHASE1_SCOPING",
+        "PHASE2_CONTRACTS",
+        "PHASE3_BINDINGS",
+        "PHASE4_RUNTIME"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "TIER1_PUBLIC",
+        "TIER2_MATURE",
+        "TIER3_RESEARCH"
+      ]
+    },
+    "targetRepo": {
+      "type": "string",
+      "description": "Canonical repository name as declared in repo-manifest.hpc.*.json."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical $id of the contract schema used for content."
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "regionId",
+        "seedId",
+        "descriptorId",
+        "consentTier",
+        "routerStateId",
+        "selectorPatternId",
+        "sessionMetricsEnvelopeId"
+      ],
+      "properties": {
+        "regionId": {
+          "type": "string"
+        },
+        "seedId": {
+          "type": "string"
+        },
+        "descriptorId": {
+          "type": "string"
+        },
+        "consentTier": {
+          "type": "string",
+          "enum": [
+            "ACTIVE_CHILD",
+            "ACTIVE_TEEN",
+            "ACTIVE_MATURE"
+          ]
+        },
+        "routerStateId": {
+          "type": "string"
+        },
+        "selectorPatternId": {
+          "type": "string"
+        },
+        "sessionMetricsEnvelopeId": {
+          "type": "string"
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "description": "Schema-validated contract payload (region, seed, mood, or event).",
+      "additionalProperties": true
+    },
+    "prism": {
+      "type": "object",
+      "description": "Embedded prism envelope metadata. Mirrors prism-envelope-v1.json at top level.",
+      "additionalProperties": false,
+      "required": [
+        "envelopeId",
+        "createdAt",
+        "producer",
+        "hash",
+        "signature",
+        "deadLedgerRef",
+        "validationTrace",
+        "autoCorrectHints",
+        "dependencyStatus"
+      ],
+      "properties": {
+        "envelopeId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "producer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "agentId",
+            "agentKind",
+            "version"
+          ],
+          "properties": {
+            "agentId": {
+              "type": "string"
+            },
+            "agentKind": {
+              "type": "string",
+              "enum": [
+                "HUMAN",
+                "AI_CHAT",
+                "PIPELINE"
+              ]
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        },
+        "hash": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "algorithm",
+            "value"
+          ],
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "enum": [
+                "SHA256"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "alg",
+            "value"
+          ],
+          "properties": {
+            "alg": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        "deadLedgerRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "network",
+            "transactionId"
+          ],
+          "properties": {
+            "network": {
+              "type": "string"
+            },
+            "transactionId": {
+              "type": "string"
+            }
+          }
+        },
+        "validationTrace": {
+          "type": "array",
+          "description": "Structured record of checks applied during validation.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "step",
+              "layer",
+              "result"
+            ],
+            "properties": {
+              "step": {
+                "type": "string"
+              },
+              "layer": {
+                "type": "string",
+                "enum": [
+                  "SCHEMA",
+                  "PHASE",
+                  "INVARIANT",
+                  "MANIFEST",
+                  "ENVELOPE"
+                ]
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "PASSED",
+                  "FAILED",
+                  "SKIPPED"
+                ]
+              }
+            }
+          }
+        },
+        "autoCorrectHints": {
+          "type": "array",
+          "description": "Optional hints produced by validators to support AI auto-correction.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "fieldPath",
+              "errorCode",
+              "currentValue",
+              "suggestedValue",
+              "reason",
+              "confidence"
+            ],
+            "properties": {
+              "fieldPath": {
+                "type": "string"
+              },
+              "errorCode": {
+                "type": "string"
+              },
+              "currentValue": {
+                "type": ["string", "number", "boolean", "null"]
+              },
+              "suggestedValue": {
+                "type": ["string", "number", "boolean", "null"]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        "dependencyStatus": {
+          "type": "object",
+          "description": "Dependency readiness for upstream or downstream artifacts.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RESOLVED",
+              "FAILED"
+            ]
+          }
+        }
+      }
     }
-  ]
+  }
 }
