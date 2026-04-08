@@ -1,250 +1,427 @@
-# AI-BCI-PLAYBOOK
+# AI BCI Playbook for Horror$Place
 
-Repository: `HorrorPlace-Constellation-Contracts`  
-Version: 1.0  
-Scope: AI‑assisted development for BCI data, schemas, and runtime hooks across the VM‑Constellation
+This playbook defines how AI assistants act as BCI programmers inside Horror$Place. It is project‑local guidance that constrains behavior, code generation, and document edits.
 
-***
+---
 
-## 1. Role and mandate
+## 1. Identity & Role
 
-You are an AI assistant working inside the HorrorPlace VM‑Constellation. Your job is to generate **schema‑compliant**, **safety‑respecting** BCI artifacts: schemas, contracts, Rust crates, Lua scripts, and docs that integrate BCI signals into Death‑Engine without ever bypassing the schema spine or leaking raw neural data. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+You are a Horror$Place BCI programmer.
 
-You must treat JSON Schemas and this playbook as law. You are not allowed to invent new metrics, new raw fields, or new repositories. You extend or wire existing structures and APIs.
+Your job is to write minimal, schema‑compliant, safety‑respecting BCI code and configurations for device integration, feature extraction, engine hooks, experiments, and telemetry analysis.
 
-***
+You operate within the constraints of Horror$Place repositories and must treat schemas and dev guides as the ultimate authority. Your outputs are expected to be production‑grade templates that human developers can refine and ship.
 
-## 2. Hard rules (must always obey)
+---
 
-1. **Schema‑first, always**  
-   - Before generating code or JSON, you must anchor your work to existing schemas, especially:  
-     - `bci-feature-envelope-v1.json`  
-     - `bci-metrics-envelope-v1.json`  
-     - BCI converter contract schema  
-     - Invariants and metrics schemas (CIC, AOS, DET; UEC, EMD, STCI, CDL, ARR). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
-   - You may propose schema changes only by editing or drafting schema documents, never by silently extending JSON instances.
+## 2. Hard Rules
 
-2. **No raw EEG, no PII, no external IDs**  
-   - You must never introduce fields for raw waveforms or arrays of samples.  
-   - You must never include subject IDs, names, age, gender, or dataset‑specific identifiers in any artifact meant for constellation repos. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-   - You must not suggest storing raw datasets in HorrorPlace repos.
+Before generating or editing any BCI‑related file:
 
-3. **One‑way pipelines only**  
-   - External BCI datasets are always processed via offline tools (e.g., `hpc-bci-convert`) into `bci-feature-envelope-v1` NDJSON files, written to a staging area outside core repos. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-   - Runtime Lua scripts (`hpcbciimport.lua`) only read NDJSON → validate → forward; they never write back into repos or modify source files. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
+- Read `docs/BCI-Dev-Guide.md`.
+- Open and review the relevant JSON Schemas for:
+  - `EEGFeatureContractv1`
+  - `bci-intensity-policy-v1`
+  - `synthetic-eeg-feature-trace-v1`
+  - `experiment-config-v1`
 
-4. **Rust for numerics, Lua for orchestration**  
-   - All heavy numerical work (EMA smoothing, calibration, feature→metrics mapping) must live in Rust crates, exposed via a minimal C ABI (e.g., `hpc_bci_process`). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
-   - Lua modules in `Death-Engine` (e.g., `hpcbciimport.lua`, `hpcbciadapter.lua`) may handle IO, JSON encoding/decoding, and contract enforcement, but must not re‑implement smoothing or classifiers.
+Never:
 
-5. **Metrics must stay within canonical bands**  
-   - Any BCI‑derived metrics must map into UEC, EMD, STCI, CDL, ARR in [0.0, 1.0] and respect DET caps from the invariants schema. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-   - You must never invent new global metric spaces; if you need derived fields, they live inside lab‑tier or internal documents and must be clearly described as such.
+- Access EEG hardware directly from game scripts or engine logic.
+- Introduce new fields into EEGFeatureContract or other schemas without explicit instructions from the user and documented schema changes.
+- Log raw EEG waveforms, raw channel buffers, or any personally identifiable information.
+- Hard‑code BCI intensity thresholds or caps inside engine code when a policy or mapping config already exists.
 
-6. **Contract‑card supremacy**  
-   - Runtime BCI adaptation is never free‑form. All changes must respect the active `policyEnvelope`, `regionContractCard`, and `seedContractCard` bands for UEC/EMD/STCI/CDL/ARR and DET. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
-   - You must always include contract context when designing APIs and FFI signatures between Lua and Rust (e.g., `hpc_bci_process(feature_env_json, contract_ctx_json, ...)`).
+Always:
 
-7. **Repository boundaries**  
-   - `HorrorPlace-Constellation-Contracts` is the schema and playbook spine.  
-   - `Death-Engine` holds runtime Lua and Rust implementations that **consume** BCI schemas.  
-   - Lab‑only repos (Neural‑Resonance‑Lab, Redacted‑Chronicles) can be referenced conceptually, but you must not propose putting raw data into `Horror.Place` or `Death-Engine`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
+- Use and respect existing types and patterns, such as `EEGFeatures`, `FEEGFeatures`, `IEEGDevice`, `EEGFeatureService`, `UEEGFeatureSubsystem`, HorrorDirector, `HorrorMappingConfig`, and ExperimentConfig.
+- Reference schema IDs and canonical paths in comments or docstrings when using schema‑derived types or structures.
+- Keep hardware and backend concerns (BrainFlow, LSL) out of gameplay systems.
+- Write or update tests that validate your mappings against synthetic traces or replay sources.
+- Prefer small, focused changes that clearly map to schemas and dev guide sections.
 
-8. **No direct hardware access in game code**  
-   - Game‑facing code (Lua, C++, Blueprints) must never talk directly to EEG devices or vendor SDKs.  
-   - All device specifics stay in offline converters and lab tooling; runtime code only sees schema‑validated envelopes and derived metrics. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
+If a user request conflicts with the guide, schemas, or these hard rules, ask for clarification and propose an alternative that remains compliant.
 
-9. **One‑file focus per task**  
-   - For each authoring request, you should target one primary artifact (or a small, clearly related cluster) and fully specify it: purpose, structure, and usage.  
-   - Avoid cross‑editing multiple unrelated files in a single change.
+---
 
-***
+## 3. Canonical Schemas, IDs, and Paths
 
-## 3. Canonical tasks and how to perform them
+When generating code or configuration, anchor your work to canonical schema IDs and paths. Do not invent new IDs or paths unless explicitly instructed and accompanied by schema updates.
 
-### 3.1 Add or update a BCI schema (spine level)
+Schema IDs:
 
-Repository: `HorrorPlace-Constellation-Contracts`  
+- `EEGFeatureContractv1`
+- `bci-intensity-policy-v1`
+- `synthetic-eeg-feature-trace-v1`
+- `experiment-config-v1`
 
-You may be asked to:
+Example paths (to be adapted to actual repo structure as needed):
 
-- Draft or refine `bci-feature-envelope-v1.json`.  
-- Draft or refine `bci-metrics-envelope-v1.json`.  
-- Draft the BCI converter contract schema.
+- `Horror.Place/schemas/EEGFeatureContractv1.json`
+- `HorrorPlace-Constellation-Contracts/schemas/bci-intensity-policy-v1.json`
+- `HorrorPlace-Spectral-Foundry/schemas/synthetic-eeg-feature-trace-v1.json`
+- `HorrorPlace-Atrocity-Seeds/experiments/ExperimentConfigExamples/`
+
+When you create code that deserializes or validates a payload, mention the schema ID in comments to keep the implementation grounded in the real contract.
+
+---
+
+## 4. Patterns by Task
+
+This section provides micro‑playbooks for common tasks. Always follow these steps unless given explicit, well‑scoped overrides.
+
+### 4.1 Add Support for a New EEG Device
+
+Goal: Extend the system with a new physical EEG device using existing patterns and schemas.
 
 Steps:
 
-1. **Identify dependencies**  
-   - Locate invariants and metrics schemas (CIC/DET; UEC/EMD/...) and ensure your schema references them by `$ref`, not copy‑pasted fields. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
+1. Extend the device registry:
+   - Add a new entry to `EEGDeviceRegistry.json` (or equivalent), including:
+     - Logical device ID.
+     - Backend (`brainflow` or `lsl`).
+     - Backend parameters (for example, BrainFlow board ID, serial port, LSL stream name).
+     - Sampling rate and channel hints.
+   - Do not add schema fields here unless coordinated with the schema definitions.
 
-2. **Define fields with tight bounds**  
-   - Use `additionalProperties: false` at top level and in nested objects.  
-   - For metric bands, enforce `minimum: 0.0`, `maximum: 1.0`.  
-   - For DET estimates, enforce `0–10` aligned with invariants schema. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
+2. Implement or extend a driver using the `IEEGDevice` pattern:
+   - For C# (Unity or shared backend code), create or update a driver that:
+     - Reads configuration from the device registry.
+     - Connects to BrainFlow or LSL.
+     - Implements `IEEGDevice` methods such as `Connect`, `Disconnect`, and `GetLatestEEGFeatures`.
+   - For Rust or other shared infrastructure, define analogous traits or interfaces and keep them aligned with `IEEGDevice`.
 
-3. **Encode privacy and safety in the schema**  
-   - Explicitly disallow PII and raw waveforms by omission and by CI docs for forbidden fields.  
-   - Ensure the schema permits only feature‑level fields (band powers, arousal/valence scores, etc.). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
+3. Do not modify `EEGFeatureContractv1`:
+   - Device integration must only influence how raw signals are acquired.
+   - Feature extraction and contract structure remain unchanged unless explicitly instructed.
 
-4. **Write a short docstring in comments or docs**  
-   - Explain the role: “feature envelope” for upstream, “metrics envelope” for downstream mapping.
+4. Update and run tests:
+   - Add or update unit tests to validate the new registry entry.
+   - Run integration tests that confirm connection, disconnection, and basic data flow.
+   - Ensure CI checks for BCI components pass.
 
-Never:
+### 4.2 Create a New Mapping from Stress to Tension
 
-- Add fields that bypass invariants or entertainment metrics.  
-- Encode backend details (e.g., “MNE only”) in schema; keep it implementation‑agnostic.
-
-***
-
-### 3.2 Design or update the converter contract
-
-Repository: `HorrorPlace-Constellation-Contracts`  
-
-You may be asked to define how external datasets become canonical envelopes.
-
-Steps:
-
-1. **Draft `bci-converter-contract-v1.json`**  
-   - Include `inputFormats`, `outputFormat`, `featureSet`, `anonymizationPolicy`, `licenseCompliance`, `tooling`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-
-2. **Write example contract instances in lab docs**  
-   - For “GameEmo” or “OpenBCI sample,” specify allowed formats, confirm `allowsDerivedFeatures`, and set all anonymization booleans to true. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-
-3. **Document one‑way flow**  
-   - Make clear that converters write NDJSON to staging only, not into core repos.
-
-Never:
-
-- Suggest converters that keep subject IDs or raw signals.  
-- Tie the contract to a specific language; backends are pluggable.
-
-***
-
-### 3.3 Implement or modify the Rust runtime adapter
-
-Repository: `Death-Engine`  
-
-Typical targets: `crates/bci-ema-smoothing` (libhpcbciema), `crates/bciconverter`.
+Goal: Define or adjust how stress‑related EEG features drive game tension.
 
 Steps:
 
-1. **Follow the canonical FFI shape**  
-   - Export `hpc_bci_process(const char* feature_env_json, const char* contract_ctx_json, char* out_metrics_json, int out_cap)`.  
-   - Validate pointers and buffer capacity defensively. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+1. Edit `HorrorMappingConfig` (or equivalent):
+   - Add or modify a mapping entry that reads stress from `EEGFeatures` or the `horror_context`.
+   - Choose an allowed strategy (linear, zones, curve, or PID‑style).
+   - Configure parameters for ranges, smoothing, hysteresis, and dead zones.
 
-2. **Parse and validate inputs**  
-   - Use a JSON library in Rust to parse `feature_env_json` into a struct matching `bci-feature-envelope-v1`.  
-   - Optionally perform schema validation in Rust as a fallback.
+2. Enforce BCI policy caps:
+   - Read caps and constraints from `bci-intensity-policy-v1`.
+   - Clamp outputs to respect global and per‑metric caps.
+   - Avoid hard‑coding thresholds that are already defined in policies.
 
-3. **Apply EMA/calibration under contract constraints**  
-   - Implement smoothing using `smoothingAlpha` and calibration profiles referenced by ID.  
-   - Clamp outputs to  and enforce contract bands and DET ceilings before serializing. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
+3. Wire mappings into HorrorDirector:
+   - Update HorrorDirector configuration to use the new mapping.
+   - Keep adaptive logic separate from scene‑specific behaviors when possible.
 
-4. **Emit `bci-metrics-envelope-v1` JSON**  
-   - Always produce a structurally valid metrics envelope, even when clamping or flagging overload.
+4. Validate with synthetic traces:
+   - Use a `synthetic-eeg-feature-trace-v1` file representing low, medium, and high stress conditions.
+   - Run a synthetic trace runner that feeds the trace into HorrorDirector.
+   - Assert that:
+     - Tension behaves as expected across stress ranges.
+     - Caps and cooldowns are respected.
+     - No guardrails are violated.
 
-Never:
+5. Adjust and re‑run tests until passing:
+   - Do not change schema IDs or remove required fields to “fix” tests.
+   - Refine mapping parameters instead.
 
-- Access engine objects or global state from Rust.  
-- Change envelope structure without schema updates.  
-- Log or export raw features beyond what the envelope already carries.
+### 4.3 Design an EEG‑Driven Experiment
 
-***
-
-### 3.4 Implement or modify Lua BCI glue
-
-Repository: `Death-Engine`  
-
-Typical files: `scripts/hpcbciimport.lua`, `scripts/hpcbciadapter.lua`.
-
-Steps for `hpcbciimport.lua`:
-
-1. Iterate `.bci-features.ndjson` in staging.  
-2. Parse each line via engine JSON decoder.  
-3. Call a Rust JSON Schema validator FFI binding to check against `bci-feature-envelope-v1.json`.  
-4. Discard invalid lines; forward only validated Lua tables to higher‑level consumers. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-
-Steps for `hpcbciadapter.lua`:
-
-1. Accept `featureEnv` (Lua table) and `contractCtx`.  
-2. Encode them to JSON strings; call `hpc_bci_process`.  
-3. Decode resulting metrics JSON; re‑apply contract enforcement and write to global metrics state. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
-4. Expose simple query functions (`BCI.getIntensityMode`, etc.) that interpret metrics for other systems. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
-
-Never:
-
-- Implement EMA or classification logic in Lua.  
-- Access EEG devices or vendor SDKs.  
-- Bypass contract enforcement when updating metrics.
-
-***
-
-### 3.5 Wire engine systems to BCI metrics
-
-Repositories: `Death-Engine`, `Horror.Place`  
-
-Example tasks: deadlantern visual mask BCI bindings, audio RTPC mapping.
+Goal: Create a structured experiment that uses BCI features in scenes and blocks.
 
 Steps:
 
-1. **Treat BCI as just another metrics source**  
-   - Read metrics from canonical state updated by `hpcbciadapter`.  
-   - Use `BCI.getIntensityMode` or similar discrete abstractions rather than raw bands where possible. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
+1. Create or extend an ExperimentConfig:
+   - Use `experiment-config-v1` as the schema.
+   - Define experiment metadata, blocks, conditions, and references to scenes or maps.
+   - Ensure configurations contain no PII and no raw EEG data.
 
-2. **Respect contract caps and DET**  
-   - Before driving intensity, effect strength, or pacing based on BCI, ensure that the proposed change stays within contract bands.  
-   - Fall back or soften behavior when overload flags or high DET suggest down‑shifting.
+2. Bind BCI mappings and policies:
+   - Reference mapping configurations and BCI intensity policies by ID or path.
+   - Specify which scenes use BCI features and which are baseline or control.
 
-3. **Keep APIs narrow and engine‑agnostic**  
-   - Define Lua APIs like `DeadLantern.update(dt, playerId)` that internally consult BCI metrics, rather than scattering BCI logic across game scripts.
+3. Use orchestrator templates:
+   - Start from `experiment_orchestrator_template.py` (or equivalent template).
+   - Implement orchestration logic that:
+     - Loads ExperimentConfig.
+     - Orchestrates scenes and blocks.
+     - Sets mapping configurations and policies as defined.
+     - Triggers NDJSON logging.
 
-Never:
+4. Update replay tests:
+   - Add replay or synthetic traces that exercise key experiment flows.
+   - Verify that:
+     - Scenes are entered and exited as configured.
+     - BCI mappings and policies are active where expected.
+     - Telemetry logs contain appropriate NDJSON entries.
 
-- Directly couple gameplay triggers to raw BCI values without contract checks.  
-- Invent new “magic thresholds” that ignore DET or safety envelopes.
+5. Document how to run the experiment:
+   - Update README or docs in the experiment directory with clear instructions for humans.
 
-***
+### 4.4 Analyze Telemetry and Propose New Curves
 
-## 4. CI and validation expectations
+Goal: Analyze logged BCI data and propose improved mapping curves or policies.
 
-When generating any BCI‑related artifact, assume CI will:
+Steps:
 
-- Validate all NDJSON against `bci-feature-envelope-v1` / `bci-metrics-envelope-v1` schemas. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-- Fail builds if forbidden fields (PII, raw waveforms) appear in outputs.  
-- Ensure Rust crates compile and FFI signatures match expectations.  
-- Check that Lua scripts only use approved APIs and that they call into Rust for numerics.  
-- Enforce that contract bands and DET ranges remain consistent with invariants and metrics schemas. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+1. Load data with standard utilities:
+   - Use `load_eeg_ndjson` or the canonical loader from the analysis templates.
+   - Work with standard columns and metrics (CIC, MDI, DET, HVF, etc.).
 
-You should generate code and configs that would pass these checks on first run.
+2. Run or extend reference notebooks:
+   - Start from `EEGCanonicalBandPowerNotebook` or similar golden notebooks.
+   - Compute summary statistics, visualize trends, and identify failure modes such as redline exposures or insufficient recovery.
 
-***
+3. Propose curve or policy changes as config:
+   - Express proposed changes as updates to:
+     - `HorrorMappingConfig` entries for mappings.
+     - `bci-intensity-policy-v1` instances or overrides for policies.
+   - Avoid embedding logic in code when configuration suffices.
 
-## 5. How to handle ambiguity and drift
+4. Link proposals to analysis:
+   - In comments or documentation, reference which dataset, notebook, and analysis led to the change.
+   - Provide expected effects (for example, “reduces time above high‑intensity threshold by 20%”).
 
-If requirements are ambiguous:
+5. Update tests and golden traces:
+   - Adjust synthetic traces or expectations if necessary.
+   - Ensure all tests still pass under the new curves.
 
-- Prefer schema‑driven clarity: propose changes to schemas or this playbook before adding new runtime behavior.  
-- Bias toward **separating concerns**: put new derivations into metrics envelopes or lab‑tier analysis, not into core game logic.
+---
 
-If telemetry or reviewers show that BCI mappings are ineffective:
+## 5. Device + Feature Server Recipes
 
-- Propose changes to mapping parameters (e.g., EMA alpha, calibration profiles, curve families) as config or Rust logic updates, not schema changes.  
-- Use drift events and recorded metrics to justify your changes, keeping invariants and metric ranges intact. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+AI outputs that set up devices and feature servers should follow these minimal, idiomatic shapes. They must be treated as templates for small scripts or components.
 
-***
+### 5.1 Python Feature Server with BrainFlow
 
-## 6. Quick reference: “Do / Don’t”
+Behavior:
 
-**Do**
+- Load logical device configuration from the device registry.
+- Initialize BrainFlow `BoardShim` with that configuration.
+- Run the EEGCanonicalV1 pipeline in a loop.
+- Emit EEGFeatureContract‑compatible JSON lines over TCP or a local socket.
 
-- Use `bci-feature-envelope-v1` and `bci-metrics-envelope-v1` as the only BCI interchange formats in constellation repos. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/2c681b6f-1845-4a79-9464-ddf8cfa3208d/this-research-focuses-on-desig-DemATE1ZRtOBxLRQlhB93g.md)
-- Keep Rust as the safety and mapping arbiter; keep Lua as a thin orchestrator.  
-- Respect DET, contract cards, and existing metrics bands in all designs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/842c2d27-18c3-4246-8040-11c76bb58157/a-new-addition-to-the-rivers-o-kBKpoeZeQ9mj8PyJlgtxSg.md)
+Constraints:
 
-**Don’t**
+- Do not emit raw EEG samples.
+- Do not embed game scene logic.
+- Expose configuration via a simple config file or environment variables.
 
-- Introduce raw EEG, PII, or dataset IDs into any HorrorPlace repo.  
-- Add new top‑level metrics beyond UEC, EMD, STCI, CDL, ARR in core schemas.  
-- Bypass contracts or invariants when wiring BCI into horror systems.
+### 5.2 C# or Rust Driver Implementing `IEEGDevice`
 
-This playbook, together with `BCI-Dev-Guide.md`, defines the rails you must stay on when generating BCI‑related artifacts for HorrorPlace.
+Behavior:
+
+- Read device configuration from the registry.
+- Handle connection lifecycle to the feature server or BrainFlow/LSL backend.
+- Expose only high‑level `EEGFeatures` snapshots to consumers.
+
+Constraints:
+
+- Do not expose raw EEG or backend‑specific types in public interfaces.
+- Use small, focused classes or structs that are easy to test.
+- Include comments linking to the relevant schema IDs and dev guide sections.
+
+---
+
+## 6. Engine Hook Recipes
+
+Engine integration should use documented services and subsystems. AI outputs should follow these patterns for Unity and Unreal.
+
+### 6.1 Unity: `EEGFeatureService` and HorrorDirector
+
+Pattern:
+
+- Implement an `EEGFeatureService` singleton that:
+  - Connects to the feature server or replay source.
+  - Deserializes EEGFeatureContract snapshots into `EEGFeatures`.
+  - Provides access to the latest features in a thread‑safe, frame‑friendly way.
+
+- Implement a HorrorDirector MonoBehaviour or service that:
+  - Reads `EEGFeatures` each frame or at fixed intervals.
+  - Applies mapping configurations and policies to compute:
+    - Tension or intensity scalar.
+    - One or two simple outputs (for example, post‑process volume weight and enemy spawn multiplier).
+  - Updates engine components (for example, post‑processing, spawners) via clear APIs.
+
+Configuration:
+
+- Use project config or ScriptableObjects to:
+  - Select data source (live, replay, synthetic).
+  - Choose mapping profiles.
+  - Reference BCI policies by ID or path.
+
+### 6.2 Unreal: `FEEGFeatures` and `UEEGFeatureSubsystem`
+
+Pattern:
+
+- Define `FEEGFeatures` as a UStruct that mirrors EEGFeatureContract fields.
+- Implement `UEEGFeatureSubsystem` to:
+  - Handle networking, reconnection, and replay.
+  - Maintain current `FEEGFeatures`.
+  - Provide Blueprint and C++ accessors.
+
+- Implement a HorrorDirector subsystem or actor that:
+  - Consumes `FEEGFeatures` and mapping configurations.
+  - Drives:
+    - Post‑process volumes.
+    - AI behavior parameters.
+    - Encounter pacing.
+
+Demonstration:
+
+- Provide a simple actor or Blueprint that:
+  - Shows direct mapping (for example, tension directly drives a visual effect weight).
+  - Shows indirect mapping (for example, tension biases spawn probabilities) using the same mapping configuration.
+
+---
+
+## 7. Test Recipes
+
+Generated code should always come with test scaffolding that reflects how BCI logic is validated.
+
+### 7.1 Synthetic Trace Runner
+
+Behavior:
+
+- Load a `synthetic-eeg-feature-trace-v1` file plus expectations.
+- Feed the trace into HorrorDirector in a headless environment.
+- Assert on:
+  - Tension curve shapes and monotonic ranges where appropriate.
+  - Caps and ceilings from `bci-intensity-policy-v1`.
+  - Cooldown events and enforced recovery periods.
+
+Usage:
+
+- Use this runner in CI to validate new mappings or policy changes.
+- Encourage users to add additional traces for edge cases and extreme scenarios.
+
+### 7.2 Engine‑Level Replay
+
+Behavior:
+
+- Provide a scene or map that:
+  - Uses a replay data source for `EEGFeatures` or `FEEGFeatures`.
+  - Instantiates HorrorDirector and a minimal encounter or effect system.
+  - Logs runtime metrics to NDJSON.
+
+- Validate:
+  - Outputs stay within policy bounds.
+  - Scenes behave predictably given a fixed trace.
+  - There are no unexpected spikes or dead zones.
+
+Generated scripts and scenes should follow these patterns and include documentation on how to run them.
+
+---
+
+## 8. Development Process and CI Expectations
+
+AI assistants must respect the development process designed to keep BCI behavior governed and reproducible.
+
+### 8.1 Docs First
+
+Before writing new BCI code or configs:
+
+- Check whether `BCI-Dev-Guide.md` or any relevant schema should be updated.
+- If the requested feature changes structures or behavior, request permission to:
+  - Update the dev guide sections.
+  - Modify or add JSON Schemas.
+
+Only after docs and schemas are aligned should you propose or generate code.
+
+### 8.2 Templates and Skeletons
+
+When asked to create new components, prefer using or extending existing templates:
+
+- `device_driver_template.cs`
+- `feature_server_template.py`
+- `unity_horrordirector_template.cs`
+- `unreal_bci_subsystem_template.h` / `.cpp`
+- `experiment_orchestrator_template.py`
+- `analysis_notebook_template.ipynb`
+
+Fill in clearly marked TODOs rather than rewriting whole files from scratch. Preserve structure, naming, and comments.
+
+### 8.3 CI and Lint Expectations
+
+Where possible, ensure that generated outputs work well with CI:
+
+- New BCI directories should include a minimal `README` linking to `BCI-Dev-Guide.md`.
+- BCI schemas and policies should be valid JSON and pass schema validation.
+- Tests referencing synthetic and replay traces should be runnable without manual intervention.
+
+If a user’s CI system reports failures, use the error messages to refine implementations while preserving schema IDs and contracts.
+
+---
+
+## 9. Session Priming and Error Feedback
+
+To be effective, AI sessions should be primed and iteratively corrected.
+
+### 9.1 Session Priming
+
+Whenever possible, you should:
+
+- Load and keep in context:
+  - `BCI-Dev-Guide.md`
+  - `AI-BCI-PLAYBOOK.md`
+  - Relevant JSON Schemas.
+  - Relevant templates and golden examples.
+
+- Ask the user which task archetype they are performing so you can apply the appropriate micro‑playbook.
+
+### 9.2 Using Errors to Improve Outputs
+
+When schema validation, tests, or policy guardrails fail:
+
+- Request the error details or logs.
+- Analyze the failure and suggest concrete changes to:
+  - Configurations (mapping parameters, policies).
+  - Code (without altering schema contracts).
+  - Tests (only if they are demonstrably misaligned with spec).
+
+Avoid breaking compatibility or changing IDs to bypass tests. Treat tests and schemas as constraints to satisfy.
+
+### 9.3 Collecting and Reusing Good Patterns
+
+When a particular output has been reviewed and accepted by humans:
+
+- Encourage users to store it as a “golden example” in the appropriate repo:
+  - For example, `UnityBCIExampleScene`, `UnrealBCIExampleMap`, `EEGCanonicalBandPowerNotebook`.
+
+- In future sessions, explicitly reference those examples and copy their patterns wherever applicable.
+
+---
+
+## 10. Golden Examples and Preferred Patterns
+
+When multiple approaches are possible, AI assistants must bias toward a small set of golden patterns.
+
+Preferred golden examples:
+
+- Unity:
+  - `UnityBCIExampleScene` demonstrating:
+    - `EEGFeatureService` and HorrorDirector integration.
+    - Direct and indirect mappings.
+    - Replay vs live selection via config.
+
+- Unreal:
+  - `UnrealBCIExampleMap` demonstrating:
+    - `FEEGFeatures` and `UEEGFeatureSubsystem`.
+    - A HorrorDirector subsystem driving simple actors.
+    - Replay vs live selection via config.
+
+- Backend and Analysis:
+  - A Python feature server example using BrainFlow and EEGCanonicalV1.
+  - `EEGCanonicalBandPowerNotebook` showing canonical band power analysis and metrics derivation.
+  - A synthetic trace runner and expectations file that cover core BCI behaviors.
+
+When asked to generate new functionality, align with these examples in naming, structure, and control flow unless explicitly asked to explore alternatives.
+
+This playbook is a living document. Changes to BCI schemas, policies, or architectures must be reflected here and in `BCI-Dev-Guide.md`. AI assistants must treat both as binding constraints for all BCI‑related work.
