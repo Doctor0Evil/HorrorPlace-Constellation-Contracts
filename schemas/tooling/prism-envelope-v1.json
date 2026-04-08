@@ -1,0 +1,212 @@
+{
+  "$id": "https://horrorplace.org/schemas/tooling/prism-envelope-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prism Envelope v1",
+  "description": "Canonical envelope for contract content, signatures, and validation metadata used across the HorrorPlace constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "envelopeId",
+    "createdAt",
+    "producer",
+    "hash",
+    "signature",
+    "deadLedgerRef",
+    "validationTrace",
+    "autoCorrectHints",
+    "dependencyStatus"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "envelopeId": {
+      "type": "string",
+      "description": "Unique identifier for this prism envelope."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this envelope was created."
+    },
+    "producer": {
+      "type": "object",
+      "description": "Information about the agent that produced this envelope.",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "agentKind",
+        "version"
+      ],
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "agentKind": {
+          "type": "string",
+          "enum": [
+            "HUMAN",
+            "AI_CHAT",
+            "PIPELINE"
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "hash": {
+      "type": "object",
+      "description": "Content hash for integrity verification.",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "SHA256"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "description": "Opaque signature over the hash and selected envelope metadata.",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "value"
+      ],
+      "properties": {
+        "alg": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "deadLedgerRef": {
+      "type": "object",
+      "description": "Reference into the Dead-Ledger network for entitlements and audit.",
+      "additionalProperties": false,
+      "required": [
+        "network",
+        "transactionId"
+      ],
+      "properties": {
+        "network": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        }
+      }
+    },
+    "validationTrace": {
+      "type": "array",
+      "description": "Ordered steps that describe how this envelope was validated.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step",
+          "layer",
+          "result"
+        ],
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "SCHEMA",
+              "PHASE",
+              "INVARIANT",
+              "MANIFEST",
+              "ENVELOPE"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "SKIPPED"
+            ]
+          }
+        }
+      }
+    },
+    "autoCorrectHints": {
+      "type": "array",
+      "description": "Hints that describe potential corrections validators suggest.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fieldPath",
+          "errorCode",
+          "currentValue",
+          "suggestedValue",
+          "reason",
+          "confidence"
+        ],
+        "properties": {
+          "fieldPath": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "currentValue": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "suggestedValue": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "dependencyStatus": {
+      "type": "object",
+      "description": "Status of external dependencies referenced by this envelope.",
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "RESOLVED",
+          "FAILED"
+        ]
+      }
+    }
+  }
+}
