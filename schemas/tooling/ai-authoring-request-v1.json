@@ -1,187 +1,229 @@
 {
+  "$id": "https://horrorplace.org/schemas/tooling/ai-authoring-request-v1.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "schema:Horror.Place/constellation/ai-authoring-request-v1",
   "title": "AI Authoring Request v1",
-  "description": "Typed request for a single AI-generated changeset, which must be returned as a prism envelope (ai-authoring-response-v1).",
+  "description": "Normalized request envelope for AI- or human-initiated authoring actions routed through CHATDIRECTOR.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaref",
+    "schemaVersion",
     "requestId",
-    "caller",
-    "target",
-    "intent"
+    "sessionId",
+    "actorId",
+    "intent",
+    "objectKind",
+    "phase",
+    "tier",
+    "targetRepo",
+    "schemaRef",
+    "identity",
+    "preferences"
   ],
   "properties": {
-    "schemaref": {
+    "schemaVersion": {
       "type": "string",
-      "const": "schema:Horror.Place/constellation/ai-authoring-request-v1",
-      "description": "Self-referencing schema URI."
+      "pattern": "^1\\.0\\.0$"
     },
     "requestId": {
       "type": "string",
-      "description": "Stable identifier for this authoring request.",
-      "pattern": "^REQ-[0-9]{8}-[0-9]{4}$"
+      "description": "Unique identifier for this authoring request."
     },
-    "caller": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "clientId"
-      ],
-      "properties": {
-        "clientId": {
-          "type": "string",
-          "description": "ID of the client or service making this request."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Optional opaque end-user identifier (non-PII)."
-        },
-        "sessionId": {
-          "type": "string",
-          "description": "Optional session or conversation identifier."
-        }
-      }
+    "sessionId": {
+      "type": "string",
+      "description": "Join key linking this request to editor telemetry, PCG, and governance streams."
     },
-    "target": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "repo",
-        "tier"
-      ],
-      "properties": {
-        "repo": {
-          "type": "string",
-          "description": "Target repository for the generated artifacts (e.g., org/repo)."
-        },
-        "branch": {
-          "type": "string",
-          "description": "Preferred target branch; tools may map this to a feature branch."
-        },
-        "tier": {
-          "type": "integer",
-          "enum": [
-            1,
-            2,
-            3
-          ],
-          "description": "Governance tier for this authoring operation (1=public, 2=vault, 3=lab)."
-        },
-        "preferredPaths": {
-          "type": "array",
-          "description": "Optional hints for where generated artifacts should be placed.",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
+    "actorId": {
+      "type": "string",
+      "description": "Identifier for the human editor or AI agent initiating this request."
     },
     "intent": {
+      "type": "string",
+      "description": "Natural language summary of what the actor wants to achieve.",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "objectKind": {
+      "type": "string",
+      "enum": [
+        "regionContractCard",
+        "seedContractCard",
+        "moodContract",
+        "eventContract"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "PHASE0_DISCOVERY",
+        "PHASE1_SCOPING",
+        "PHASE2_CONTRACTS",
+        "PHASE3_BINDINGS",
+        "PHASE4_RUNTIME"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "TIER1_PUBLIC",
+        "TIER2_MATURE",
+        "TIER3_RESEARCH"
+      ]
+    },
+    "targetRepo": {
+      "type": "string",
+      "description": "Canonical repository name as declared in repo-manifest.hpc.*.json."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical $id of the target contract schema."
+    },
+    "identity": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "type",
-        "summary"
+        "regionId",
+        "seedId",
+        "descriptorId",
+        "consentTier",
+        "routerStateId",
+        "selectorPatternId",
+        "sessionMetricsEnvelopeId"
       ],
       "properties": {
-        "type": {
-          "type": "string",
-          "description": "High-level operation type (e.g., add-style-contract, add-region-card)."
+        "regionId": {
+          "type": "string"
         },
-        "summary": {
-          "type": "string",
-          "description": "Short description of what the caller wants the AI to do."
+        "seedId": {
+          "type": "string"
         },
-        "details": {
+        "descriptorId": {
+          "type": "string"
+        },
+        "consentTier": {
           "type": "string",
-          "description": "Optional freeform natural-language instructions for the AI."
+          "enum": [
+            "ACTIVE_CHILD",
+            "ACTIVE_TEEN",
+            "ACTIVE_MATURE"
+          ]
+        },
+        "routerStateId": {
+          "type": "string"
+        },
+        "selectorPatternId": {
+          "type": "string"
+        },
+        "sessionMetricsEnvelopeId": {
+          "type": "string"
         }
       }
     },
-    "constraints": {
+    "preferences": {
       "type": "object",
       "additionalProperties": false,
+      "required": [
+        "metricPriorities",
+        "styleHints"
+      ],
       "properties": {
-        "maxArtifacts": {
+        "metricPriorities": {
+          "type": "array",
+          "description": "Optional metric weighting preferences for this request.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "metric",
+              "priority",
+              "direction"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string",
+                "enum": [
+                  "UEC",
+                  "EMD",
+                  "STCI",
+                  "CDL",
+                  "ARR"
+                ]
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "MAXIMIZE",
+                  "MINIMIZE",
+                  "TARGET_BAND"
+                ]
+              }
+            }
+          }
+        },
+        "styleHints": {
+          "type": "array",
+          "description": "Non-binding stylistic hints (e.g., artstyle IDs) that downstream tools may consider.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fieldConfidence": {
+      "type": "object",
+      "description": "Optional per-field confidence scores from AI, used to guide clarification prompts.",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "telemetryContext": {
+      "type": "object",
+      "description": "Optional aggregate telemetry snapshot to inform skeleton generation.",
+      "additionalProperties": false,
+      "properties": {
+        "recentUEC": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recentARR": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recentCDL": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "playSessions": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 3,
-          "description": "Maximum number of artifacts the AI may include in the prism envelope."
-        },
-        "noRawContent": {
-          "type": "boolean",
-          "description": "If true, the AI must not generate any raw horror content; contract-only artifacts only."
-        },
-        "allowedSchemas": {
-          "type": "array",
-          "description": "Optional whitelist of schemaref URIs the AI may target for artifacts.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "allowedRoles": {
-          "type": "array",
-          "description": "Optional whitelist of artifact roles (primary, registry, secondary) the AI may use.",
-          "items": {
-            "type": "string",
-            "enum": [
-              "primary",
-              "registry",
-              "secondary"
-            ]
-          }
+          "minimum": 0
         }
       }
     },
-    "context": {
+    "generationHints": {
       "type": "object",
-      "description": "Optional machine-readable context the AI can use.",
+      "description": "Hints produced by CHATDIRECTOR during planning, consumed by AI during generation.",
       "additionalProperties": false,
       "properties": {
-        "referencedIds": {
-          "type": "array",
-          "description": "IDs of regions, personas, styles, or events this request should anchor to.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "registryHints": {
-          "type": "array",
-          "description": "Optional hints about which registry files are in play (e.g., core/registry/styles.ndjson).",
-          "items": {
-            "type": "string"
-          }
-        },
-        "invariantSnapshot": {
-          "type": "object",
-          "description": "Optional numeric snapshot of invariants (CIC, AOS, etc.) relevant to this request.",
-          "additionalProperties": {
-            "type": "number"
-          }
-        },
-        "metricSnapshot": {
-          "type": "object",
-          "description": "Optional numeric snapshot of entertainment metrics (UEC, EMD, STCI, CDL, ARR).",
-          "additionalProperties": {
-            "type": "number"
-          }
-        }
-      }
-    },
-    "expectedResponse": {
-      "type": "object",
-      "description": "Explicit contract for the response type.",
-      "additionalProperties": false,
-      "required": [
-        "schemaref"
-      ],
-      "properties": {
-        "schemaref": {
+        "skeletonVariant": {
           "type": "string",
-          "const": "schema:Horror.Place/constellation/ai-authoring-response-v1",
-          "description": "The AI must respond with a document that validates against this schema."
+          "enum": [
+            "MINIMAL",
+            "TUTORIAL",
+            "PRODUCTION"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4096
         }
       }
     }
