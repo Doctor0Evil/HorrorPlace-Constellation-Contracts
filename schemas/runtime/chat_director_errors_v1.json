@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChatDirectorErrorSchemaV1",
+  "description": "Core error-code schema for CHAT_DIRECTOR, including invariant, metric, resurrection, and distance-related errors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "layers",
+    "errors"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the CHAT_DIRECTOR error schema."
+    },
+    "layers": {
+      "type": "array",
+      "description": "Ordered list of error layers used by CHAT_DIRECTOR.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Layer identifier, e.g., manifest, invariant, runtime."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the error layer."
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "description": "Table of error codes and their metadata.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "layer",
+          "severity",
+          "title",
+          "description",
+          "pointer_hint",
+          "remediation"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable error code identifier."
+          },
+          "layer": {
+            "type": "string",
+            "description": "One of the layer IDs defined in the layers array."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error",
+              "fatal"
+            ],
+            "description": "Severity classification for the error."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human-readable title."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the error condition."
+          },
+          "pointer_hint": {
+            "type": "string",
+            "description": "JSON Pointer hint indicating where in the payload the error most likely occurred."
+          },
+          "remediation": {
+            "type": "string",
+            "description": "Human-focused remediation guidance for operators or tooling."
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": "1.1.0",
+      "layers": [
+        {
+          "id": "manifest",
+          "description": "Errors in the outer request/manifest layer, such as missing fields or unresolved IDs."
+        },
+        {
+          "id": "invariant",
+          "description": "Errors arising from invariant or metric violations after clamping and validation."
+        },
+        {
+          "id": "runtime",
+          "description": "Errors occurring during runtime execution, planning, or external adapter calls."
+        }
+      ],
+      "errors": [
+        {
+          "code": "ERR_MANIFEST_INVALID_JSON",
+          "layer": "manifest",
+          "severity": "error",
+          "title": "Invalid JSON manifest",
+          "description": "The CHAT_DIRECTOR request could not be parsed as valid JSON.",
+          "pointer_hint": "",
+          "remediation": "Ensure the request body is valid JSON and conforms to the ai_authoring_request_v1.json schema."
+        },
+        {
+          "code": "ERR_INVARIANT_VIOLATION",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "Invariant violation",
+          "description": "A core invariant was violated when validating the request or its derived profile.",
+          "pointer_hint": "/invariants",
+          "remediation": "Inspect invariant bands and caps for this tier and objectKind; adjust the request or spine configuration."
+        },
+        {
+          "code": "ERR_METRIC_OUT_OF_RANGE",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "Metric out of range",
+          "description": "An entertainment metric band fell outside the allowed range defined in the metrics spine.",
+          "pointer_hint": "/metrics",
+          "remediation": "Clamp or adjust the metric band to fall within the spine-declared ranges, or update the spine if appropriate."
+        },
+        {
+          "code": "ERR_RESURRECTION_ORIGIN_UNKNOWN",
+          "layer": "manifest",
+          "severity": "error",
+          "title": "Unknown resurrection origin",
+          "description": "The resurrectionProfile.originId could not be resolved against the ancestor registry.",
+          "pointer_hint": "/resurrectionProfile/originId",
+          "remediation": "Verify that originId is present, correctly spelled, and present in the ancestor summary registry for the selected objectKind and tier."
+        },
+        {
+          "code": "ERR_RESURRECTION_NOVELTY_TOO_LOW",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "Resurrection novelty too low",
+          "description": "The requested novelty band collapsed or fell below the minimum allowed novelty for this objectKind and tier.",
+          "pointer_hint": "/resurrectionProfile/noveltyBand",
+          "remediation": "Increase the requested novelty band or relax overrides so the clamped band remains within the per-tier novelty range."
+        },
+        {
+          "code": "ERR_RESURRECTION_SAFETY_VIOLATION",
+          "layer": "invariant",
+          "severity": "fatal",
+          "title": "Resurrection safety violation",
+          "description": "Safety caps derived from invariants would be exceeded by the requested resurrection profile.",
+          "pointer_hint": "/resurrectionProfile/safetyCaps",
+          "remediation": "Lower DET/CDL/ARR caps or revise the request so that no cap exceeds the invariant ceilings for this tier and objectKind."
+        },
+        {
+          "code": "ERR_RESURRECTION_DISTANCE_METRIC_UNKNOWN",
+          "layer": "manifest",
+          "severity": "error",
+          "title": "Unknown resurrection distance metric",
+          "description": "The distanceMetricId in the resurrection profile does not correspond to a known distance implementation.",
+          "pointer_hint": "/resurrectionProfile/distanceMetricId",
+          "remediation": "Use a supported distanceMetricId, such as normalized_l2_invariants_metrics, or update the spine and runtime to register the new metric."
+        },
+        {
+          "code": "ERR_RESURRECTION_DISTANCE_WEIGHTS_PROFILE_UNKNOWN",
+          "layer": "manifest",
+          "severity": "error",
+          "title": "Unknown resurrection distance weights profile",
+          "description": "The distanceWeightsProfileId in the resurrection profile does not match any profile declared in the spine.",
+          "pointer_hint": "/resurrectionProfile/distanceWeightsProfileId",
+          "remediation": "Ensure the distanceWeightsProfileId is declared in the spine distance-weights section and that the CHAT_DIRECTOR runtime is using a compatible spine version."
+        },
+        {
+          "code": "ERR_RESURRECTION_DISTANCE_WEIGHTS_PROFILE_MISMATCH",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "Resurrection distance weights profile mismatch",
+          "description": "Two resurrection profiles being compared use different distanceWeightsProfileId values.",
+          "pointer_hint": "/resurrectionProfile/distanceWeightsProfileId",
+          "remediation": "Align both profiles to the same distanceWeightsProfileId before computing distances, or regenerate one profile using the desired weights profile."
+        },
+        {
+          "code": "ERR_RESURRECTION_DISTANCE_METRIC_MISMATCH",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "Resurrection distance metric mismatch",
+          "description": "Two resurrection profiles being compared use different distanceMetricId values.",
+          "pointer_hint": "/resurrectionProfile/distanceMetricId",
+          "remediation": "Ensure both profiles are built with the same distanceMetricId so a single distance function can be applied consistently."
+        },
+        {
+          "code": "ERR_BCI_GUARDRAIL_BLOCK",
+          "layer": "invariant",
+          "severity": "error",
+          "title": "BCI guardrail block",
+          "description": "BCI-derived guardrails disallow resurrections under the current physio bands or stress score.",
+          "pointer_hint": "/resurrectionProfile/physioGuardrails",
+          "remediation": "Reduce requested intensity (novelty or DET/CDL caps) or wait until BCI summaries indicate a lower stress state for this session."
+        },
+        {
+          "code": "ERR_RUNTIME_PLANNING_FAILED",
+          "layer": "runtime",
+          "severity": "error",
+          "title": "Runtime planning failed",
+          "description": "The pre-flight planning stage could not produce a valid resurrection profile or execution plan.",
+          "pointer_hint": "/",
+          "remediation": "Inspect preceding manifest and invariant errors, adjust the request parameters, and re-run the planning step with corrected inputs."
+        }
+      ]
+    }
+  ]
+}
