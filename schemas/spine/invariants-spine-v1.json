@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/spine/invariants-spine-v1.json",
+  "title": "Invariants Spine v1",
+  "description": "Canonical catalog of horror invariants, their ranges, and dependency hints.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "invariants"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier for this invariants spine."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this invariants spine."
+    },
+    "invariants": {
+      "type": "array",
+      "description": "Per-invariant entries with ranges and dependency hints.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "description",
+          "range",
+          "consumers"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "MDI",
+              "AOS",
+              "RRM",
+              "FCF",
+              "SPR",
+              "RWF",
+              "DET",
+              "HVF",
+              "LSG",
+              "SHCI"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "range": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "min",
+              "max"
+            ],
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            }
+          },
+          "derivedFrom": {
+            "type": "array",
+            "description": "Optional list of other invariant codes this one depends on.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "consumers": {
+            "type": "array",
+            "description": "Schemas or systems that consume this invariant.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
