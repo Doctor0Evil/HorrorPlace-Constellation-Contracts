@@ -1,0 +1,345 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/contract.playerstate.v1.json",
+  "title": "Contract.PlayerState.v1",
+  "type": "object",
+  "description": "Schema for invariant- and metric-aware FPS player state envelopes, suitable for ADEPlayerCharacter-style executors and resurrection telemetry in the Horror.Place VM-constellation.",
+  "required": [
+    "schema",
+    "version",
+    "contractId",
+    "safetyTier",
+    "intensityBand",
+    "invariantBindings",
+    "metricIntent",
+    "movementEnvelope",
+    "resourceTracks",
+    "lightState",
+    "telemetry",
+    "deadledgerref"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/contract.playerstate.v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "contractId": {
+      "type": "string",
+      "description": "Stable ID for this player-state contract, e.g. playerstate.fps.default.v1.",
+      "pattern": "^[a-z0-9_.-]+$"
+    },
+    "safetyTier": {
+      "type": "string",
+      "description": "Safety maturity band governing DET caps and comfort envelopes.",
+      "enum": ["standard", "mature", "research"]
+    },
+    "intensityBand": {
+      "type": "integer",
+      "description": "Coarse 0–10 horror intensity band for this player envelope.",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "invariantBindings": {
+      "type": "object",
+      "description": "Bands of invariants (CIC, AOS, DET, LSG, HVF, SPR, SHCI) this contract expects to operate within.",
+      "required": ["CIC", "AOS", "DET", "LSG", "HVF", "SPR", "SHCI"],
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "$ref": "#/$defs/range01" },
+        "AOS": { "$ref": "#/$defs/range01" },
+        "DET": { "$ref": "#/$defs/range01" },
+        "LSG": { "$ref": "#/$defs/range01" },
+        "HVF": {
+          "type": "object",
+          "required": ["mag"],
+          "additionalProperties": false,
+          "properties": {
+            "mag": { "$ref": "#/$defs/range01" }
+          }
+        },
+        "SPR": { "$ref": "#/$defs/range01" },
+        "SHCI": { "$ref": "#/$defs/range01" }
+      }
+    },
+    "metricIntent": {
+      "type": "object",
+      "description": "Target entertainment metric bands for this player envelope, aligned with mood/region contracts.",
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/$defs/range01" },
+        "EMD": { "$ref": "#/$defs/range01" },
+        "STCI": { "$ref": "#/$defs/range01" },
+        "CDL": { "$ref": "#/$defs/range01" },
+        "ARR": { "$ref": "#/$defs/range01" }
+      }
+    },
+    "movementEnvelope": {
+      "type": "object",
+      "description": "Declarative locomotion modes and their invariant-/BCI-aware policies.",
+      "required": [
+        "modes",
+        "defaultMode",
+        "speedPolicy",
+        "detCaps",
+        "bciHooks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "modes": {
+          "type": "array",
+          "description": "Available movement modes (e.g., walk, sprint, crouch) and their base properties.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["modeId", "label", "baseSpeed"],
+            "additionalProperties": false,
+            "properties": {
+              "modeId": {
+                "type": "string",
+                "pattern": "^[a-z0-9_.-]+$"
+              },
+              "label": { "type": "string" },
+              "baseSpeed": {
+                "type": "number",
+                "description": "Engine-agnostic units; engine profile decides how to map to MaxWalkSpeed.",
+                "minimum": 0.0
+              },
+              "staminaCostPerSecond": {
+                "type": "number",
+                "minimum": 0.0,
+                "description": "Baseline stamina cost for sustaining this mode at neutral invariants."
+              }
+            }
+          }
+        },
+        "defaultMode": {
+          "type": "string",
+          "description": "modeId that should be used as the default movement state."
+        },
+        "speedPolicy": {
+          "type": "object",
+          "description": "How invariants and metrics modulate movement speed and mode eligibility.",
+          "required": ["lsgRidgePenalty", "detExposureCap", "safeCorridorBonus"],
+          "additionalProperties": false,
+          "properties": {
+            "lsgRidgePenalty": {
+              "type": "number",
+              "description": "Maximum fractional reduction in speed when traversing high-LSG ridges.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "detExposureCap": {
+              "type": "number",
+              "description": "DET-scaled cap on combined movement + perceptual stress.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "safeCorridorBonus": {
+              "type": "number",
+              "description": "Maximum fractional bonus in low-DET, low-LSG corridors.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "detCaps": {
+          "type": "object",
+          "description": "Per-mode DET ceilings for movement-related stress.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z0-9_.-]+$": {
+              "$ref": "#/$defs/range01"
+            }
+          }
+        },
+        "bciHooks": {
+          "type": "object",
+          "description": "Optional BCI mapping hooks for locomotion (Tier-3 only).",
+          "required": ["enabled", "profileFamily"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "profileFamily": {
+              "type": "string",
+              "description": "Hex-coded mapping family ID for sprint/crouch modulation (e.g., 0xPKSIG).",
+              "pattern": "^0x[0-9A-Fa-f]+$"
+            }
+          }
+        }
+      }
+    },
+    "resourceTracks": {
+      "type": "object",
+      "description": "Stamina and sanity envelopes with invariant- and metric-aware bands.",
+      "required": ["stamina", "sanity"],
+      "additionalProperties": false,
+      "properties": {
+        "stamina": {
+          "type": "object",
+          "description": "Stamina bounds and policies.",
+          "required": ["min", "max", "drainPolicy", "regenPolicy"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "drainPolicy": {
+              "type": "object",
+              "required": ["maxDrainPerSecond", "lsgPenalty", "detPenalty"],
+              "additionalProperties": false,
+              "properties": {
+                "maxDrainPerSecond": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "lsgPenalty": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "detPenalty": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            },
+            "regenPolicy": {
+              "type": "object",
+              "required": ["maxRegenPerSecond"],
+              "additionalProperties": false,
+              "properties": {
+                "maxRegenPerSecond": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            }
+          }
+        },
+        "sanity": {
+          "type": "object",
+          "description": "Sanity bounds and decay/restoration envelopes.",
+          "required": [
+            "min",
+            "max",
+            "decayPolicy",
+            "recoveryPolicy",
+            "sprBand",
+            "shciBand"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "decayPolicy": {
+              "type": "object",
+              "required": [
+                "maxDecayPerSecond",
+                "aosWeight",
+                "sprWeight",
+                "shciWeight",
+                "uecWeight",
+                "cdlWeight",
+                "arrWeight"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "maxDecayPerSecond": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "aosWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+                "sprWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+                "shciWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+                "uecWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+                "cdlWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+                "arrWeight": { "type": "number", "minimum": 0.0, "maximum": 5.0 }
+              }
+            },
+            "recoveryPolicy": {
+              "type": "object",
+              "required": ["maxRecoverPerSecond"],
+              "additionalProperties": false,
+              "properties": {
+                "maxRecoverPerSecond": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            },
+            "sprBand": { "$ref": "#/$defs/range01" },
+            "shciBand": { "$ref": "#/$defs/range01" }
+          }
+        }
+      }
+    },
+    "lightState": {
+      "type": "object",
+      "description": "Minimal player-held light/cone state relevant at the player envelope layer.",
+      "required": ["hasFlashlight", "flashlightContractId"],
+      "additionalProperties": false,
+      "properties": {
+        "hasFlashlight": { "type": "boolean" },
+        "flashlightContractId": {
+          "type": "string",
+          "description": "FK into Contract.PerceptualDevice.Flashlight.v1 records."
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry hooks and resurrection integration hints.",
+      "required": ["logFrameSchemaId", "resurrectionRoles"],
+      "additionalProperties": false,
+      "properties": {
+        "logFrameSchemaId": {
+          "type": "string",
+          "description": "Schema ID for per-frame telemetry (e.g., Telemetry.PlayerMovementFrame.v1)."
+        },
+        "resurrectionRoles": {
+          "type": "array",
+          "description": "How this contract participates in resurrection profiles (e.g., fatigue, panic).",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["fatigueProfile", "panicProfile", "none"]
+          }
+        }
+      }
+    },
+    "deadledgerref": {
+      "type": "string",
+      "description": "Opaque reference into Dead-Ledger attesting to this contract’s provenance and safety review."
+    }
+  },
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "description": "Closed interval [min,max] in 0..1.",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
