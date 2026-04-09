@@ -1,202 +1,375 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horror.place/schemas/player-envelope-fps-v1.json",
-  "title": "H.PlayerEnvelope.FPS",
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/player-envelope-fps-v1.json",
+  "title": "H.PlayerEnvelope.FPS.v1",
+  "description": "Formal contract for FPS player locomotion and resource envelope. Defines parameter blocks for velocity, stamina, sanity, exposure R, opacity O, and battery, plus session and tier assumptions.",
   "type": "object",
-  "description": "Parameterization of the 6D FPS player envelope x(t) with tier-specific safetyCaps, noise bounds, and DET-scaled exposure limits.",
+  "additionalProperties": false,
   "required": [
-    "schema",
-    "version",
-    "safetyTier",
+    "schemaVersion",
+    "tier",
     "tickSeconds",
-    "stateBounds",
-    "velocity",
+    "sessionHorizonSeconds",
+    "safeCaps",
+    "movement",
     "stamina",
     "sanity",
-    "horrorExposure",
+    "exposure",
     "opacity",
     "battery",
-    "noiseBounds"
+    "noise"
   ],
-  "additionalProperties": false,
   "properties": {
-    "schema": {
+    "schemaVersion": {
       "type": "string",
-      "const": "https://horror.place/schemas/player-envelope-fps-v1.json"
+      "const": "1.0.0",
+      "description": "Semantic version of this envelope schema."
     },
-    "version": {
+    "tier": {
       "type": "string",
-      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "safetyTier": {
-      "type": "string",
-      "enum": ["standard", "mature", "research"]
+      "description": "Safety tier this envelope configuration is for.",
+      "enum": ["Tier1Standard", "Tier2Internal", "Tier3Lab"]
     },
     "tickSeconds": {
       "type": "number",
+      "description": "Simulation tick size in seconds, e.g. 0.0167 for 60 Hz.",
       "minimum": 0.001,
-      "maximum": 0.1
+      "maximum": 0.100
     },
-    "stateBounds": {
+    "sessionHorizonSeconds": {
+      "type": "number",
+      "description": "Maximum length of a single session in seconds for worst-case excursion analysis.",
+      "minimum": 60.0,
+      "maximum": 14400.0
+    },
+
+    "safeCaps": {
       "type": "object",
-      "required": ["v", "stamina", "sanity", "R", "O", "battery"],
+      "description": "Tier-specific safe bands and duty-cycle caps.",
       "additionalProperties": false,
+      "required": [
+        "vMax",
+        "staminaMin",
+        "sanityMin",
+        "exposureMax",
+        "opacityMax",
+        "batteryMin",
+        "flashOnDutyMax"
+      ],
       "properties": {
-        "v": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0 },
-            "max": { "type": "number", "minimum": 0.0 }
-          },
-          "additionalProperties": false
+        "vMax": {
+          "type": "number",
+          "description": "Maximum normalized velocity for this tier.",
+          "minimum": 0.1,
+          "maximum": 5.0
         },
-        "stamina": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          },
-          "additionalProperties": false
+        "staminaMin": {
+          "type": "number",
+          "description": "Minimum allowed stamina floor.",
+          "minimum": 0.0,
+          "maximum": 1.0
         },
-        "sanity": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          },
-          "additionalProperties": false
+        "sanityMin": {
+          "type": "number",
+          "description": "Minimum allowed sanity floor.",
+          "minimum": 0.0,
+          "maximum": 1.0
         },
-        "R": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          },
-          "additionalProperties": false
+        "exposureMax": {
+          "type": "number",
+          "description": "Maximum exposure R value.",
+          "minimum": 0.0,
+          "maximum": 1.0
         },
-        "O": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          },
-          "additionalProperties": false
+        "opacityMax": {
+          "type": "number",
+          "description": "Maximum opacity O value.",
+          "minimum": 0.0,
+          "maximum": 1.0
         },
-        "battery": {
-          "type": "object",
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          },
-          "additionalProperties": false
+        "batteryMin": {
+          "type": "number",
+          "description": "Minimum required battery reserve.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "flashOnDutyMax": {
+          "type": "number",
+          "description": "Maximum fraction of the session the flashlight is allowed to be in full-drain mode.",
+          "minimum": 0.0,
+          "maximum": 1.0
         }
       }
     },
-    "velocity": {
+
+    "movement": {
       "type": "object",
-      "required": ["vMax", "kappa", "alphaSprint"],
+      "description": "Velocity envelope parameters.",
+      "additionalProperties": false,
+      "required": ["kappaV", "alphaSprint", "sigmaV"],
       "properties": {
-        "vMax": { "type": "number", "minimum": 0.5, "maximum": 20.0 },
-        "kappa": { "type": "number", "minimum": 0.0, "maximum": 100.0 },
-        "alphaSprint": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
-      },
-      "additionalProperties": false
+        "kappaV": {
+          "type": "number",
+          "description": "Velocity convergence rate (1/s) toward target speed.",
+          "minimum": 0.1,
+          "maximum": 20.0
+        },
+        "alphaSprint": {
+          "type": "number",
+          "description": "Additional normalized target-speed contribution from sprint input.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "sigmaV": {
+          "type": "number",
+          "description": "Velocity noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.1
+        }
+      }
     },
+
     "stamina": {
       "type": "object",
-      "required": ["lambdaRest", "lambdaDrain", "betaEnv"],
+      "description": "Stamina drain and recovery envelope.",
+      "additionalProperties": false,
+      "required": [
+        "lambdaDrain",
+        "betaEnv",
+        "lambdaRest",
+        "sigmaStamina",
+        "minFloor"
+      ],
       "properties": {
-        "lambdaRest": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "lambdaDrain": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "betaEnv": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
-      },
-      "additionalProperties": false
+        "lambdaDrain": {
+          "type": "number",
+          "description": "Base drain rate (1/s) under full movement load.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "betaEnv": {
+          "type": "number",
+          "description": "Multiplier for environment stress contribution (CIC, LSG, HVF).",
+          "minimum": 0.0,
+          "maximum": 2.0
+        },
+        "lambdaRest": {
+          "type": "number",
+          "description": "Recovery rate (1/s) when not moving.",
+          "minimum": 0.0,
+          "maximum": 0.05
+        },
+        "sigmaStamina": {
+          "type": "number",
+          "description": "Stamina noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "minFloor": {
+          "type": "number",
+          "description": "Local stamina floor for this envelope, must be >= safeCaps.staminaMin.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
     },
+
     "sanity": {
       "type": "object",
+      "description": "Sanity decay and recovery envelope driven by invariants, metrics, and BCI.",
+      "additionalProperties": false,
       "required": [
         "lambdaDecay",
         "lambdaRecover",
-        "wCIC",
-        "wDET",
-        "wLSG",
-        "wHVF",
-        "wUEC",
-        "wEMD",
-        "wCDL",
-        "wARR",
+        "weights",
         "gammaArousal",
         "gammaOverload",
-        "deadlanternMask"
+        "sigmaSanity",
+        "minFloor"
       ],
       "properties": {
-        "lambdaDecay": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "lambdaRecover": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "wCIC": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wDET": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wLSG": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wHVF": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wUEC": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wEMD": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wCDL": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "wARR": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
-        "gammaArousal": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "gammaOverload": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "deadlanternMask": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-      },
-      "additionalProperties": false
+        "lambdaDecay": {
+          "type": "number",
+          "description": "Decay rate (1/s) under worst-case stress.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "lambdaRecover": {
+          "type": "number",
+          "description": "Recovery rate (1/s) toward full sanity.",
+          "minimum": 0.0,
+          "maximum": 0.05
+        },
+        "weights": {
+          "type": "object",
+          "description": "Stress weights for invariants and metrics.",
+          "additionalProperties": false,
+          "required": [
+            "wCIC",
+            "wDET",
+            "wLSG",
+            "wHVF",
+            "wUEC",
+            "wEMD",
+            "wCDL",
+            "wARR"
+          ],
+          "properties": {
+            "wCIC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wDET":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wLSG":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wHVF":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wUEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wEMD":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wCDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "wARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "gammaArousal": {
+          "type": "number",
+          "description": "BCI arousal multiplier.",
+          "minimum": 0.0,
+          "maximum": 2.0
+        },
+        "gammaOverload": {
+          "type": "number",
+          "description": "BCI overload multiplier.",
+          "minimum": 0.0,
+          "maximum": 2.0
+        },
+        "sigmaSanity": {
+          "type": "number",
+          "description": "Sanity noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "minFloor": {
+          "type": "number",
+          "description": "Local sanity floor for this envelope, must be >= safeCaps.sanityMin.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
     },
-    "horrorExposure": {
+
+    "exposure": {
       "type": "object",
-      "required": ["lambda", "thetaCIC", "thetaAOS", "thetaLSG", "thetaHVF"],
+      "description": "Raw horror exposure R(t) envelope.",
+      "additionalProperties": false,
+      "required": ["lambdaR", "sigmaR"],
       "properties": {
-        "lambda": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "thetaCIC": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "thetaAOS": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "thetaLSG": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "thetaHVF": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
-      },
-      "additionalProperties": false
+        "lambdaR": {
+          "type": "number",
+          "description": "Exposure convergence rate (1/s).",
+          "minimum": 0.0,
+          "maximum": 0.1
+        },
+        "sigmaR": {
+          "type": "number",
+          "description": "Exposure noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.05
+        }
+      }
     },
+
     "opacity": {
       "type": "object",
-      "required": ["lambda", "thetaAOS", "thetaSTCI", "thetaOverload"],
+      "description": "Perceptual opacity O(t) envelope.",
+      "additionalProperties": false,
+      "required": ["lambdaO", "theta1", "theta2", "theta3", "sigmaO"],
       "properties": {
-        "lambda": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "thetaAOS": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-        "thetaSTCI": { "type": "number", "minimum": -2.0, "maximum": 2.0 },
-        "thetaOverload": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
-      },
-      "additionalProperties": false
+        "lambdaO": {
+          "type": "number",
+          "description": "Opacity convergence rate (1/s).",
+          "minimum": 0.0,
+          "maximum": 0.1
+        },
+        "theta1": {
+          "type": "number",
+          "description": "Weight for AOS contribution to opacity target.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "theta2": {
+          "type": "number",
+          "description": "Weight for (1 - STCI) contribution to opacity target.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "theta3": {
+          "type": "number",
+          "description": "Weight for BCI overload contribution to opacity target.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "sigmaO": {
+          "type": "number",
+          "description": "Opacity noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.05
+        }
+      }
     },
+
     "battery": {
       "type": "object",
-      "required": ["lambdaDrain", "lambdaRecover", "phiCIC"],
+      "description": "Flashlight battery envelope.",
+      "additionalProperties": false,
+      "required": [
+        "lambdaDrain",
+        "lambdaRecover",
+        "phiCIC",
+        "sigmaBattery",
+        "minReserve"
+      ],
       "properties": {
-        "lambdaDrain": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "lambdaRecover": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "phiCIC": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
-      },
-      "additionalProperties": false
+        "lambdaDrain": {
+          "type": "number",
+          "description": "Base battery drain rate (1/s) when flashlight is on.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "lambdaRecover": {
+          "type": "number",
+          "description": "Battery recovery rate (1/s) when flashlight is off.",
+          "minimum": 0.0,
+          "maximum": 0.05
+        },
+        "phiCIC": {
+          "type": "number",
+          "description": "Additional drain factor from CIC invariant.",
+          "minimum": 0.0,
+          "maximum": 5.0
+        },
+        "sigmaBattery": {
+          "type": "number",
+          "description": "Battery noise amplitude bound.",
+          "minimum": 0.0,
+          "maximum": 0.01
+        },
+        "minReserve": {
+          "type": "number",
+          "description": "Minimum battery reserve required by this envelope, must be >= safeCaps.batteryMin.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
     },
-    "noiseBounds": {
+
+    "noise": {
       "type": "object",
-      "required": ["v", "stamina", "sanity", "R", "O", "battery"],
+      "description": "Optional global noise configuration for all coordinates.",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
       "properties": {
-        "v": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "stamina": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "sanity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "R": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "O": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "battery": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-      },
-      "additionalProperties": false
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether stochastic noise is enabled for this envelope."
+        }
+      }
     }
   }
 }
