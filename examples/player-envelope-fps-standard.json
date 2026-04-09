@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "tier": "Tier1Standard",
+  "tickSeconds": 0.0166667,
+  "sessionHorizonSeconds": 1800.0,
+
+  "safeCaps": {
+    "vMax": 1.0,
+    "staminaMin": 0.2,
+    "sanityMin": 0.3,
+    "exposureMax": 1.0,
+    "opacityMax": 1.0,
+    "batteryMin": 0.2,
+    "flashOnDutyMax": 0.5
+  },
+
+  "movement": {
+    "kappaV": 5.0,
+    "alphaSprint": 0.5,
+    "sigmaV": 0.001
+  },
+
+  "stamina": {
+    "lambdaDrain": 0.0001,
+    "betaEnv": 0.5,
+    "lambdaRest": 0.003,
+    "sigmaStamina": 0.00005,
+    "minFloor": 0.2
+  },
+
+  "sanity": {
+    "lambdaDecay": 0.00004,
+    "lambdaRecover": 0.0002,
+    "weights": {
+      "wCIC": 0.5,
+      "wDET": 0.5,
+      "wLSG": 0.5,
+      "wHVF": 0.5,
+      "wUEC": 0.5,
+      "wEMD": 0.5,
+      "wCDL": 0.5,
+      "wARR": 0.5
+    },
+    "gammaArousal": 0.5,
+    "gammaOverload": 0.5,
+    "sigmaSanity": 0.00005,
+    "minFloor": 0.3
+  },
+
+  "exposure": {
+    "lambdaR": 0.005,
+    "sigmaR": 0.0005
+  },
+
+  "opacity": {
+    "lambdaO": 0.005,
+    "theta1": 0.5,
+    "theta2": 0.3,
+    "theta3": 0.2,
+    "sigmaO": 0.0005
+  },
+
+  "battery": {
+    "lambdaDrain": 0.0002,
+    "lambdaRecover": 0.0005,
+    "phiCIC": 0.5,
+    "sigmaBattery": 0.00002,
+    "minReserve": 0.2
+  },
+
+  "noise": {
+    "enabled": true
+  }
+}
