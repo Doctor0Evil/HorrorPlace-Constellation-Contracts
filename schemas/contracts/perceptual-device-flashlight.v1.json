@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/contracts/perceptual-device-flashlight.v1.json",
+  "title": "Perceptual Device Flashlight Contract v1",
+  "description": "Flashlight / perceptual cone policy bound to invariants and metric impacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schemaref",
+    "safetyTier",
+    "intensityBand",
+    "detCap",
+    "invariantBindings",
+    "implicationRules",
+    "batteryProfile",
+    "beamProfile",
+    "metadata"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable policy identifier.",
+      "pattern": "perceptual-device.flashlight\\.[a-z0-9.-]+\\.v[0-9]+"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version.",
+      "pattern": "v[0-9]+\\.[0-9]+\\.[0-9]+"
+    },
+    "schemaref": {
+      "type": "string",
+      "description": "Schema reference identifier.",
+      "const": "horror.place.schema.contracts.perceptual-device-flashlight.v1"
+    },
+    "safetyTier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "intensityBand": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "detCap": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Maximum allowed DET contribution for this device."
+    },
+    "invariantBindings": {
+      "type": "object",
+      "description": "Typical invariant ranges where this flashlight profile is intended.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "MDI": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "AOS": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "RRM": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "SPR": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "SHCI": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "LSG": { "type": "integer", "minimum": 0, "maximum": 10 }
+      }
+    },
+    "implicationRules": {
+      "type": "object",
+      "description": "Expected metric deltas when this device is active.",
+      "additionalProperties": false,
+      "properties": {
+        "deltaUEC": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "deltaEMD": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "deltaSTCI": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "deltaCDL": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "deltaARR": { "type": "number", "minimum": -1.0, "maximum": 1.0 }
+      }
+    },
+    "batteryProfile": {
+      "type": "object",
+      "description": "Battery behavior in normalized units.",
+      "additionalProperties": false,
+      "required": [ "maxCharge", "drainBasePerSecond", "drainInvariantsFactor" ],
+      "properties": {
+        "maxCharge": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "drainBasePerSecond": { "type": "number", "minimum": 0.0 },
+        "drainInvariantsFactor": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "beamProfile": {
+      "type": "object",
+      "description": "Beam characteristics and flicker policy.",
+      "additionalProperties": false,
+      "required": [ "baseIntensity", "flickerThreshold", "flickerMaxProbability" ],
+      "properties": {
+        "baseIntensity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "flickerThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "flickerMaxProbability": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Standard governance metadata.",
+      "additionalProperties": false,
+      "required": [ "createdAt", "updatedAt", "maintainer" ],
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "maintainer": { "type": "string" }
+      }
+    }
+  }
+}
