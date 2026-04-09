@@ -1,0 +1,110 @@
+{
+  "schemaref": "schema.horror.place/tooling/prism-envelope-v2.json",
+  "envelopeId": "PRISM.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "changesetId": "CHANGESET.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "intent": "Create a new washer-shadow seed under the Urban Riverfront region and register it.",
+  "schemaFamily": "schema.horror.place/contract/seedContractCard.v1.json",
+  "tier": "public",
+  "sessionId": "SESSION.EXAMPLE.URBAN.RIVERFRONT.001",
+  "authoringContractId": "AI-AUTH.CONTRACT.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "artifacts": [
+    {
+      "artifactId": "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "targetPath": "contracts/seeds/seedCard.urban-riverfront.washer-shadow.v1.json",
+      "schemaref": "schema.horror.place/contract/seedContractCard.v1.json",
+      "tier": "public",
+      "referencedIds": [
+        "REGION.URBAN.RIVERFRONT",
+        "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1"
+      ],
+      "deadledgerref": {
+        "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1",
+        "circuitType": "seed-contract",
+        "protocolVersion": "1.0.0"
+      },
+      "content": {
+        "schemaref": "schema.horror.place/contract/seedContractCard.v1.json",
+        "id": "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "tier": "public",
+        "parentRef": "REGION.URBAN.RIVERFRONT.V1",
+        "name": "Shadow Under the Washer Bridge",
+        "description": "A local legend about a figure that never leaves the shadow line beneath the old washer bridge.",
+        "invariants": {
+          "CIC": { "min": 0.6, "max": 0.75 },
+          "MDI": { "min": 0.4, "max": 0.65 },
+          "AOS": { "min": 0.5, "max": 0.85 },
+          "RRM": { "min": 0.3, "max": 0.6 },
+          "FCF": { "min": 0.4, "max": 0.75 },
+          "SPR": { "min": 0.5, "max": 0.85 },
+          "RWF": { "min": 0.65, "max": 0.88 },
+          "HVF": { "min": 0.5, "max": 0.85 },
+          "LSG": { "min": 0.6, "max": 0.88 },
+          "SHCI": { "min": 0.6, "max": 0.88 },
+          "DET": { "min": 3.0, "max": 5.5 }
+        },
+        "metrics": {
+          "UEC": { "min": 0.5, "max": 0.75 },
+          "EMD": { "min": 0.55, "max": 0.9 },
+          "STCI": { "min": 0.6, "max": 0.9 },
+          "CDL": { "min": 0.35, "max": 0.65 },
+          "ARR": { "min": 0.7, "max": 0.95 }
+        },
+        "region": {
+          "regionId": "REGION.URBAN.RIVERFRONT",
+          "tiles": [
+            "URBAN.RIVERFRONT.BRIDGE-WASHER.NORTH-PYLON",
+            "URBAN.RIVERFRONT.BRIDGE-WASHER.SOUTH-PYLON"
+          ]
+        },
+        "style": {
+          "styleId": "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1"
+        },
+        "deadledgerref": {
+          "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+          "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1",
+          "circuitType": "seed-contract",
+          "protocolVersion": "1.0.0"
+        }
+      }
+    },
+    {
+      "artifactId": "REG.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "targetPath": "registry/registry-seeds.ndjson",
+      "schemaref": "schema.horror.place/registry/registry-seeds.v1.json",
+      "tier": "public",
+      "referencedIds": [
+        "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "REGION.URBAN.RIVERFRONT",
+        "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1"
+      ],
+      "deadledgerref": {
+        "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1"
+      },
+      "content": {
+        "id": "REG.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "schemaref": "schema.horror.place/registry/registry-seeds.v1.json",
+        "tier": "public",
+        "seedContractId": "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+        "regionId": "REGION.URBAN.RIVERFRONT",
+        "styleId": "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1",
+        "invariants": {
+          "CIC": { "min": 0.6, "max": 0.75 },
+          "DET": { "min": 3.0, "max": 5.5 }
+        },
+        "metrics": {
+          "UEC": { "min": 0.5, "max": 0.75 },
+          "ARR": { "min": 0.7, "max": 0.95 }
+        },
+        "deadledgerref": {
+          "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+          "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1"
+        }
+      }
+    }
+  ],
+  "createdAt": "2026-04-09T02:37:10Z"
+}
