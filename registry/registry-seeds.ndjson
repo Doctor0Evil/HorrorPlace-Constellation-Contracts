@@ -1,0 +1,20 @@
+{
+  "id": "REG.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "schemaref": "schema.horror.place/registry/registry-seeds.v1.json",
+  "tier": "public",
+  "seedContractId": "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "regionId": "REGION.URBAN.RIVERFRONT",
+  "styleId": "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1",
+  "invariants": {
+    "CIC": { "min": 0.6, "max": 0.75 },
+    "DET": { "min": 3.0, "max": 5.5 }
+  },
+  "metrics": {
+    "UEC": { "min": 0.5, "max": 0.75 },
+    "ARR": { "min": 0.7, "max": 0.95 }
+  },
+  "deadledgerref": {
+    "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+    "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1"
+  }
+}
