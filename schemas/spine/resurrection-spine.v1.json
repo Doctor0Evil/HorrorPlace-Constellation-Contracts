@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "https://horror.place/constellation/schemas/spine/resurrection-spine.v1.json",
+  "title": "ResurrectionSpinev1",
+  "description": "Resurrection-specific safeDefaults layered on top of the invariants/metrics spine. Defines default novelty bands, metric bands, and safety caps per (objectKind, tier), plus repetition limits for CHATDIRECTOR planning and runtime gating.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "profiles",
+    "distanceMetrics"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the resurrection spine view, e.g., '1.0.0'."
+    },
+    "profiles": {
+      "type": "array",
+      "description": "Default resurrection profiles keyed by contract family and tier.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "objectKind",
+          "tier",
+          "noveltyBand",
+          "metricBands",
+          "safetyCaps",
+          "maxResurrectionsPerBranch"
+        ],
+        "properties": {
+          "objectKind": {
+            "type": "string",
+            "description": "Contract family this profile applies to.",
+            "enum": [
+              "moodContract",
+              "eventContract",
+              "regionContractCard",
+              "seedContractCard",
+              "personaContract"
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "description": "Constellation tier for which this profile is the default.",
+            "enum": [
+              "Tier1Public",
+              "Tier2Internal",
+              "Tier3Vault",
+              "Tier4Underground"
+            ]
+          },
+          "noveltyBand": {
+            "type": "object",
+            "description": "Default distance band for novelty for this (objectKind, tier) pair, in [0,1]. Tiers can narrow or widen this band.",
+            "additionalProperties": false,
+            "required": [
+              "min",
+              "max"
+            ],
+            "properties": {
+              "min": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Minimum normalized distance allowed for resurrections under this profile."
+              },
+              "max": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Maximum normalized distance allowed for resurrections under this profile."
+              }
+            }
+          },
+          "metricBands": {
+            "type": "object",
+            "description": "Default absolute bands for entertainment metrics during resurrections. Values must be subsets of the canonical ranges defined in entertainment-metrics-spine.v1.json.",
+            "additionalProperties": false,
+            "properties": {
+              "UEC": { "$ref": "#/definitions/metricBand" },
+              "EMD": { "$ref": "#/definitions/metricBand" },
+              "STCI": { "$ref": "#/definitions/metricBand" },
+              "CDL": { "$ref": "#/definitions/metricBand" },
+              "ARR": { "$ref": "#/definitions/metricBand" }
+            }
+          },
+          "safetyCaps": {
+            "type": "object",
+            "description": "Hard caps for invariants/metrics during resurrections. These must not exceed canonical spine ranges.",
+            "additionalProperties": false,
+            "properties": {
+              "DET": { "$ref": "#/definitions/invariantCap" },
+              "CDL": { "$ref": "#/definitions/metricCap" },
+              "ARR": { "$ref": "#/definitions/metricCap" }
+            }
+          },
+          "maxResurrectionsPerBranch": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Soft or hard limit on resurrection count per ancestor branch for this (objectKind, tier)."
+          }
+        }
+      }
+    },
+    "distanceMetrics": {
+      "type": "array",
+      "description": "Catalog of allowed distance metrics for resurrection novelty, referenced by distanceMetric identifiers in requests, Rust, Lua, and telemetry.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "vectorComponents"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier, e.g., 'normalized-l2-invariants+metrics.v1'."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Family of distance metric.",
+            "enum": [
+              "l2",
+              "cosine"
+            ]
+          },
+          "vectorComponents": {
+            "type": "object",
+            "description": "Which invariants and metrics participate in the distance computation.",
+            "additionalProperties": false,
+            "properties": {
+              "invariants": {
+                "type": "array",
+                "description": "Invariant abbreviations to include in the distance vector, e.g., ['DET', 'SHCI'].",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metrics": {
+                "type": "array",
+                "description": "Metric abbreviations to include, e.g., ['UEC', 'CDL', 'ARR'].",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "normalization": {
+            "type": "string",
+            "description": "How raw values are normalized before distance is computed (e.g., 'spine-range', 'z-score')."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metricBand": {
+      "type": "object",
+      "description": "Absolute band for a single entertainment metric for resurrection runs.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum allowed metric value for this profile."
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed metric value for this profile."
+        }
+      }
+    },
+    "invariantCap": {
+      "type": "object",
+      "description": "Safety cap for an invariant (e.g., DET) during a resurrection.",
+      "additionalProperties": false,
+      "required": [
+        "max"
+      ],
+      "properties": {
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed invariant value for this profile."
+        }
+      }
+    },
+    "metricCap": {
+      "type": "object",
+      "description": "Safety cap for a metric like CDL or ARR during a resurrection.",
+      "additionalProperties": false,
+      "required": [
+        "max"
+      ],
+      "properties": {
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed metric value for this profile."
+        }
+      }
+    }
+  }
+}
