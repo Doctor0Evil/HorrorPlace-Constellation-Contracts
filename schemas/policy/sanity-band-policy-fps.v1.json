@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/sanity-band-policy-fps.v1.json",
+  "title": "SanityBandPolicy.FPS.v1",
+  "type": "object",
+  "description": "Tier-specific sanity bands and budget caps for FPS envelopes, defining floor, comfort, and dissociation thresholds and maximum allowed band occupancy fractions.",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "policyId",
+    "tierId",
+    "sanityFloor",
+    "sanityComfort",
+    "sanityHigh",
+    "maxLowBandFraction",
+    "maxLongestLowRunFraction",
+    "maxHighBandFraction",
+    "maxBandTransitions"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/policy/sanity-band-policy-fps.v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "policyId": {
+      "type": "string",
+      "description": "Stable ID for this sanity band policy, e.g. sanity-bands.fps.standard.v1.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "tierId": {
+      "type": "string",
+      "description": "Tier this band policy applies to.",
+      "enum": [
+        "standard",
+        "mature",
+        "research"
+      ]
+    },
+    "sanityFloor": {
+      "type": "number",
+      "description": "Hard lower bound for sanity, sanity_min^(tier). Must match or exceed the envelope policy sanityFloor.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "sanityComfort": {
+      "type": "number",
+      "description": "Soft lower comfort bound within the safe set S. Below this, sanity is considered 'low band'.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "sanityHigh": {
+      "type": "number",
+      "description": "Upper dissociation threshold. Above this, sanity is considered 'high band'.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maxLowBandFraction": {
+      "type": "number",
+      "description": "Maximum allowed fraction of session time spent in low band: T_low / T.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maxLongestLowRunFraction": {
+      "type": "number",
+      "description": "Maximum allowed fraction of session for the longest contiguous low-band run: L_low / T.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maxHighBandFraction": {
+      "type": "number",
+      "description": "Maximum allowed fraction of session time spent in high band: T_high / T.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maxBandTransitions": {
+      "type": "integer",
+      "description": "Optional cap on the number of band transitions (low/comfort/high) to avoid extreme oscillation patterns.",
+      "minimum": 0
+    }
+  }
+}
