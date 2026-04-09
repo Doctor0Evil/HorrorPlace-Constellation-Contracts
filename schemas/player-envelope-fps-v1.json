@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/player-envelope-fps-v1.json",
+  "title": "H.PlayerEnvelope.FPS",
+  "type": "object",
+  "description": "Parameterization of the 6D FPS player envelope x(t) with tier-specific safetyCaps, noise bounds, and DET-scaled exposure limits.",
+  "required": [
+    "schema",
+    "version",
+    "safetyTier",
+    "tickSeconds",
+    "stateBounds",
+    "velocity",
+    "stamina",
+    "sanity",
+    "horrorExposure",
+    "opacity",
+    "battery",
+    "noiseBounds"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/player-envelope-fps-v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "safetyTier": {
+      "type": "string",
+      "enum": ["standard", "mature", "research"]
+    },
+    "tickSeconds": {
+      "type": "number",
+      "minimum": 0.001,
+      "maximum": 0.1
+    },
+    "stateBounds": {
+      "type": "object",
+      "required": ["v", "stamina", "sanity", "R", "O", "battery"],
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0 },
+            "max": { "type": "number", "minimum": 0.0 }
+          },
+          "additionalProperties": false
+        },
+        "stamina": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": false
+        },
+        "sanity": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": false
+        },
+        "R": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": false
+        },
+        "O": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": false
+        },
+        "battery": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "velocity": {
+      "type": "object",
+      "required": ["vMax", "kappa", "alphaSprint"],
+      "properties": {
+        "vMax": { "type": "number", "minimum": 0.5, "maximum": 20.0 },
+        "kappa": { "type": "number", "minimum": 0.0, "maximum": 100.0 },
+        "alphaSprint": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+      },
+      "additionalProperties": false
+    },
+    "stamina": {
+      "type": "object",
+      "required": ["lambdaRest", "lambdaDrain", "betaEnv"],
+      "properties": {
+        "lambdaRest": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "lambdaDrain": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "betaEnv": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+      },
+      "additionalProperties": false
+    },
+    "sanity": {
+      "type": "object",
+      "required": [
+        "lambdaDecay",
+        "lambdaRecover",
+        "wCIC",
+        "wDET",
+        "wLSG",
+        "wHVF",
+        "wUEC",
+        "wEMD",
+        "wCDL",
+        "wARR",
+        "gammaArousal",
+        "gammaOverload",
+        "deadlanternMask"
+      ],
+      "properties": {
+        "lambdaDecay": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "lambdaRecover": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "wCIC": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wDET": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wLSG": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wHVF": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wUEC": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wEMD": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wCDL": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "wARR": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "gammaArousal": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "gammaOverload": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "deadlanternMask": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      },
+      "additionalProperties": false
+    },
+    "horrorExposure": {
+      "type": "object",
+      "required": ["lambda", "thetaCIC", "thetaAOS", "thetaLSG", "thetaHVF"],
+      "properties": {
+        "lambda": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "thetaCIC": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "thetaAOS": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "thetaLSG": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "thetaHVF": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+      },
+      "additionalProperties": false
+    },
+    "opacity": {
+      "type": "object",
+      "required": ["lambda", "thetaAOS", "thetaSTCI", "thetaOverload"],
+      "properties": {
+        "lambda": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "thetaAOS": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+        "thetaSTCI": { "type": "number", "minimum": -2.0, "maximum": 2.0 },
+        "thetaOverload": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+      },
+      "additionalProperties": false
+    },
+    "battery": {
+      "type": "object",
+      "required": ["lambdaDrain", "lambdaRecover", "phiCIC"],
+      "properties": {
+        "lambdaDrain": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "lambdaRecover": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "phiCIC": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+      },
+      "additionalProperties": false
+    },
+    "noiseBounds": {
+      "type": "object",
+      "required": ["v", "stamina", "sanity", "R", "O", "battery"],
+      "properties": {
+        "v": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "stamina": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "sanity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "R": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "O": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "battery": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}
