@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/ai-authoring-session-envelope-v1.json",
+  "title": "AIAuthoringSessionEnvelopeV1",
+  "description": "Telemetry envelope for AI-authoring sessions across the Horror.Place VM-constellation. Captures intent, targets, invariants/metrics touched, and governance bindings for Dead-Ledger and registry entries. GitHub-safe, no raw horror content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "version",
+    "timestamp",
+    "authoringToolId",
+    "sessionId",
+    "actorKind",
+    "actorId",
+    "targetRepo",
+    "targetPath",
+    "tier",
+    "schemaRefTarget",
+    "objectKindTarget",
+    "invariantsTouched",
+    "metricsTouched",
+    "deadLedgerRefs",
+    "registryRefs",
+    "filesPlanned",
+    "filesWritten",
+    "policyContext",
+    "result",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this authoring session envelope.",
+      "pattern": "authenv-[a-z0-9]{6,18}"
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Schema version identifier for validator binding.",
+      "const": "ai-authoring-session-envelope.v1"
+    },
+    "objectKind": {
+      "type": "string",
+      "description": "Object kind for telemetry routing.",
+      "const": "aiAuthoringSessionEnvelope"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this envelope shape.",
+      "pattern": "v[0-9]+\\.[0-9]+\\.[0-9]+"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this envelope was finalized."
+    },
+
+    "authoringToolId": {
+      "type": "string",
+      "description": "Identifier for the AI authoring tool or copilot instance emitting this envelope.",
+      "pattern": "tool-[a-z0-9\\-\\.]{3,64}"
+    },
+
+    "sessionId": {
+      "type": "string",
+      "description": "Globally unique ID for this authoring session, shared across telemetry streams.",
+      "pattern": "sess-[a-f0-9\\-]{8,40}"
+    },
+
+    "actorKind": {
+      "type": "string",
+      "description": "Kind of principal driving the authoring session.",
+      "enum": [
+        "humanDesigner",
+        "aiChat",
+        "batchTool",
+        "ciJob"
+      ]
+    },
+
+    "actorId": {
+      "type": "string",
+      "description": "Opaque identifier for the actor; no PII, only stable or session-local IDs.",
+      "pattern": "act-[a-z0-9\\-]{4,40}"
+    },
+
+    "targetRepo": {
+      "type": "string",
+      "description": "Canonical repository name targeted by this authoring session.",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Constellation-Contracts",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network"
+      ]
+    },
+
+    "targetPath": {
+      "type": "string",
+      "description": "Repository-relative path for the primary artifact this session intends to write.",
+      "pattern": "([a-zA-Z0-9_.\\-]+/)*[a-zA-Z0-9_.\\-]+"
+    },
+
+    "tier": {
+      "type": "string",
+      "description": "Visibility and governance tier associated with the target repository and artifact.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ]
+    },
+
+    "schemaRefTarget": {
+      "type": "string",
+      "description": "Schema reference of the primary object being authored, e.g., consent-state-machine.v1."
+    },
+
+    "objectKindTarget": {
+      "type": "string",
+      "description": "Object kind of the primary artifact, aligned with schema spine, e.g., consentStateMachine, historySelectorRule.",
+      "minLength": 1,
+      "maxLength": 80
+    },
+
+    "intentSummary": {
+      "type": "string",
+      "description": "Short, GitHub-safe description of what the session attempted to author or edit.",
+      "maxLength": 512
+    },
+
+    "invariantsTouched": {
+      "type": "array",
+      "description": "List of invariants that this session intended to affect via authored artifacts.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIC",
+          "MDI",
+          "AOS",
+          "RRM",
+          "FCF",
+          "SPR",
+          "RWF",
+          "DET",
+          "HVF",
+          "LSG",
+          "SHCI"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+
+    "metricsTouched": {
+      "type": "array",
+      "description": "List of entertainment or safety metrics this session intended to affect.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "UEC",
+          "EMD",
+          "STCI",
+          "CDL",
+          "ARR",
+          "SVI",
+          "HVI",
+          "SHI",
+          "GXI",
+          "NSI"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+
+    "deadLedgerRefs": {
+      "type": "array",
+      "description": "Dead-Ledger envelope references consulted or required by this session. No raw proofs.",
+      "items": {
+        "type": "string",
+        "pattern": "DLN\\.[a-z0-9\\.\\-]{3,80}"
+      },
+      "default": []
+    },
+
+    "registryRefs": {
+      "type": "array",
+      "description": "Registry entry IDs consulted or updated during this authoring session.",
+      "items": {
+        "type": "string",
+        "pattern": "reg-[a-z0-9\\-]{6,40}"
+      },
+      "default": []
+    },
+
+    "filesPlanned": {
+      "type": "array",
+      "description": "Files this session intended to create or edit.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "schemaRef",
+          "objectKind",
+          "tier",
+          "mode"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path of the file.",
+            "pattern": "([a-zA-Z0-9_.\\-]+/)*[a-zA-Z0-9_.\\-]+"
+          },
+          "schemaRef": {
+            "type": "string",
+            "description": "Schema reference associated with this file, if any."
+          },
+          "objectKind": {
+            "type": "string",
+            "description": "Object kind aligned with schema spine."
+          },
+          "tier": {
+            "type": "string",
+            "description": "Visibility tier for this file.",
+            "enum": [
+              "Tier1Public",
+              "Tier2Internal",
+              "Tier3Vault",
+              "Tier4Underground"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "Intended operation on this file.",
+            "enum": [
+              "create",
+              "update",
+              "delete"
+            ]
+          }
+        }
+      },
+      "default": []
+    },
+
+    "filesWritten": {
+      "type": "array",
+      "description": "Files actually written during this authoring session, after linting and policy checks.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "schemaRef",
+          "objectKind",
+          "tier",
+          "mode",
+          "status"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path of the file.",
+            "pattern": "([a-zA-Z0-9_.\\-]+/)*[a-zA-Z0-9_.\\-]+"
+          },
+          "schemaRef": {
+            "type": "string",
+            "description": "Schema reference associated with this file, if any."
+          },
+          "objectKind": {
+            "type": "string",
+            "description": "Object kind aligned with schema spine."
+          },
+          "tier": {
+            "type": "string",
+            "description": "Visibility tier for this file.",
+            "enum": [
+              "Tier1Public",
+              "Tier2Internal",
+              "Tier3Vault",
+              "Tier4Underground"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "Operation performed on this file.",
+            "enum": [
+              "create",
+              "update",
+              "delete"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Outcome of the operation after CI and policy checks.",
+            "enum": [
+              "success",
+              "rejectedBySchema",
+              "rejectedByTierPolicy",
+              "rejectedByDeadLedger",
+              "rejectedBySafety",
+              "skipped"
+            ]
+          }
+        }
+      },
+      "default": []
+    },
+
+    "policyContext": {
+      "type": "object",
+      "description": "Snapshot of policy context used for this session: consent tier, router state, and ethics caps.",
+      "additionalProperties": false,
+      "required": [
+        "consentTier",
+        "policyTier",
+        "routerStateId",
+        "fieldId",
+        "explicitnessCeilingId"
+      ],
+      "properties": {
+        "consentTier": {
+          "type": "string",
+          "description": "Consent tier in effect for the human principal, aligned with Consent module.",
+          "enum": [
+            "minor",
+            "adult-basic",
+            "adult-horror",
+            "research"
+          ]
+        },
+        "policyTier": {
+          "type": "string",
+          "description": "Policy tier classification standard/mature/research.",
+          "enum": [
+            "standard",
+            "mature",
+            "research"
+          ]
+        },
+        "routerStateId": {
+          "type": "string",
+          "description": "Foreign key into Age-Gated Tier Router state for this session.",
+          "pattern": "rtr-[a-z0-9\\-]{6,20}"
+        },
+        "fieldId": {
+          "type": "string",
+          "description": "Current Fields A–D zone profile identifier from explicitness policies.",
+          "pattern": "Field-[ABCD]"
+        },
+        "explicitnessCeilingId": {
+          "type": "string",
+          "description": "Identifier of the explicitness-ceiling policy in effect.",
+          "pattern": "expceil-[a-z0-9\\-]{4,40}"
+        }
+      }
+    },
+
+    "result": {
+      "type": "object",
+      "description": "High-level outcome of the authoring session.",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "ciPassed",
+        "filesCount",
+        "warnings",
+        "errors"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Overall status of the authoring session.",
+          "enum": [
+            "completed",
+            "abortedByUser",
+            "abortedByPolicy",
+            "ciFailed",
+            "noChanges"
+          ]
+        },
+        "ciPassed": {
+          "type": "boolean",
+          "description": "True if all CI checks associated with this session passed."
+        },
+        "filesCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files successfully written."
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Non-fatal policy or lint warnings emitted during the session.",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "default": []
+        },
+        "errors": {
+          "type": "array",
+          "description": "Fatal errors or policy violations that affected the session outcome.",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "default": []
+        }
+      }
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta block for provenance and governance metadata.",
+      "additionalProperties": true
+    }
+  }
+}
