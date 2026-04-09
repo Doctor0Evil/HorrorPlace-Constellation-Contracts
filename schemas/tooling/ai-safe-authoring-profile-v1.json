@@ -1,18 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horror.place/constellation/schemas/tooling/ai-safe-authoring-profile-v1.json",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/tooling/ai-safe-authoring-profile-v1.json",
   "title": "AI Safe Authoring Profile v1",
-  "description": "Per-agent capability and constraint profile for CHAT_DIRECTOR authoring sessions.",
+  "description": "Per-agent capability and constraint profile for CHAT_DIRECTOR authoring sessions, including identity, structural limits, invariant bands, metric targets, and session policy.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "profileId",
     "version",
+    "description",
     "agentSelector",
     "capabilities",
     "limits",
-    "planPolicy",
+    "invariantBands",
     "metricTargets",
+    "planPolicy",
     "sessionPolicy"
   ],
   "properties": {
@@ -63,7 +65,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Allowed constellation tiers for this profile (e.g., Tier1Public, Tier2Internal).",
+          "description": "Allowed constellation tiers for this profile (e.g., T1-core, T2-vault, T3-lab).",
           "default": []
         },
         "repos": {
