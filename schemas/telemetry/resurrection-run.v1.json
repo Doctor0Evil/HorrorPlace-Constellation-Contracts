@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "https://horror.place/schemas/telemetry/resurrection-run.v1.json",
+  "title": "Resurrection Run Telemetry v1",
+  "description": "Single resurrection attempt telemetry slice.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "sessionId",
+    "playerId",
+    "seedId",
+    "resurrectionKind",
+    "regionId",
+    "tileId",
+    "stage",
+    "timePhase",
+    "invariants",
+    "metricsBefore",
+    "metricsAfter",
+    "gate",
+    "outcome",
+    "quality",
+    "timestamps"
+  ],
+  "properties": {
+    "runId": { "type": "string" },
+    "sessionId": { "type": "string" },
+    "playerId": { "type": "string" },
+    "seedId": { "type": "string" },
+    "eventId": { "type": ["string","null"] },
+    "originId": { "type": ["string","null"] },
+
+    "resurrectionKind": {
+      "type": "string",
+      "enum": ["seed", "event", "persona", "mixed"]
+    },
+
+    "regionId": { "type": "string" },
+    "tileId": { "type": "string" },
+    "stage": {
+      "type": "string",
+      "enum": ["outer", "threshold", "locus", "rupture", "fallout"]
+    },
+    "timePhase": {
+      "type": "string",
+      "enum": ["day", "dusk", "night", "dawn", "storm", "other"]
+    },
+
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CIC","MDI","AOS","RRM","FCF","SPR","RWF",
+        "DET","LSG","SHCI","HVF"
+      ],
+      "properties": {
+        "CIC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "MDI":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RRM":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "FCF":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SPR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RWF":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "HVF": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["magnitude", "direction"],
+          "properties": {
+            "magnitude": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "direction": { "type": "string", "maxLength": 128 }
+          }
+        }
+      }
+    },
+
+    "metricsBefore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC","EMD","STCI","CDL","ARR"],
+      "properties": {
+        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "metricsAfter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC","EMD","STCI","CDL","ARR"],
+      "properties": {
+        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed","distance","noveltyThreshold","reason"],
+      "properties": {
+        "allowed":          { "type": "boolean" },
+        "distance":         { "type": "number", "minimum": 0.0 },
+        "noveltyThreshold": { "type": "number", "minimum": 0.0 },
+        "reason":           { "type": "string" }
+      }
+    },
+
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label","exposureSeconds"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "enum": ["ignored","glanced","observed","investigated","fled","froze","died"]
+        },
+        "exposureSeconds": { "type": "number", "minimum": 0.0 },
+        "physioSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hrBand":   { "type": "string" },
+            "edaBand":  { "type": "string" },
+            "bciband":  { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localScore","novelty","metricFit","safety","ambiguity"],
+      "properties": {
+        "localScore": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "novelty":    { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "metricFit":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "safety":     { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ambiguity":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordedAt"],
+      "properties": {
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "sessionTimeSeconds": { "type": "number", "minimum": 0.0 }
+      }
+    }
+  }
+}
