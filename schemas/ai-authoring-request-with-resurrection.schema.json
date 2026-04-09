@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://Horror.Place/constellation/schemas/ai-authoring-request-with-resurrection.schema.json",
+  "title": "AI Authoring Request v1 (with Resurrection Profile)",
+  "description": "Extension of ai-authoring-request-v1.json adding optional resurrectionProfile and originId for resurrection-aware authoring.",
+  "allOf": [
+    {
+      "$ref": "schema://Horror.Place/constellation/schemas/ai-authoring-request-v1.json"
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "originId": {
+          "type": "string",
+          "description": "Optional ancestor ID when this request is a resurrection."
+        },
+        "resurrectionProfile": {
+          "$ref": "schema://Horror.Place/constellation/schemas/resurrection-profile-v1.schema.json"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "originId": {
+                "type": "string"
+              }
+            },
+            "required": ["originId"]
+          },
+          "then": {
+            "required": ["resurrectionProfile"],
+            "properties": {
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "resurrect",
+                  "resurrect_variant",
+                  "resurrect_seed",
+                  "resurrect_event",
+                  "resurrect_mood",
+                  "resurrect_persona"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
