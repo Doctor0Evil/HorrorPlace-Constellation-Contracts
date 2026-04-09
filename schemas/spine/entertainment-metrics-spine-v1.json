@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/spine/entertainment-metrics-spine-v1.json",
+  "title": "Entertainment Metrics Spine v1",
+  "description": "Canonical catalog of entertainment metrics, global ranges, and recommended bands per object kind and tier.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "metrics"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "metrics": {
+      "type": "array",
+      "description": "Per-metric entries with ranges and recommended bands.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "description",
+          "range"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "range": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "min",
+              "max"
+            ],
+            "properties": {
+              "min": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "max": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          },
+          "recommendedBands": {
+            "type": "array",
+            "description": "Recommended bands per objectKind and tier.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "objectKind",
+                "tier",
+                "min",
+                "max"
+              ],
+              "properties": {
+                "objectKind": {
+                  "type": "string"
+                },
+                "tier": {
+                  "type": "string"
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
