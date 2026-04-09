@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "https://horror.place/constellation/schemas/ai-authoring-resurrection-profile-v1.json",
+  "title": "AiAuthoringResurrectionProfilev1",
+  "type": "object",
+  "description": "Typed resurrection profile attached to ai-authoring-request-v1 and mirrored in runtime Lua profiles. Encodes ancestor identity, novelty targets, safety caps, and expected metric shifts for CHATDIRECTOR planning and runtime gating.",
+  "additionalProperties": false,
+  "required": [
+    "originId",
+    "ancestorKind",
+    "resurrectionKind",
+    "noveltyBand",
+    "safetyCaps"
+  ],
+  "properties": {
+    "originId": {
+      "type": "string",
+      "description": "Ancestor ID being resurrected (seed/event/persona/etc.). Must resolve to an existing registry entry at validation time."
+    },
+    "ancestorKind": {
+      "type": "string",
+      "description": "Kind of ancestor artifact used for resurrection planning (mirrors runtime telemetry vocabulary).",
+      "enum": [
+        "seed",
+        "event",
+        "persona",
+        "mixed"
+      ]
+    },
+    "resurrectionKind": {
+      "type": "string",
+      "description": "High-level category of resurrection requested, aligned with authoring and telemetry vocabularies.",
+      "enum": [
+        "seed",
+        "event",
+        "persona",
+        "mixed"
+      ]
+    },
+    "resurrectionIntent": {
+      "type": "object",
+      "description": "Designer- or AI-facing intent description. Never executed directly; used as a hint for planning and diagnostics.",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Short free-text description of the resurrection goal (e.g., 'softer reprise of corridor ambush')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional longer notes for human reviewers."
+        }
+      }
+    },
+    "noveltyBand": {
+      "type": "object",
+      "description": "Target novelty distance band relative to the ancestor, expressed in the same distance metric used at runtime and in telemetry.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum allowed normalized distance between ancestor and candidate; values near 0 mean near-identical, 1 is maximally different."
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed normalized distance; keeps resurrections from drifting too far from the ancestor."
+        }
+      }
+    },
+    "maxResurrectionsPerBranch": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Soft limit on the number of resurrection attempts for this ancestor branch within a session or campaign. 0 can be interpreted as 'no explicit cap' by policy layers."
+    },
+    "resurrectionWindow": {
+      "type": "object",
+      "description": "Lifecycle window in which resurrections are allowed for this profile.",
+      "additionalProperties": false,
+      "properties": {
+        "timePhases": {
+          "type": "array",
+          "description": "Allowed temporal phases for this resurrection, matching event stage naming.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "outer",
+              "threshold",
+              "locus",
+              "rupture",
+              "fallout"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "stages": {
+          "type": "array",
+          "description": "Allowed global stages for this resurrection (session or campaign stages).",
+          "items": {
+            "type": "string",
+            "enum": [
+              "day",
+              "dusk",
+              "night",
+              "dawn",
+              "storm"
+            ]
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "allowedMetricBands": {
+      "type": "object",
+      "description": "Per-metric allowed absolute bands for resurrections under this profile, usually derived from ancestor aggregates and spine safeDefaults.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "$ref": "#/definitions/metricBand"
+        },
+        "EMD": {
+          "$ref": "#/definitions/metricBand"
+        },
+        "STCI": {
+          "$ref": "#/definitions/metricBand"
+        },
+        "CDL": {
+          "$ref": "#/definitions/metricBand"
+        },
+        "ARR": {
+          "$ref": "#/definitions/metricBand"
+        }
+      }
+    },
+    "targetMetricDeltas": {
+      "type": "object",
+      "description": "Intended per-metric deltas for this resurrection relative to the ancestor, used to guide authoring and to compare against telemetry.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "$ref": "#/definitions/metricDeltaBand"
+        },
+        "EMD": {
+          "$ref": "#/definitions/metricDeltaBand"
+        },
+        "STCI": {
+          "$ref": "#/definitions/metricDeltaBand"
+        },
+        "CDL": {
+          "$ref": "#/definitions/metricDeltaBand"
+        },
+        "ARR": {
+          "$ref": "#/definitions/metricDeltaBand"
+        }
+      }
+    },
+    "safetyCaps": {
+      "type": "object",
+      "description": "Invariant/metric safety caps that resurrections under this profile must not exceed, even if novelty or deltas would otherwise permit it.",
+      "additionalProperties": false,
+      "required": [
+        "DET",
+        "CDL",
+        "ARR"
+      ],
+      "properties": {
+        "DET": {
+          "$ref": "#/definitions/invariantCap"
+        },
+        "CDL": {
+          "$ref": "#/definitions/metricCap"
+        },
+        "ARR": {
+          "$ref": "#/definitions/metricCap"
+        }
+      }
+    },
+    "distanceMetric": {
+      "type": "string",
+      "description": "Identifier of the distance metric to use when computing novelty, shared across Rust, Lua, and telemetry.",
+      "enum": [
+        "normalized-l2-invariants+metrics.v1",
+        "normalized-cosine-invariants+metrics.v1"
+      ]
+    },
+    "distanceWeightsProfileId": {
+      "type": "string",
+      "description": "Optional ID for a weights profile that controls how invariants and metrics are weighted when computing distance."
+    },
+    "profileSource": {
+      "type": "string",
+      "description": "Indicates how this profile was constructed.",
+      "enum": [
+        "spine-safe-defaults",
+        "ancestor-telemetry-derived",
+        "author-override",
+        "mixed"
+      ]
+    },
+    "profileVersion": {
+      "type": "string",
+      "description": "Semantic version of the resurrection profile schema/logic used to compute defaults, e.g., 'rp.v1.0.0'."
+    }
+  },
+  "definitions": {
+    "metricBand": {
+      "type": "object",
+      "description": "Absolute band for a single entertainment metric.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum allowed value for this metric during a resurrection run."
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed value for this metric during a resurrection run."
+        }
+      }
+    },
+    "metricDeltaBand": {
+      "type": "object",
+      "description": "Target delta band for a single entertainment metric relative to the ancestor.",
+      "additionalProperties": false,
+      "required": [
+        "deltaMin",
+        "deltaMax"
+      ],
+      "properties": {
+        "deltaMin": {
+          "type": "number",
+          "description": "Minimum allowed delta (after - before) for this metric."
+        },
+        "deltaMax": {
+          "type": "number",
+          "description": "Maximum allowed delta (after - before) for this metric."
+        }
+      }
+    },
+    "invariantCap": {
+      "type": "object",
+      "description": "Safety cap for an invariant like DET, expressed as an absolute maximum.",
+      "additionalProperties": false,
+      "required": [
+        "max"
+      ],
+      "properties": {
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed invariant value for any resurrected contract under this profile."
+        }
+      }
+    },
+    "metricCap": {
+      "type": "object",
+      "description": "Safety cap for an entertainment metric such as CDL or ARR.",
+      "additionalProperties": false,
+      "required": [
+        "max"
+      ],
+      "properties": {
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed metric value; interpretation (hard vs soft) is governed by validation rules."
+        }
+      }
+    }
+  }
+}
