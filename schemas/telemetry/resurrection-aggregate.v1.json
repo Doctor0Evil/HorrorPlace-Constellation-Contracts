@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "https://horror.place/schemas/telemetry/resurrection-aggregate.v1.json",
+  "title": "Resurrection Aggregate v1",
+  "description": "Aggregated resurrection quality stats per seed/event.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "seedId",
+    "resurrectionKind",
+    "counters",
+    "scores",
+    "metricsRealized",
+    "safety",
+    "rwfHint",
+    "timestamps"
+  ],
+  "properties": {
+    "id":        { "type": "string" },
+    "seedId":    { "type": "string" },
+    "eventId":   { "type": ["string","null"] },
+    "resurrectionKind": {
+      "type": "string",
+      "enum": ["seed", "event", "persona", "mixed"]
+    },
+
+    "counters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempts","allowed","blocked"],
+      "properties": {
+        "attempts": { "type": "integer", "minimum": 0 },
+        "allowed":  { "type": "integer", "minimum": 0 },
+        "blocked":  { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["avgLocal","p25Local","p75Local"],
+      "properties": {
+        "avgLocal": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "p25Local": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "p75Local": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "metricsRealized": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["avgUECdelta","avgEMDdelta","avgSTCIdelta","avgCDLdelta","avgARR"],
+      "properties": {
+        "avgUECdelta":  { "type": "number" },
+        "avgEMDdelta":  { "type": "number" },
+        "avgSTCIdelta": { "type": "number" },
+        "avgCDLdelta":  { "type": "number" },
+        "avgARR":       { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detOverflows","cdlOverflows","arrTooLow"],
+      "properties": {
+        "detOverflows": { "type": "integer", "minimum": 0 },
+        "cdlOverflows": { "type": "integer", "minimum": 0 },
+        "arrTooLow":    { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "rwfHint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rwfScore","status"],
+      "properties": {
+        "rwfScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "status": {
+          "type": "string",
+          "enum": ["experimental","provisional","stable","quarantine"]
+        }
+      }
+    },
+
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["firstSeen","lastSeen"],
+      "properties": {
+        "firstSeen": { "type": "string", "format": "date-time" },
+        "lastSeen":  { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
