@@ -1,0 +1,16 @@
+pub struct AuthoringProfile {
+    pub profile_id: String,
+    pub agent_id: String,
+    pub description: String,
+    pub ai_role: AiRole,
+    pub tiers: Vec<Tier>,
+    pub allowed_object_kinds: Vec<ObjectKind>,
+    pub structural_limits: StructuralLimits,
+    pub schema_whitelist: SchemaWhitelist,
+    pub invariant_caps: InvariantCaps,
+    pub metric_bands: MetricBands,
+    pub auto_clamp_policy: AutoClampPolicy,
+    pub phase_permissions: HashMap<Phase, PhasePermission>,
+    pub repo_path_filters: Vec<RepoPathFilter>,
+    pub telemetry_policy: TelemetryPolicy,
+}
