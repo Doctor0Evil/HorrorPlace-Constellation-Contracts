@@ -1,0 +1,39 @@
+{
+  "id": "perceptual-device.flashlight.standard.v1",
+  "version": "v1.0.0",
+  "schemaref": "horror.place.schema.contracts.perceptual-device-flashlight.v1",
+  "safetyTier": 2,
+  "intensityBand": 5,
+  "detCap": 0.70,
+  "invariantBindings": {
+    "CIC": 6,
+    "MDI": 5,
+    "AOS": 4,
+    "RRM": 4,
+    "SPR": 6,
+    "SHCI": 6,
+    "LSG": 5
+  },
+  "implicationRules": {
+    "deltaUEC": 0.10,
+    "deltaEMD": 0.05,
+    "deltaSTCI": 0.05,
+    "deltaCDL": 0.05,
+    "deltaARR": 0.00
+  },
+  "batteryProfile": {
+    "maxCharge": 1.0,
+    "drainBasePerSecond": 0.02,
+    "drainInvariantsFactor": 0.30
+  },
+  "beamProfile": {
+    "baseIntensity": 1.0,
+    "flickerThreshold": 0.30,
+    "flickerMaxProbability": 0.75
+  },
+  "metadata": {
+    "createdAt": "2026-04-08T21:30:00Z",
+    "updatedAt": "2026-04-08T21:30:00Z",
+    "maintainer": "HorrorPlace Core"
+  }
+}
