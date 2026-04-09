@@ -1,0 +1,48 @@
+{
+  "id": "player-state.survival-default.v1",
+  "version": "v1.0.0",
+  "schemaref": "horror.place.schema.contracts.player-state.v1",
+  "invariants": {
+    "CIC": 0.65,
+    "MDI": 0.55,
+    "AOS": 0.50,
+    "RRM": 0.45,
+    "FCF": 0.40,
+    "SPR": 0.70,
+    "RWF": 0.75,
+    "DET": 0.55,
+    "HVFmag": 0.60,
+    "LSG": 0.55,
+    "SHCI": 0.70
+  },
+  "metricsTargets": {
+    "UEC": [0.60, 0.85],
+    "EMD": [0.55, 0.85],
+    "STCI": [0.50, 0.75],
+    "CDL": [0.45, 0.80],
+    "ARR": [0.70, 0.95]
+  },
+  "movementProfile": {
+    "walkSpeed": 1.0,
+    "sprintSpeed": 2.1,
+    "crouchSpeed": 0.55
+  },
+  "staminaProfile": {
+    "max": 1.0,
+    "drainPerSecond": 0.40,
+    "regenPerSecond": 0.25
+  },
+  "sanityProfile": {
+    "base": 1.0,
+    "pressureGain": 1.0,
+    "anchorGain": 0.4
+  },
+  "lightProfile": {
+    "flashlightPolicyId": "perceptual-device.flashlight.standard.v1"
+  },
+  "metadata": {
+    "createdAt": "2026-04-08T21:30:00Z",
+    "updatedAt": "2026-04-08T21:30:00Z",
+    "maintainer": "HorrorPlace Core"
+  }
+}
