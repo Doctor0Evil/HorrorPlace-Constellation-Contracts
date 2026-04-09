@@ -1,0 +1,238 @@
+name: BCI CI Gates (Schema → Invariants → Numerical → Governance)
+
+on:
+  workflow_call:
+    inputs:
+      schema_paths:
+        description: "Space-separated globs for BCI schema-like files (JSON/YAML) and NDJSON fixtures."
+        required: true
+        type: string
+      invariants_paths:
+        description: "Space-separated globs for configs that reference invariants/metrics (mappings, director configs, horrorcontext blocks)."
+        required: false
+        type: string
+        default: ""
+      numerical_fixture_paths:
+        description: "Space-separated globs for synthetic BCI fixtures used in Python/Rust comparisons."
+        required: false
+        type: string
+        default: ""
+      numerical_entry_python:
+        description: "Module:function entrypoint for the Python reference (e.g. eegcanon_multimodal_harness:main)."
+        required: false
+        type: string
+        default: ""
+      numerical_entry_rust:
+        description: "Cargo test or binary name for the Rust implementation (e.g. bci_canonical_pipeline_harness)."
+        required: false
+        type: string
+        default: ""
+      governance_paths:
+        description: "Space-separated globs for BCI policies, manifests, Dead-Ledger descriptors, and high-intensity mappings."
+        required: false
+        type: string
+        default: ""
+    secrets:
+      GH_TOKEN:
+        description: "Token with read access to Constellation-Contracts and caller repo."
+        required: true
+
+jobs:
+  schema-gate:
+    name: BCI Schema Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Constellation spine
+        uses: actions/checkout@v4
+        with:
+          repository: HorrorPlace-Constellation-Contracts
+          path: constellation
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Install JSON/YAML tooling
+        run: |
+          pip install --upgrade jsonschema==4.* ruamel.yaml==0.18.* ndjson==0.3.*
+
+      - name: Resolve schema-like files
+        id: schema_paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=""
+          for g in ${{ inputs.schema_paths }}; do
+            matches=$(printf '%s\n' $g | xargs -I{} bash -lc 'shopt -s nullglob; echo {}')
+            paths="$paths $matches"
+          done
+          paths=$(echo "$paths" | xargs -n1 | sort -u | xargs || true)
+          echo "paths=$paths" >> "$GITHUB_OUTPUT"
+
+      - name: Validate JSON/YAML against BCI schemas
+        if: steps.schema_paths.outputs.paths != ''
+        env:
+          SCHEMA_FILES: ${{ steps.schema_paths.outputs.paths }}
+        run: |
+          set -euo pipefail
+          python constellation/tools/bci_schema_gate.py $SCHEMA_FILES
+
+      - name: Validate NDJSON fixtures
+        if: steps.schema_paths.outputs.paths != ''
+        env:
+          SCHEMA_FILES: ${{ steps.schema_paths.outputs.paths }}
+        run: |
+          set -euo pipefail
+          python constellation/tools/bci_ndjson_gate.py $SCHEMA_FILES
+
+  invariants-metrics-gate:
+    name: BCI Invariants / Metrics Gate
+    runs-on: ubuntu-latest
+    needs: schema-gate
+    if: success() && inputs.invariants_paths != ''
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Constellation spine
+        uses: actions/checkout@v4
+        with:
+          repository: HorrorPlace-Constellation-Contracts
+          path: constellation
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Install CHAT_DIRECTOR and invariants tools
+        run: |
+          pip install --upgrade chat-director-cli==0.1.* jsonschema==4.* ruamel.yaml==0.18.*
+
+      - name: Resolve invariants/metrics files
+        id: inv_paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=""
+          for g in ${{ inputs.invariants_paths }}; do
+            matches=$(printf '%s\n' $g | xargs -I{} bash -lc 'shopt -s nullglob; echo {}')
+            paths="$paths $matches"
+          done
+          paths=$(echo "$paths" | xargs -n1 | sort -u | xargs || true)
+          echo "paths=$paths" >> "$GITHUB_OUTPUT"
+
+      - name: Run invariants/metrics checks
+        if: steps.inv_paths.outputs.paths != ''
+        env:
+          INV_FILES: ${{ steps.inv_paths.outputs.paths }}
+        run: |
+          set -euo pipefail
+          chat-director validate \
+            --spine constellation/vm-constellation-t3/configs/invariants-metrics-spine.yaml \
+            --inputs $INV_FILES
+
+  numerical-fidelity-gate:
+    name: BCI Numerical Fidelity Gate
+    runs-on: ubuntu-latest
+    needs: invariants-metrics-gate
+    if: success() && inputs.numerical_fixture_paths != '' && inputs.numerical_entry_python != '' && inputs.numerical_entry_rust != ''
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Constellation spine
+        uses: actions/checkout@v4
+        with:
+          repository: HorrorPlace-Constellation-Contracts
+          path: constellation
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Install Python reference stack
+        run: |
+          pip install --upgrade numpy==1.* scipy==1.* jsonschema==4.* ndjson==0.3.*
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve numerical fixtures
+        id: num_paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=""
+          for g in ${{ inputs.numerical_fixture_paths }}; do
+            matches=$(printf '%s\n' $g | xargs -I{} bash -lc 'shopt -s nullglob; echo {}')
+            paths="$paths $matches"
+          done
+          paths=$(echo "$paths" | xargs -n1 | sort -u | xargs || true)
+          echo "paths=$paths" >> "$GITHUB_OUTPUT"
+
+      - name: Run Python reference on fixtures
+        if: steps.num_paths.outputs.paths != ''
+        env:
+          FIXTURES: ${{ steps.num_paths.outputs.paths }}
+          ENTRY: ${{ inputs.numerical_entry_python }}
+        run: |
+          set -euo pipefail
+          python -m $ENTRY --fixtures $FIXTURES --out expected-python.jsonl
+
+      - name: Run Rust implementation on fixtures
+        if: steps.num_paths.outputs.paths != ''
+        env:
+          FIXTURES: ${{ steps.num_paths.outputs.paths }}
+          ENTRY: ${{ inputs.numerical_entry_rust }}
+        run: |
+          set -euo pipefail
+          cargo test -p "$ENTRY" --features "bci_numerical_gate" -- --nocapture
+          # Assumes Rust harness writes actual outputs to actual-rust.jsonl in CWD
+
+      - name: Compare Python vs Rust outputs
+        if: steps.num_paths.outputs.paths != ''
+        run: |
+          set -euo pipefail
+          python constellation/tools/bci_numerical_compare.py \
+            --expected expected-python.jsonl \
+            --actual actual-rust.jsonl \
+            --tolerance-config constellation/configs/bci-numerical-tolerances.yaml
+
+  governance-tier-gate:
+    name: BCI Governance / Tier Gate
+    runs-on: ubuntu-latest
+    needs: numerical-fidelity-gate
+    if: success() && inputs.governance_paths != ''
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Constellation spine
+        uses: actions/checkout@v4
+        with:
+          repository: HorrorPlace-Constellation-Contracts
+          path: constellation
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Install CHAT_DIRECTOR + governance tools
+        run: |
+          pip install --upgrade chat-director-cli==0.1.* jsonschema==4.* ruamel.yaml==0.18.*
+
+      - name: Resolve governance files
+        id: gov_paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=""
+          for g in ${{ inputs.governance_paths }}; do
+            matches=$(printf '%s\n' $g | xargs -I{} bash -lc 'shopt -s nullglob; echo {}')
+            paths="$paths $matches"
+          done
+          paths=$(echo "$paths" | xargs -n1 | sort -u | xargs || true)
+          echo "paths=$paths" >> "$GITHUB_OUTPUT"
+
+      - name: Run governance/tier checks
+        if: steps.gov_paths.outputs.paths != ''
+        env:
+          GOV_FILES: ${{ steps.gov_paths.outputs.paths }}
+        run: |
+          set -euo pipefail
+          chat-director validate-manifests \
+            --spine constellation/vm-constellation-t3/configs/governance-spine.yaml \
+            --inputs $GOV_FILES \
+            --require-deadledgerref-for-high-bci \
+            --enforce-bci-intensity-policy constellation/schemas/bci-intensity-policy-v1.json
