@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/tooling/discovery-contract-v1.json",
+  "title": "Discovery Contract v1",
+  "description": "Small envelope recording which spines, manifests, registries, and capability snapshots an agent has loaded before authoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaVersion",
+    "agentProfileId",
+    "generatedAt",
+    "spineRefs",
+    "manifestRefs",
+    "registryRefs"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this discovery contract instance."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version tag for this schema (e.g., discovery-contract.v1)."
+    },
+    "agentProfileId": {
+      "type": "string",
+      "description": "Identifier of the ai-safe-authoring-profile-v1 in effect."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this discovery contract was generated."
+    },
+    "spineRefs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariantsSpineId",
+        "entertainmentMetricsSpineId",
+        "schemaSpineIndexId"
+      ],
+      "properties": {
+        "invariantsSpineId": {
+          "type": "string",
+          "description": "Identifier or hash of the invariants spine document."
+        },
+        "entertainmentMetricsSpineId": {
+          "type": "string",
+          "description": "Identifier or hash of the entertainment-metrics spine document."
+        },
+        "schemaSpineIndexId": {
+          "type": "string",
+          "description": "Identifier or hash of the schema-spine-index document."
+        }
+      }
+    },
+    "manifestRefs": {
+      "type": "array",
+      "description": "List of repository manifest identifiers consulted.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "registryRefs": {
+      "type": "array",
+      "description": "List of registry identifiers or slices consulted (regions, events, personas, styles, seeds).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilitySpineRef": {
+      "type": "string",
+      "description": "Optional reference to a capability-spine snapshot if present."
+    }
+  }
+}
