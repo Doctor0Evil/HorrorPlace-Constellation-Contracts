@@ -1,0 +1,551 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SchemaSpineIndexV1",
+  "description": "Unified spine index for HorrorPlace invariants, entertainment metrics, contracts, and resurrection defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaSpineVersion",
+    "updatedAt",
+    "invariants",
+    "metrics",
+    "contracts",
+    "aiAuthoring",
+    "resurrection_defaults"
+  ],
+  "properties": {
+    "schemaSpineVersion": {
+      "type": "string",
+      "description": "Semantic version of the spine index."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp for this spine index."
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "uri",
+        "draft",
+        "fields",
+        "range",
+        "consumers"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "draft": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "range": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "default": {
+              "type": "object",
+              "required": ["min", "max"],
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              }
+            },
+            "DET": {
+              "type": "object",
+              "required": ["min", "max"],
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "repo",
+              "paths"
+            ],
+            "properties": {
+              "repo": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "uri",
+        "draft",
+        "fields",
+        "range",
+        "consumers"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "draft": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "range": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "default": {
+              "type": "object",
+              "required": ["min", "max"],
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "repo",
+              "paths"
+            ],
+            "properties": {
+              "repo": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "styleContract": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "eventContract": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "regionContract": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "personaContract": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "contractCardPolicy": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "contractCardRegion": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "contractCardSeed": {
+          "type": "object",
+          "required": ["id", "uri", "kind", "consumers"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" },
+            "consumers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["repo", "paths"],
+                "properties": {
+                  "repo": { "type": "string" },
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "aiAuthoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "type": "object",
+          "required": ["id", "uri", "kind"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" }
+          }
+        },
+        "response": {
+          "type": "object",
+          "required": ["id", "uri", "kind"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" }
+          }
+        },
+        "prismEnvelope": {
+          "type": "object",
+          "required": ["id", "uri", "kind"],
+          "properties": {
+            "id": { "type": "string" },
+            "uri": { "type": "string", "format": "uri" },
+            "kind": { "type": "string" }
+          }
+        }
+      }
+    },
+    "resurrection_defaults": {
+      "type": "object",
+      "description": "Resurrection-specific safe defaults layered on top of the invariants and metrics spine.",
+      "additionalProperties": false,
+      "required": [
+        "profile_version",
+        "entries"
+      ],
+      "properties": {
+        "profile_version": {
+          "type": "string",
+          "description": "Version tag for resurrection default profiles."
+        },
+        "entries": {
+          "type": "array",
+          "description": "Per-(objectKind, tier) resurrection defaults.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "object_kind",
+              "tier",
+              "novelty_band",
+              "metric_bands",
+              "safety_caps",
+              "max_resurrections_per_branch",
+              "distance_metric_id",
+              "distance_weights_profile_id"
+            ],
+            "properties": {
+              "object_kind": {
+                "type": "string",
+                "description": "Canonical objectKind key, e.g., persona, haunt_seed, event_region."
+              },
+              "tier": {
+                "type": "integer",
+                "enum": [1, 2, 3],
+                "description": "Tier of the resurrection context."
+              },
+              "novelty_band": {
+                "type": "object",
+                "description": "Default novelty band in [0,1] for this (objectKind, tier).",
+                "additionalProperties": false,
+                "required": ["min", "max"],
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  },
+                  "max": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  }
+                }
+              },
+              "metric_bands": {
+                "type": "object",
+                "description": "Default entertainment metric bands keyed by metric ID.",
+                "additionalProperties": false,
+                "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+                "properties": {
+                  "UEC": { "$ref": "#/definitions/MetricBand" },
+                  "EMD": { "$ref": "#/definitions/MetricBand" },
+                  "STCI": { "$ref": "#/definitions/MetricBand" },
+                  "CDL": { "$ref": "#/definitions/MetricBand" },
+                  "ARR": { "$ref": "#/definitions/MetricBand" }
+                }
+              },
+              "safety_caps": {
+                "type": "object",
+                "description": "Default safety caps keyed by invariant IDs, to be clamped against invariants.range.",
+                "additionalProperties": false,
+                "required": ["DET", "CDL", "ARR"],
+                "properties": {
+                  "DET": { "$ref": "#/definitions/SafetyCapBand" },
+                  "CDL": { "$ref": "#/definitions/SafetyCapBand" },
+                  "ARR": { "$ref": "#/definitions/SafetyCapBand" }
+                }
+              },
+              "max_resurrections_per_branch": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Maximum allowed resurrections for a given ancestor branch in this bucket."
+              },
+              "distance_metric_id": {
+                "type": "string",
+                "description": "Identifier for the distance metric to use when computing novelty/distance."
+              },
+              "distance_weights_profile_id": {
+                "type": "string",
+                "description": "Identifier for a spine-governed weights profile used by the distance function."
+              },
+              "bci_guardrails": {
+                "type": "object",
+                "description": "Optional BCI-aware guardrails, modulating novelty and safety caps based on physio buckets.",
+                "additionalProperties": false,
+                "required": [
+                  "hr_band_constraints",
+                  "eda_band_constraints",
+                  "max_physio_band_increase"
+                ],
+                "properties": {
+                  "hr_band_constraints": {
+                    "$ref": "#/definitions/PhysioGuardrailBand"
+                  },
+                  "eda_band_constraints": {
+                    "$ref": "#/definitions/PhysioGuardrailBand"
+                  },
+                  "max_physio_band_increase": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Maximum per-resurrection increase allowed in physio bands."
+                  },
+                  "disallow_if_stress_score_above": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "If present, disallows resurrections when the BCI summary stress score exceeds this threshold."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "MetricBand": {
+      "type": "object",
+      "description": "Closed interval [min, max] for a metric, normalized to [0,1] or the spine's metric range.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "SafetyCapBand": {
+      "type": "object",
+      "description": "Safety ceiling for an invariant, clamped against invariants.range.",
+      "additionalProperties": false,
+      "required": ["max"],
+      "properties": {
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "PhysioGuardrailBand": {
+      "type": "object",
+      "description": "Allowed physio band range used by BCI-aware guardrails.",
+      "additionalProperties": false,
+      "required": ["min_band", "max_band"],
+      "properties": {
+        "min_band": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max_band": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
