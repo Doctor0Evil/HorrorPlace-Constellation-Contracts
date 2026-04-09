@@ -1,0 +1,248 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AiAuthoringRequestV1",
+  "description": "Authoring request schema for CHAT_DIRECTOR, including resurrection profiles and overrides.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "object_kind",
+    "tier",
+    "prompt",
+    "analysis_target_kind"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "Opaque, globally unique request identifier."
+    },
+    "object_kind": {
+      "type": "string",
+      "description": "Kind of object being authored (persona, haunt_seed, resurrectionAggregate, etc.)."
+    },
+    "tier": {
+      "type": "integer",
+      "enum": [1, 2, 3],
+      "description": "Tier for this authoring request."
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Primary natural-language prompt or instructions."
+    },
+    "analysis_target_kind": {
+      "type": "string",
+      "description": "High-level analysis target, e.g., skeleton, resurrectionAggregate, profile_only."
+    },
+    "origin_id": {
+      "type": "string",
+      "description": "Ancestor origin identifier. Required when any resurrection profile field is present."
+    },
+    "resurrection_profile": {
+      "$ref": "#/definitions/ResurrectionProfileSpec"
+    },
+    "resurrection_profile_overrides": {
+      "$ref": "#/definitions/ResurrectionProfileOverrides"
+    },
+    "bci_summary": {
+      "$ref": "#/definitions/BciSummary",
+      "description": "Optional BCI summary context for this request, derived from the Neural-Resonance-Lab schema."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          { "required": ["resurrection_profile"] },
+          { "required": ["resurrection_profile_overrides"] }
+        ]
+      },
+      "then": {
+        "required": ["origin_id"]
+      }
+    }
+  ],
+  "definitions": {
+    "Band01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "MetricBandSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    },
+    "MetricBandsSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/definitions/MetricBandSpec" },
+        "EMD": { "$ref": "#/definitions/MetricBandSpec" },
+        "STCI": { "$ref": "#/definitions/MetricBandSpec" },
+        "CDL": { "$ref": "#/definitions/MetricBandSpec" },
+        "ARR": { "$ref": "#/definitions/MetricBandSpec" }
+      }
+    },
+    "SafetyCapsSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "DET": { "$ref": "#/definitions/MetricBandSpec" },
+        "CDL": { "$ref": "#/definitions/MetricBandSpec" },
+        "ARR": { "$ref": "#/definitions/MetricBandSpec" }
+      }
+    },
+    "ResurrectionProfileSpec": {
+      "type": "object",
+      "description": "Canonical, clamped resurrection profile computed by Rust.",
+      "additionalProperties": false,
+      "required": [
+        "origin_id",
+        "object_kind",
+        "tier",
+        "profile_source",
+        "profile_version",
+        "novelty_band",
+        "metric_bands",
+        "safety_caps",
+        "distance_metric_id",
+        "distance_weights_profile_id"
+      ],
+      "properties": {
+        "origin_id": {
+          "type": "string",
+          "description": "Ancestor origin identifier, must resolve in the ancestor registry."
+        },
+        "object_kind": {
+          "type": "string"
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [1, 2, 3]
+        },
+        "profile_source": {
+          "type": "string",
+          "enum": [
+            "spine_safe_defaults",
+            "ancestor_telemetry_derived",
+            "mixed",
+            "bci_adjusted"
+          ],
+          "description": "Source classification for this profile."
+        },
+        "profile_version": {
+          "type": "string",
+          "description": "Version tag corresponding to the resurrection_defaults profile_version."
+        },
+        "novelty_band": {
+          "$ref": "#/definitions/Band01"
+        },
+        "metric_bands": {
+          "$ref": "#/definitions/MetricBandsSpec"
+        },
+        "safety_caps": {
+          "$ref": "#/definitions/SafetyCapsSpec"
+        },
+        "max_resurrections_per_branch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distance_metric_id": {
+          "type": "string",
+          "description": "ID of the distance metric used when computing novelty/distance."
+        },
+        "distance_weights_profile_id": {
+          "type": "string",
+          "description": "ID of the distance weights profile declared in the spine."
+        },
+        "bci_sensitivity": {
+          "type": "string",
+          "enum": ["none", "conservative", "balanced", "aggressive"],
+          "description": "How strongly this profile should react to BCI guardrails."
+        },
+        "physio_guardrails": {
+          "type": "object",
+          "description": "Resolved physio-aware constraints derived from spine BCI guardrails and bci_summary.",
+          "additionalProperties": false,
+          "properties": {
+            "hr_band": { "$ref": "#/definitions/Band01" },
+            "eda_band": { "$ref": "#/definitions/Band01" },
+            "max_physio_band_increase": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "stress_score_cap": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    },
+    "ResurrectionProfileOverrides": {
+      "type": "object",
+      "description": "LLM-suggested overrides to be merged and clamped by Rust.",
+      "additionalProperties": false,
+      "properties": {
+        "novelty_band": {
+          "$ref": "#/definitions/Band01"
+        },
+        "metric_bands": {
+          "$ref": "#/definitions/MetricBandsSpec"
+        },
+        "safety_caps": {
+          "$ref": "#/definitions/SafetyCapsSpec"
+        },
+        "bci_sensitivity": {
+          "type": "string",
+          "enum": ["none", "conservative", "balanced", "aggressive"]
+        }
+      }
+    },
+    "BciSummary": {
+      "type": "object",
+      "description": "BCI summary schema aligned with Neural-Resonance-Lab buckets.",
+      "additionalProperties": false,
+      "required": [
+        "hr_band",
+        "eda_band",
+        "attention_band",
+        "stress_score"
+      ],
+      "properties": {
+        "hr_band": {
+          "$ref": "#/definitions/Band01"
+        },
+        "eda_band": {
+          "$ref": "#/definitions/Band01"
+        },
+        "attention_band": {
+          "$ref": "#/definitions/Band01"
+        },
+        "stress_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
