@@ -1,0 +1,518 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/horror-mapping-config-bci-v1.json",
+  "title": "HorrorMappingConfig.BCI.v1",
+  "description": "Canonical, schema-bound configuration that maps BCI metrics to horror-facing control channels via a small set of mathematically defined mapping families and guardrails.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schemaref",
+    "policyId",
+    "inputs",
+    "channels",
+    "profiles",
+    "safety"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable mapping-config identifier, e.g. 'HorrorMappingConfig.BCI.SprintTunnelFlash.v1'."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this mapping config, e.g. '1.0.0'."
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "schemas/horror-mapping-config-bci-v1.json",
+      "description": "Local schema reference for CI and toolchains."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["research", "mature", "standard"],
+      "description": "Safety tier for this mapping profile."
+    },
+    "policyId": {
+      "type": "string",
+      "description": "Reference to a bci-intensity-policy artifact that sets global caps and constraints."
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Declaration of which BCI metrics and bcistate fields this config may read.",
+      "additionalProperties": false,
+      "required": [
+        "metrics",
+        "bcistate"
+      ],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "description": "Known normalized metric inputs drawn from bci-metrics-envelope (0..1 unless documented otherwise).",
+          "items": {
+            "type": "string",
+            "enum": [
+              "fearIndex",
+              "calmScore",
+              "stressScore",
+              "attentionFocus",
+              "overloadFlag",
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR",
+              "signalQuality"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "bcistate": {
+          "type": "object",
+          "description": "Optional bcistate inputs coming from bcicore-intensity and BCI state fusion.",
+          "additionalProperties": false,
+          "properties": {
+            "useIntensityMode": {
+              "type": "boolean",
+              "description": "Whether bcicore intensity mode (CALM, FOCUSED, TENSE, OVERLOADED) is available as a condition."
+            },
+            "useFearBand": {
+              "type": "boolean",
+              "description": "Whether bcistate.fearBand (LOW, MED, HIGH) is used for gating."
+            },
+            "useOverloadFlag": {
+              "type": "boolean",
+              "description": "Whether bcistate.overloadFlag is used in conditions."
+            }
+          }
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "description": "Declaration of horror-facing control channels that this mapping config may drive.",
+      "additionalProperties": false,
+      "properties": {
+        "tension": {
+          "type": "object",
+          "description": "Normalized tension signal in [0,1].",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "sprintMul": {
+          "type": "object",
+          "description": "Sprint multiplier affecting player movement speed.",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "tunnelRadius": {
+          "type": "object",
+          "description": "Radius for tunnel-vision effect, in normalized screen units.",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "tunnelOpacity": {
+          "type": "object",
+          "description": "Opacity for tunnel-vision darkening.",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "flashlightJitterAmp": {
+          "type": "object",
+          "description": "Amplitude of flashlight jitter.",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "flashlightJitterFreq": {
+          "type": "object",
+          "description": "Frequency factor for flashlight jitter (normalized into a safe non-strobe band).",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "encounterSpawnMul": {
+          "type": "object",
+          "description": "Multiplier on encounter spawn intensity.",
+          "required": ["enabled", "min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+          }
+        }
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "description": "Named mapping profiles (e.g., sprint-inhibition, tunnel-vision, flashlight-jitter) each built from mapping entries and guardrails.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profileId",
+          "description",
+          "mappings",
+          "safety"
+        ],
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "description": "Identifier for this mapping profile, e.g. 'sprint-inhibition-v1'."
+          },
+          "description": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "object",
+            "description": "Optional global gating conditions for this profile.",
+            "additionalProperties": false,
+            "properties": {
+              "minCIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxCIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minAOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxAOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "allowedIntensityModes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
+                },
+                "uniqueItems": true
+              },
+              "disableWhenOverloadFlag": {
+                "type": "boolean",
+                "description": "If true, this profile is disabled while bcistate.overloadFlag is true."
+              }
+            }
+          },
+          "mappings": {
+            "type": "array",
+            "description": "Per-channel mapping entries implementing this profile.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mappingId",
+                "channel",
+                "family",
+                "inputs",
+                "params"
+              ],
+              "properties": {
+                "mappingId": {
+                  "type": "string",
+                  "description": "Local identifier for this mapping entry."
+                },
+                "channel": {
+                  "type": "string",
+                  "description": "Output control channel this mapping drives.",
+                  "enum": [
+                    "tension",
+                    "sprintMul",
+                    "tunnelRadius",
+                    "tunnelOpacity",
+                    "flashlightJitterAmp",
+                    "flashlightJitterFreq",
+                    "encounterSpawnMul"
+                  ]
+                },
+                "family": {
+                  "type": "string",
+                  "description": "Mapping family, matching a mathematically defined kernel implemented in Rust.",
+                  "enum": [
+                    "linear",
+                    "sigmoid",
+                    "piecewise",
+                    "hysteresis",
+                    "oscillatory",
+                    "noise_augmented",
+                    "metric_aware"
+                  ]
+                },
+                "inputs": {
+                  "type": "array",
+                  "description": "Names of inputs used by this mapping (subset of declared inputs.metrics and bcistate flags).",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "params": {
+                  "type": "object",
+                  "description": "Family-specific parameter vector.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "linear": {
+                      "type": "object",
+                      "description": "Parameters for linear family y = a * x + b.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "a": { "type": "number" },
+                        "b": { "type": "number" },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "sigmoid": {
+                      "type": "object",
+                      "description": "Parameters for logistic family S(x)=1/(1+exp(-k(x-x0))).",
+                      "additionalProperties": false,
+                      "properties": {
+                        "k": { "type": "number" },
+                        "x0": { "type": "number" },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "piecewise": {
+                      "type": "object",
+                      "description": "Parameters for piecewise/banded mappings.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "breakpoints": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 1
+                        },
+                        "valuesLow": {
+                          "type": "number",
+                          "description": "Output value or slope in the lowest band."
+                        },
+                        "valuesMid": {
+                          "type": "number",
+                          "description": "Output value or slope in the middle band."
+                        },
+                        "valuesHigh": {
+                          "type": "number",
+                          "description": "Output value or slope in the highest band."
+                        },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "hysteresis": {
+                      "type": "object",
+                      "description": "Parameters for hysteresis curves.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "rising": {
+                          "type": "object",
+                          "description": "Parameters for rising branch (may mirror linear/sigmoid).",
+                          "additionalProperties": true
+                        },
+                        "falling": {
+                          "type": "object",
+                          "description": "Parameters for falling branch.",
+                          "additionalProperties": true
+                        },
+                        "switchDelta": {
+                          "type": "number",
+                          "description": "Minimum change in input needed to switch branch."
+                        },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "oscillatory": {
+                      "type": "object",
+                      "description": "Parameters for low-frequency oscillatory modulation y(t) = B_base + A * sin(2π f t + phi).",
+                      "additionalProperties": false,
+                      "properties": {
+                        "base": { "type": "number" },
+                        "amplitude": { "type": "number" },
+                        "frequencyNorm": {
+                          "type": "number",
+                          "description": "Frequency in normalized units; mapped into a safe Hz band by engine.",
+                          "minimum": 0.0,
+                          "maximum": 1.0
+                        },
+                        "phase": { "type": "number" },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "noise_augmented": {
+                      "type": "object",
+                      "description": "Parameters for noise-augmented mappings y = C_base(x) + epsilon(t).",
+                      "additionalProperties": false,
+                      "properties": {
+                        "baseFamily": {
+                          "type": "string",
+                          "enum": ["linear", "sigmoid", "piecewise"]
+                        },
+                        "baseParams": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "description": "Embedded params for the base family."
+                        },
+                        "noiseAmplitude": {
+                          "type": "number",
+                          "minimum": 0.0,
+                          "maximum": 1.0
+                        },
+                        "noiseBandwidthNorm": {
+                          "type": "number",
+                          "minimum": 0.0,
+                          "maximum": 1.0,
+                          "description": "Normalized bandwidth of noise; mapped to non-strobe-safe band."
+                        },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    },
+                    "metric_aware": {
+                      "type": "object",
+                      "description": "Parameters for multi-input metric- and invariant-aware mappings.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "weights": {
+                          "type": "object",
+                          "description": "Linear weights for each input metric/invariant.",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        },
+                        "bias": {
+                          "type": "number"
+                        },
+                        "nonlinearity": {
+                          "type": "string",
+                          "enum": ["none", "tanh", "relu", "sigmoid"]
+                        },
+                        "yMin": { "type": "number" },
+                        "yMax": { "type": "number" }
+                      }
+                    }
+                  }
+                },
+                "conditions": {
+                  "type": "object",
+                  "description": "Optional per-mapping gating conditions.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "minUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "maxUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "minARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "maxARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "minCDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "maxCDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "minSignalQuality": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                    "disableOnLowSignal": {
+                      "type": "boolean",
+                      "description": "Disable mapping when signalQuality falls below minSignalQuality."
+                    },
+                    "allowedIntensityModes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
+                      },
+                      "uniqueItems": true
+                    },
+                    "disableWhenOverloadFlag": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "safety": {
+            "type": "object",
+            "description": "Safety envelopes specific to this profile.",
+            "additionalProperties": false,
+            "properties": {
+              "maxSlopePerSec": {
+                "type": "object",
+                "description": "Per-channel maximum |dy/dt| caps.",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0.0
+                }
+              },
+              "exposureCaps": {
+                "type": "object",
+                "description": "Per-channel exposure caps above given thresholds.",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "threshold": { "type": "number" },
+                    "maxSecondsAbove": { "type": "number", "minimum": 0.0 },
+                    "cooldownSeconds": { "type": "number", "minimum": 0.0 }
+                  }
+                }
+              },
+              "disableOnPoorSignal": {
+                "type": "boolean",
+                "description": "Disable this profile entirely when signal quality is persistently low."
+              }
+            }
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "description": "Global safety constraints shared by all profiles in this config.",
+      "additionalProperties": false,
+      "properties": {
+        "globalMaxSlopePerSec": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Global hard cap on |dy/dt| for any channel."
+        },
+        "globalExposureSecondsCap": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Global cap on cumulative time above high-tension outputs per session."
+        },
+        "minSignalQuality": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum signal quality below which BCI-driven mappings must be disabled."
+        },
+        "fallbackBehavior": {
+          "type": "string",
+          "enum": ["scripted_only", "reduced_intensity", "hold_last_safe"],
+          "description": "Behavior when BCI mappings are disabled (e.g. poor signal)."
+        }
+      }
+    }
+  }
+}
