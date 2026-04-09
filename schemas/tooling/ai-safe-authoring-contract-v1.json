@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://HorrorPlace-Constellation-Contracts/tooling/ai-safe-authoring-contract-v1.json",
+  "title": "AI Safe Authoring Contract v1",
+  "description": "Session-level contract describing discovery, planned artifacts, safety constraints, and telemetry for AI-driven authoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaVersion",
+    "agent",
+    "profile",
+    "discovery",
+    "plan",
+    "safety",
+    "telemetry"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this authoring contract instance."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version tag for this schema (e.g., ai-safe-authoring-contract.v1)."
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "agentProfileId",
+        "roles"
+      ],
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "description": "Logical identifier of the AI agent or tool."
+        },
+        "agentProfileId": {
+          "type": "string",
+          "description": "Reference to an ai-safe-authoring-profile-v1 card."
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Architect",
+              "Implementer",
+              "Auditor"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Roles this agent claims for the duration of this contract."
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profileId",
+        "tiers",
+        "repos"
+      ],
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "description": "Identifier of the active ai-safe-authoring-profile-v1 card."
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Content tiers the profile allows for this session."
+        },
+        "repos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Canonical repository names this contract may target."
+        }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spineLoaded",
+        "manifestsLoaded",
+        "registriesLoaded"
+      ],
+      "properties": {
+        "spineLoaded": {
+          "type": "boolean",
+          "description": "True if invariants-spine, entertainment-metrics-spine, and schema-spine-index are loaded."
+        },
+        "manifestsLoaded": {
+          "type": "boolean",
+          "description": "True if RepoManifest data is loaded for all target repos."
+        },
+        "registriesLoaded": {
+          "type": "boolean",
+          "description": "True if NDJSON registries (regions, events, personas, styles, seeds) are loaded."
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "spineIndexRef": {
+              "type": "string",
+              "description": "Optional reference to the schema-spine-index document used."
+            },
+            "manifestRefs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of manifest identifiers consulted."
+            },
+            "registryRefs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of registry identifiers consulted."
+            }
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifacts"
+      ],
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "objectKind",
+              "targetRepo",
+              "targetPath",
+              "schemaRef",
+              "tier",
+              "invariantsTouched",
+              "metricsTouched",
+              "maxFilesInBundle"
+            ],
+            "properties": {
+              "objectKind": {
+                "type": "string",
+                "description": "Planned contract type, such as policyEnvelope, regionContractCard, seedContractCard."
+              },
+              "targetRepo": {
+                "type": "string",
+                "description": "Repository that should receive this artifact."
+              },
+              "targetPath": {
+                "type": "string",
+                "description": "Repository-relative path where the artifact will be written."
+              },
+              "schemaRef": {
+                "type": "string",
+                "description": "Canonical JSON Schema URI that the artifact must conform to."
+              },
+              "tier": {
+                "type": "string",
+                "description": "VM-Constellation repo tier classification."
+              },
+              "invariantsTouched": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "CIC",
+                    "MDI",
+                    "AOS",
+                    "RRM",
+                    "FCF",
+                    "SPR",
+                    "RWF",
+                    "DET",
+                    "HVF",
+                    "LSG",
+                    "SHCI"
+                  ]
+                },
+                "description": "Invariant codes that this artifact is expected to set or modify."
+              },
+              "metricsTouched": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "UEC",
+                    "EMD",
+                    "STCI",
+                    "CDL",
+                    "ARR"
+                  ]
+                },
+                "description": "Entertainment metric codes that this artifact is expected to influence."
+              },
+              "maxFilesInBundle": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3,
+                "description": "Upper bound on how many concrete artifacts this plan is allowed to emit for this logical bundle."
+              }
+            }
+          },
+          "description": "List of planned artifacts; each must later map to exactly one prism envelope."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consentTier",
+        "maxIntensityBand"
+      ],
+      "properties": {
+        "consentTier": {
+          "type": "string",
+          "description": "Active consent tier for this authoring session."
+        },
+        "maxIntensityBand": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum allowed intensity band for artifacts proposed under this contract."
+        },
+        "deadLedgerSurfaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Dead-Ledger proof surfaces this session is allowed to reference."
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Opaque identifier tying this contract to a telemetry session."
+        },
+        "uecTarget": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Optional target UEC band for the session."
+        },
+        "arrTarget": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Optional target ARR band for the session."
+        }
+      }
+    }
+  }
+}
