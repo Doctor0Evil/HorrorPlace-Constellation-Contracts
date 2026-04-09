@@ -1,0 +1,99 @@
+{
+  "schema": "https://horror.place/schema/runtime/player-envelope-fps-policy.v1",
+  "id": "player-envelope-fps-policy.standard.v1.example",
+  "title": "Player Envelope FPS Policy – Standard Tier Example",
+  "description": "Example policy instance for H.PlayerEnvelope.FPS.v1, suitable for Tier=standard, 60-minute sessions, with conservative stamina/sanity decay and protected flashlight reserve.",
+  "tierId": "standard",
+  "mode": "fps-horror-standard",
+  "sessionMaxSeconds": 3600,
+  "flashlightDutyMax": 0.4,
+
+  "safeSet": {
+    "speedMax": 6.0,
+    "staminaMin": 0.15,
+    "sanityMin": 0.3,
+    "riskMax": 1.0,
+    "obscurityMax": 1.0,
+    "batteryMin": 0.2
+  },
+
+  "speed": {
+    "vmaxTier": 6.0,
+    "kv": 4.0,
+    "kFriction": 3.0
+  },
+
+  "stamina": {
+    "minFloor": 0.15,
+    "dBase": 0.10,
+    "dDET": 0.10,
+    "rBase": 0.25,
+    "phiDET": {
+      "family": "0xPKLIN",
+      "slope": 1.0,
+      "intercept": 0.0
+    }
+  },
+
+  "sanity": {
+    "sanityMinTier": 0.3,
+    "sMax": 0.12,
+    "alpha1_DET": 0.7,
+    "alpha2_CDL": 0.6,
+    "alpha3_ARR": 0.5,
+    "alpha4_BCIOverload": 0.4
+  },
+
+  "risk": {
+    "RmaxTier": 1.0,
+    "rho1_DET": 0.3,
+    "rho2_STCI": 0.3
+  },
+
+  "obscurity": {
+    "OmaxTier": 1.0,
+    "omega1_UEC": 0.3,
+    "omega2_EMD": 0.3,
+    "omega3_ARR": 0.3
+  },
+
+  "battery": {
+    "minReserve": 0.2,
+    "b0": 0.015,
+    "bCIC": 0.02,
+    "bHVF": 0.02
+  },
+
+  "noiseBudget": {
+    "speed": 0.3,
+    "stamina": 0.15,
+    "sanity": 0.15,
+    "risk": 0.2,
+    "obscurity": 0.2,
+    "battery": 0.1
+  },
+
+  "bci": {
+    "enabled": false,
+    "curveFamily": null,
+    "overloadChannel": null,
+    "fearIndexChannel": null
+  },
+
+  "telemetry": {
+    "safeSetId": "player-envelope-fps-safeSet.standard.v1",
+    "emitPerTick": true,
+    "segmentSeconds": 5
+  },
+
+  "notes": {
+    "designIntent": "Standard corridor experience for non-BCI runs: moderate sprint costs, sanity decay that respects a 60-minute horizon, and a flashlight battery that cannot fully deplete under allowed duty cycle.",
+    "safetyProofHints": {
+      "staminaWorstCaseDrop": "sessionMaxSeconds * (dBase + dDET) <= 1 - staminaMin",
+      "sanityWorstCaseDrop": "sessionMaxSeconds * sMax <= 1 - sanityMinTier",
+      "batteryWorstCaseDrop": "flashlightDutyMax * sessionMaxSeconds * (b0 + bCIC + bHVF) <= 1 - minReserve",
+      "riskMaxBound": "sessionMaxSeconds * (rho1_DET + rho2_STCI) <= RmaxTier",
+      "obscurityMaxBound": "sessionMaxSeconds * (omega1_UEC + omega2_EMD) <= ObscurityMaxTier"
+    }
+  }
+}
