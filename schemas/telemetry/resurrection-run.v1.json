@@ -1,163 +1,258 @@
 {
+  "invariants_used": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
+  "metrics_used": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+  "tiers": ["standard"],
+  "deadledger_surface": ["zkpproof_schema", "verifiers_registry"],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "id": "https://horror.place/schemas/telemetry/resurrection-run.v1.json",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/resurrection-run.v1.json",
   "title": "Resurrection Run Telemetry v1",
-  "description": "Single resurrection attempt telemetry slice.",
+  "description": "Tier-1 telemetry schema for logging individual resurrection attempts across engines.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "runId",
     "sessionId",
-    "playerId",
-    "seedId",
-    "resurrectionKind",
-    "regionId",
-    "tileId",
-    "stage",
-    "timePhase",
+    "identity",
+    "context",
     "invariants",
     "metricsBefore",
     "metricsAfter",
     "gate",
     "outcome",
-    "quality",
-    "timestamps"
+    "localScore",
+    "version",
+    "recordedAt"
   ],
   "properties": {
-    "runId": { "type": "string" },
-    "sessionId": { "type": "string" },
-    "playerId": { "type": "string" },
-    "seedId": { "type": "string" },
-    "eventId": { "type": ["string","null"] },
-    "originId": { "type": ["string","null"] },
-
-    "resurrectionKind": {
+    "version": {
       "type": "string",
-      "enum": ["seed", "event", "persona", "mixed"]
+      "const": "1.0.0",
+      "description": "Schema version for this telemetry record."
     },
-
-    "regionId": { "type": "string" },
-    "tileId": { "type": "string" },
-    "stage": {
+    "recordedAt": {
       "type": "string",
-      "enum": ["outer", "threshold", "locus", "rupture", "fallout"]
+      "format": "date-time",
+      "description": "UTC timestamp when this resurrection attempt was recorded."
     },
-    "timePhase": {
+    "runId": {
       "type": "string",
-      "enum": ["day", "dusk", "night", "dawn", "storm", "other"]
+      "description": "Unique identifier for this resurrection run within the telemetry system."
     },
-
+    "sessionId": {
+      "type": "string",
+      "description": "Identifier for the player or simulation session."
+    },
+    "playerId": {
+      "type": "string",
+      "description": "Opaque, pseudonymous player identifier when applicable.",
+      "nullable": true
+    },
+    "identity": {
+      "type": "object",
+      "description": "Identity fields for linking this run to seeds, events, and origins.",
+      "additionalProperties": false,
+      "required": ["originId"],
+      "properties": {
+        "seedId": {
+          "type": "string",
+          "description": "ID of the resurrection seed, if the run is seed-scoped.",
+          "nullable": true
+        },
+        "eventId": {
+          "type": "string",
+          "description": "ID of the resurrection event, if the run is event-scoped.",
+          "nullable": true
+        },
+        "originId": {
+          "type": "string",
+          "description": "Opaque identifier for the originating design or contract (e.g., bundle, archetype)."
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Runtime context where the resurrection was attempted.",
+      "additionalProperties": false,
+      "required": ["resurrectionKind"],
+      "properties": {
+        "regionId": {
+          "type": "string",
+          "description": "Region ID where the resurrection manifested.",
+          "nullable": true
+        },
+        "tileId": {
+          "type": "string",
+          "description": "Tile ID or sub-region identifier.",
+          "nullable": true
+        },
+        "timePhase": {
+          "type": "string",
+          "description": "High-level time or session phase (e.g., early, mid, late, echo).",
+          "nullable": true
+        },
+        "stage": {
+          "type": "string",
+          "description": "Author-defined stage name within the resurrection script.",
+          "nullable": true
+        },
+        "resurrectionKind": {
+          "type": "string",
+          "description": "Kind of resurrection attempt (e.g., echo, replay, escalation, soft-visit)."
+        }
+      }
+    },
     "invariants": {
       "type": "object",
+      "description": "Snapshot of key invariants at the moment of the resurrection run.",
       "additionalProperties": false,
-      "required": [
-        "CIC","MDI","AOS","RRM","FCF","SPR","RWF",
-        "DET","LSG","SHCI","HVF"
-      ],
+      "required": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
       "properties": {
-        "CIC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "MDI":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "AOS":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "RRM":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "FCF":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "SPR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "RWF":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "DET":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "LSG":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "HVF": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["magnitude", "direction"],
-          "properties": {
-            "magnitude": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "direction": { "type": "string", "maxLength": 128 }
-          }
-        }
+        "CIC": { "type": "number" },
+        "MDI": { "type": "number" },
+        "AOS": { "type": "number" },
+        "RRM": { "type": "number" },
+        "FCF": { "type": "number" },
+        "SPR": { "type": "number" },
+        "RWF": { "type": "number" },
+        "DET": { "type": "number" },
+        "HVF": { "type": "number" },
+        "LSG": { "type": "number" },
+        "SHCI": { "type": "number" }
       }
     },
-
     "metricsBefore": {
       "type": "object",
+      "description": "Entertainment metrics immediately before the resurrection attempt.",
       "additionalProperties": false,
-      "required": ["UEC","EMD","STCI","CDL","ARR"],
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
       "properties": {
-        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "EMD":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "UEC": { "type": "number" },
+        "EMD": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" },
+        "ARR": { "type": "number" }
       }
     },
-
     "metricsAfter": {
       "type": "object",
+      "description": "Entertainment metrics shortly after the resurrection attempt.",
       "additionalProperties": false,
-      "required": ["UEC","EMD","STCI","CDL","ARR"],
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
       "properties": {
-        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "EMD":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "UEC": { "type": "number" },
+        "EMD": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" },
+        "ARR": { "type": "number" }
       }
     },
-
     "gate": {
       "type": "object",
+      "description": "Resurrection gate decision and contributing factors.",
       "additionalProperties": false,
-      "required": ["allowed","distance","noveltyThreshold","reason"],
+      "required": ["allowed", "distance", "noveltyThreshold", "reason"],
       "properties": {
-        "allowed":          { "type": "boolean" },
-        "distance":         { "type": "number", "minimum": 0.0 },
-        "noveltyThreshold": { "type": "number", "minimum": 0.0 },
-        "reason":           { "type": "string" }
+        "allowed": {
+          "type": "boolean",
+          "description": "Whether this resurrection attempt was allowed to manifest."
+        },
+        "distance": {
+          "type": "number",
+          "description": "Normalized distance between ancestor and candidate profiles, 0–1 recommended."
+        },
+        "noveltyThreshold": {
+          "type": "number",
+          "description": "Configured novelty threshold for allowing this resurrection, 0–1 recommended."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Machine-readable reason code or short description for the gate decision."
+        }
       }
     },
-
+    "localScore": {
+      "type": "object",
+      "description": "Per-run resurrection quality score and its components.",
+      "additionalProperties": false,
+      "required": ["localScore", "novelty", "metricFit", "safety", "ambiguity"],
+      "properties": {
+        "localScore": {
+          "type": "number",
+          "description": "Aggregate resurrectionQuality.localScore in 0–1."
+        },
+        "novelty": {
+          "type": "number",
+          "description": "Novelty component in 0–1."
+        },
+        "metricFit": {
+          "type": "number",
+          "description": "Metric fit component in 0–1."
+        },
+        "safety": {
+          "type": "number",
+          "description": "Safety component in 0–1."
+        },
+        "ambiguity": {
+          "type": "number",
+          "description": "Ambiguity component in 0–1."
+        }
+      }
+    },
     "outcome": {
       "type": "object",
+      "description": "Observed player or agent outcome for this resurrection run.",
       "additionalProperties": false,
-      "required": ["label","exposureSeconds"],
+      "required": ["playerOutcome", "exposureSeconds"],
       "properties": {
-        "label": {
+        "playerOutcome": {
           "type": "string",
-          "enum": ["ignored","glanced","observed","investigated","fled","froze","died"]
+          "description": "Coarse classification (e.g., flee, observe, ignore, engage, unknown)."
         },
-        "exposureSeconds": { "type": "number", "minimum": 0.0 },
-        "physioSummary": {
+        "exposureSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Approximate exposure duration in seconds attributable to this resurrection run."
+        },
+        "physio": {
           "type": "object",
+          "description": "Optional physiology summary, using coarse buckets only.",
           "additionalProperties": false,
+          "required": [],
           "properties": {
-            "hrBand":   { "type": "string" },
-            "edaBand":  { "type": "string" },
-            "bciband":  { "type": "string" }
+            "hrBucket": {
+              "type": "string",
+              "description": "Heart-rate bucket (e.g., low, medium, high).",
+              "nullable": true
+            },
+            "edaBucket": {
+              "type": "string",
+              "description": "EDA/arousal bucket (e.g., calm, elevated, peak).",
+              "nullable": true
+            }
           }
         }
       }
     },
-
-    "quality": {
+    "engine": {
       "type": "object",
-      "additionalProperties": false,
-      "required": ["localScore","novelty","metricFit","safety","ambiguity"],
+      "description": "Optional engine-specific metadata to assist adapters.",
+      "additionalProperties": true,
       "properties": {
-        "localScore": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "novelty":    { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "metricFit":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "safety":     { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "ambiguity":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "engineKind": {
+          "type": "string",
+          "description": "Engine identifier (e.g., godot, unreal)."
+        },
+        "buildId": {
+          "type": "string",
+          "description": "Opaque identifier for the build or experiment configuration.",
+          "nullable": true
+        }
       }
     },
-
-    "timestamps": {
+    "extras": {
       "type": "object",
-      "additionalProperties": false,
-      "required": ["recordedAt"],
-      "properties": {
-        "recordedAt": { "type": "string", "format": "date-time" },
-        "sessionTimeSeconds": { "type": "number", "minimum": 0.0 }
-      }
+      "description": "Optional extension point for lab-tier fields. Tier-1 consumers must ignore.",
+      "additionalProperties": true
     }
   }
 }
