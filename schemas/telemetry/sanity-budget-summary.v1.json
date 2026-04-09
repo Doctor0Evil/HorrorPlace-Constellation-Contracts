@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/sanity-budget-summary.v1.json",
+  "title": "Telemetry.SanityBudgetSummary.v1",
+  "type": "object",
+  "description": "Per-resurrection-run summary of sanity band occupancy and transitions, derived from H.PlayerEnvelope.FPS telemetry.",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "summaryId",
+    "runId",
+    "sessionId",
+    "tierId",
+    "sessionDurationSeconds",
+    "sanityBandPolicyId",
+    "timeLowBandSeconds",
+    "longestLowBandRunSeconds",
+    "timeHighBandSeconds",
+    "bandTransitionCount"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/telemetry/sanity-budget-summary.v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "summaryId": {
+      "type": "string",
+      "description": "Unique identifier for this summary record.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "runId": {
+      "type": "string",
+      "description": "Resurrection run identifier this summary corresponds to.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Gameplay session identifier, for joining with other telemetry streams.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "tierId": {
+      "type": "string",
+      "description": "Tier active during this run.",
+      "enum": [
+        "standard",
+        "mature",
+        "research"
+      ]
+    },
+    "sessionDurationSeconds": {
+      "type": "number",
+      "description": "Actual duration T of the run, in seconds.",
+      "minimum": 0
+    },
+    "sanityBandPolicyId": {
+      "type": "string",
+      "description": "ID of the SanityBandPolicy.FPS.v1 contract used to compute bands for this summary.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "timeLowBandSeconds": {
+      "type": "number",
+      "description": "Total time in seconds spent with sanity below the comfort band: T_low.",
+      "minimum": 0
+    },
+    "longestLowBandRunSeconds": {
+      "type": "number",
+      "description": "Duration in seconds of the longest contiguous interval in low band: L_low.",
+      "minimum": 0
+    },
+    "timeHighBandSeconds": {
+      "type": "number",
+      "description": "Total time in seconds spent with sanity above the high-band threshold: T_high.",
+      "minimum": 0
+    },
+    "bandTransitionCount": {
+      "type": "integer",
+      "description": "Number of times sanity crossed between low/comfort/high bands during this run.",
+      "minimum": 0
+    }
+  }
+}
