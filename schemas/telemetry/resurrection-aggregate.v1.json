@@ -1,101 +1,228 @@
 {
+  "invariants_used": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
+  "metrics_used": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+  "tiers": ["standard"],
+  "deadledger_surface": ["zkpproof_schema", "verifiers_registry"],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "id": "https://horror.place/schemas/telemetry/resurrection-aggregate.v1.json",
-  "title": "Resurrection Aggregate v1",
-  "description": "Aggregated resurrection quality stats per seed/event.",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/resurrection-aggregate.v1.json",
+  "title": "Resurrection Aggregate Telemetry v1",
+  "description": "Tier-1 aggregation schema summarizing resurrectionQuality behavior per seed/event.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
-    "seedId",
+    "version",
+    "recordedAt",
     "resurrectionKind",
     "counters",
     "scores",
     "metricsRealized",
     "safety",
-    "rwfHint",
-    "timestamps"
+    "rwfHint"
   ],
   "properties": {
-    "id":        { "type": "string" },
-    "seedId":    { "type": "string" },
-    "eventId":   { "type": ["string","null"] },
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for this aggregate record."
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this aggregate was computed."
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable aggregate identifier, e.g., RESQ-SEED-moodX-0001."
+    },
+    "seedId": {
+      "type": "string",
+      "description": "Seed identifier this aggregate summarizes.",
+      "nullable": true
+    },
+    "eventId": {
+      "type": "string",
+      "description": "Event identifier this aggregate summarizes, if applicable.",
+      "nullable": true
+    },
     "resurrectionKind": {
       "type": "string",
-      "enum": ["seed", "event", "persona", "mixed"]
+      "description": "Resurrection kind (echo, replay, escalation, etc.) shared by the aggregated runs."
     },
-
     "counters": {
       "type": "object",
+      "description": "Attempt and gate counters over all runs in this group.",
       "additionalProperties": false,
-      "required": ["attempts","allowed","blocked"],
+      "required": ["attempts", "allowed", "blocked"],
       "properties": {
-        "attempts": { "type": "integer", "minimum": 0 },
-        "allowed":  { "type": "integer", "minimum": 0 },
-        "blocked":  { "type": "integer", "minimum": 0 }
+        "attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of resurrection attempts considered."
+        },
+        "allowed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of attempts allowed by the resurrection gate."
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of attempts blocked by the resurrection gate."
+        }
       }
     },
-
     "scores": {
       "type": "object",
+      "description": "Aggregate resurrectionQuality score statistics.",
       "additionalProperties": false,
-      "required": ["avgLocal","p25Local","p75Local"],
+      "required": ["avgLocal", "p25Local", "p75Local"],
       "properties": {
-        "avgLocal": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "p25Local": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "p75Local": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "avgLocal": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average localScore across all runs."
+        },
+        "p25Local": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "25th percentile of localScore (lower-quartile quality)."
+        },
+        "p75Local": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "75th percentile of localScore (upper-quartile quality)."
+        }
       }
     },
-
     "metricsRealized": {
       "type": "object",
+      "description": "Average realized metric deltas and levels for this resurrection group.",
       "additionalProperties": false,
-      "required": ["avgUECdelta","avgEMDdelta","avgSTCIdelta","avgCDLdelta","avgARR"],
+      "required": [
+        "avgUECdelta",
+        "avgEMDdelta",
+        "avgSTCIdelta",
+        "avgCDLdelta",
+        "avgARR"
+      ],
       "properties": {
-        "avgUECdelta":  { "type": "number" },
-        "avgEMDdelta":  { "type": "number" },
-        "avgSTCIdelta": { "type": "number" },
-        "avgCDLdelta":  { "type": "number" },
-        "avgARR":       { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "avgUECdelta": {
+          "type": "number",
+          "description": "Average change in UEC across runs (after - before)."
+        },
+        "avgEMDdelta": {
+          "type": "number",
+          "description": "Average change in EMD across runs."
+        },
+        "avgSTCIdelta": {
+          "type": "number",
+          "description": "Average change in STCI across runs."
+        },
+        "avgCDLdelta": {
+          "type": "number",
+          "description": "Average change in CDL across runs."
+        },
+        "avgARR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average realized ARR after resurrections."
+        }
       }
     },
-
     "safety": {
       "type": "object",
+      "description": "Counts of safety-related violations observed for this group.",
       "additionalProperties": false,
-      "required": ["detOverflows","cdlOverflows","arrTooLow"],
+      "required": ["detOverflows", "cdlOverflows", "arrTooLow"],
       "properties": {
-        "detOverflows": { "type": "integer", "minimum": 0 },
-        "cdlOverflows": { "type": "integer", "minimum": 0 },
-        "arrTooLow":    { "type": "integer", "minimum": 0 }
+        "detOverflows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where DET exceeded its configured cap."
+        },
+        "cdlOverflows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where CDL exceeded its configured cap."
+        },
+        "arrTooLow": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where ARR fell below its target floor."
+        }
       }
     },
-
     "rwfHint": {
       "type": "object",
+      "description": "Reliability hint synthesized from scores and safety behavior.",
       "additionalProperties": false,
-      "required": ["rwfScore","status"],
+      "required": ["rwfScore", "status"],
       "properties": {
         "rwfScore": {
           "type": "number",
           "minimum": 0.0,
-          "maximum": 1.0
+          "maximum": 1.0,
+          "description": "Reliability weight factor for this resurrection (0–1)."
         },
         "status": {
           "type": "string",
-          "enum": ["experimental","provisional","stable","quarantine"]
+          "enum": ["experimental", "provisional", "stable", "quarantine"],
+          "description": "High-level reliability status tag."
         }
       }
     },
-
-    "timestamps": {
+    "telemetryWindow": {
       "type": "object",
+      "description": "Optional window metadata describing which runs were included.",
       "additionalProperties": false,
-      "required": ["firstSeen","lastSeen"],
+      "required": [],
       "properties": {
-        "firstSeen": { "type": "string", "format": "date-time" },
-        "lastSeen":  { "type": "string", "format": "date-time" }
+        "from": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Inclusive start of the aggregation window.",
+          "nullable": true
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Inclusive end of the aggregation window.",
+          "nullable": true
+        },
+        "runCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of resurrection-run records actually ingested."
+        }
       }
+    },
+    "origin": {
+      "type": "object",
+      "description": "Optional linkage back to design-time contracts or bundles.",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "originId": {
+          "type": "string",
+          "description": "Design origin identifier (bundle, archetype, or contract).",
+          "nullable": true
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Canonical schemaRef of the originating contract, if known.",
+          "nullable": true
+        }
+      }
+    },
+    "extras": {
+      "type": "object",
+      "description": "Extension point for lab or project-specific fields. Tier-1 consumers must ignore.",
+      "additionalProperties": true
     }
   }
 }
