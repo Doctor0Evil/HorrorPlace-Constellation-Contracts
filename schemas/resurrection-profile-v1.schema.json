@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://Horror.Place/constellation/schemas/resurrection-profile-v1.schema.json",
+  "title": "Horror.Place Resurrection Profile",
+  "description": "Contract for resurrectionProfile objects attached to mood, event, seed, and persona contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "originId",
+    "originKind",
+    "resurrectionKind",
+    "novelty",
+    "invariantDeltas",
+    "metricTargets",
+    "pacing",
+    "telemetry",
+    "qualityThresholds"
+  ],
+  "properties": {
+    "originId": {
+      "type": "string",
+      "description": "Canonical ID of the ancestor contract being resurrected (seed/event/mood/persona)."
+    },
+    "originKind": {
+      "type": "string",
+      "enum": ["mood", "event", "seed", "region", "persona"],
+      "description": "Object kind of the ancestor contract."
+    },
+    "resurrectionKind": {
+      "type": "string",
+      "enum": ["echo", "inversion", "displacement", "contamination"],
+      "description": "High-level transformation pattern applied to the ancestor."
+    },
+    "novelty": {
+      "type": "object",
+      "description": "Target novelty bands and drift expectations relative to origin.",
+      "additionalProperties": false,
+      "required": ["minDrift", "maxDrift", "cloneBandThreshold"],
+      "properties": {
+        "minDrift": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum normalized drift distance required vs origin (0=same, 1=maximal change)."
+        },
+        "maxDrift": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum normalized drift distance permitted vs origin for this resurrection.",
+          "examples": [0.9]
+        },
+        "cloneBandThreshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Distance threshold below which a candidate is considered a near-clone and must be rejected."
+        }
+      }
+    },
+    "invariantDeltas": {
+      "type": "object",
+      "description": "Target shifts in invariant bands relative to origin contract.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "MDI": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "AOS": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "RRM": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "FCF": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "SPR": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "RWF": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "DET": {
+          "$ref": "#/$defs/deltaBand"
+        },
+        "HVF": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mag": {
+              "$ref": "#/$defs/deltaBand"
+            },
+            "rotateDir": {
+              "type": "boolean",
+              "description": "Whether the resurrection must rotate the haunt vector direction vs origin."
+            },
+            "minRotationDeg": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 360.0,
+              "description": "Minimum rotation of HVF direction to apply (in degrees)."
+            }
+          }
+        },
+        "LSG": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "delta": {
+              "$ref": "#/$defs/deltaBand"
+            },
+            "requireTopologyChange": {
+              "type": "boolean",
+              "description": "Require LSG class/topology to change (e.g., new liminal corridors)."
+            }
+          }
+        },
+        "SHCI": {
+          "$ref": "#/$defs/deltaBand"
+        }
+      }
+    },
+    "metricTargets": {
+      "type": "object",
+      "description": "Desired changes to entertainment metrics and safety caps for this resurrection.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR", "safetyCaps"],
+      "properties": {
+        "UEC": {
+          "$ref": "#/$defs/metricDeltaBand"
+        },
+        "EMD": {
+          "$ref": "#/$defs/metricDeltaBand"
+        },
+        "STCI": {
+          "$ref": "#/$defs/metricDeltaBand"
+        },
+        "CDL": {
+          "$ref": "#/$defs/metricDeltaBand"
+        },
+        "ARR": {
+          "$ref": "#/$defs/metricBand"
+        },
+        "safetyCaps": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "DET": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Hard cap on DET for any single resurrection run."
+            },
+            "CDL": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Hard cap on CDL for any single resurrection run."
+            },
+            "sessionContributionMax": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Maximum cumulative metric impact per session for this resurrection profile."
+            }
+          }
+        }
+      }
+    },
+    "pacing": {
+      "type": "object",
+      "description": "Constraints on how often and where this resurrection may be invoked.",
+      "additionalProperties": false,
+      "properties": {
+        "maxPerSession": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of times this profile may be used per session."
+        },
+        "cooldownSeconds": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Minimum time between resurrections of this originId in the same session."
+        },
+        "maxPerRegion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum count per region instance."
+        },
+        "allowedTileClasses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "spawntile",
+              "battlefronttile",
+              "liminaltile",
+              "sanctuarytile",
+              "chokepointtile"
+            ]
+          },
+          "description": "Tile classes this resurrection is allowed to target; used to shift topology for DreadForge-style moods."
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry hooks and thresholds for resurrection monitoring.",
+      "additionalProperties": false,
+      "properties": {
+        "logResurrectionRuns": {
+          "type": "boolean",
+          "default": true
+        },
+        "trackFirstSeen": {
+          "type": "boolean",
+          "default": true
+        },
+        "trackLastSeen": {
+          "type": "boolean",
+          "default": true
+        },
+        "coolingOffThreshold": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Resurrection count after which the profile should auto-cool or mutate."
+        }
+      }
+    },
+    "qualityThresholds": {
+      "type": "object",
+      "description": "Minimum quality thresholds for accepting this resurrection in CI and runtime.",
+      "additionalProperties": false,
+      "required": ["minResurrectionQuality"],
+      "properties": {
+        "minResurrectionQuality": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum resurrectionQuality score required for promotion."
+        },
+        "minMetricGainUEC": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0,
+          "description": "Optional minimum net UEC delta over ancestor runs."
+        },
+        "requireARRIncreaseOnResolved": {
+          "type": "boolean",
+          "description": "Require higher ARR than ancestor for previously resolved storylines."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "deltaBand": {
+      "type": "object",
+      "description": "Target delta band relative to ancestor.",
+      "additionalProperties": false,
+      "properties": {
+        "minDelta": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "maxDelta": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "requireChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, candidate must differ from origin by at least this band."
+        }
+      }
+    },
+    "metricDeltaBand": {
+      "type": "object",
+      "description": "Target metric delta band relative to ancestor runs.",
+      "additionalProperties": false,
+      "properties": {
+        "minDelta": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "maxDelta": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "metricBand": {
+      "type": "object",
+      "description": "Absolute target metric band for resurrected content.",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
