@@ -1,0 +1,78 @@
+{
+  "schemaref": "schema.horror.place/tooling/ai-safe-authoring-contract-v1.json",
+  "id": "AI-AUTH.CONTRACT.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+  "sessionId": "SESSION.EXAMPLE.URBAN.RIVERFRONT.001",
+  "agentId": "AGENT.CHAT.COPILOT.DEFAULT.V1",
+  "agentProfileId": "AI-PROFILE.CONTRACT-ONLY.DEFAULT.V1",
+  "state": "PLAN_CONFIRMED",
+  "tier": "public",
+  "intent": "Introduce a single new micro-experience seed under REGION.URBAN.RIVERFRONT and register it for use in urban riverfront horror pacing.",
+  "schemaFamily": "schema.horror.place/contract/seedContractCard.v1.json",
+  "maxFilesInBundle": 2,
+  "artifacts": [
+    {
+      "artifactId": "SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+      "objectKind": "seedContractCard",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "targetPath": "contracts/seeds/seedCard.urban-riverfront.washer-shadow.v1.json",
+      "schemaref": "schema.horror.place/contract/seedContractCard.v1.json",
+      "tier": "public",
+      "parentRef": "REGION.URBAN.RIVERFRONT.V1",
+      "invariantsTouched": [
+        "CIC",
+        "MDI",
+        "AOS",
+        "RRM",
+        "FCF",
+        "SPR",
+        "RWF",
+        "HVF",
+        "LSG",
+        "SHCI",
+        "DET"
+      ],
+      "metricsTouched": [
+        "UEC",
+        "EMD",
+        "STCI",
+        "CDL",
+        "ARR"
+      ],
+      "plannedBands": {
+        "CIC": { "min": 0.6, "max": 0.75 },
+        "DET": { "min": 3.0, "max": 5.5 },
+        "UEC": { "min": 0.5, "max": 0.75 },
+        "ARR": { "min": 0.7, "max": 0.95 }
+      }
+    },
+    {
+      "artifactId": "REG.SEED.URBAN.RIVERFRONT.WASHER-SHADOW.V1",
+      "objectKind": "seedRegistryEntry",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "targetPath": "registry/registry-seeds.ndjson",
+      "schemaref": "schema.horror.place/registry/registry-seeds.v1.json",
+      "tier": "public",
+      "parentRef": "REGION.URBAN.RIVERFRONT.V1",
+      "invariantsTouched": [
+        "CIC",
+        "DET"
+      ],
+      "metricsTouched": [
+        "UEC",
+        "ARR"
+      ],
+      "plannedBands": {
+        "CIC": { "min": 0.6, "max": 0.75 },
+        "DET": { "min": 3.0, "max": 5.5 },
+        "UEC": { "min": 0.5, "max": 0.75 },
+        "ARR": { "min": 0.7, "max": 0.95 }
+      }
+    }
+  ],
+  "constraints": {
+    "requireNarrowing": true,
+    "requireRegistryLinkage": true,
+    "requireSingleSchemaFamily": true
+  },
+  "createdAt": "2026-04-09T02:37:00Z"
+}
