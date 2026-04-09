@@ -1,0 +1,980 @@
+{
+  "$id": "https://horror.place/constellation/schemas/chatdirector-region-seed-slice-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "chatDirectorRegionSeedSliceV1",
+  "description": "Canonical end-to-end slice for CHATDIRECTOR v1, binding a regionContractCard, a seedContractCard, and a registry entry with narrowing and linkage checks baked into structure. This schema is designed as the reference pattern for other slice families.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sliceKind",
+    "envelope",
+    "regionCard",
+    "seedCard",
+    "registryEntry"
+  ],
+  "properties": {
+    "sliceKind": {
+      "type": "string",
+      "enum": [
+        "RegionSeedSliceV1"
+      ],
+      "description": "Discriminant identifying this as a region+seed+registry slice for CHATDIRECTOR."
+    },
+
+    "envelope": {
+      "type": "object",
+      "title": "SliceEnvelope",
+      "description": "Shared authoring and validation envelope for the slice. Mirrors CHATDIRECTOR authoring envelope and encodes invariants, metrics, phase, tier, and promotion criteria.",
+      "additionalProperties": false,
+      "required": [
+        "sliceId",
+        "requestId",
+        "objectKinds",
+        "schemaRefs",
+        "phase",
+        "tier",
+        "invariants",
+        "metrics",
+        "promotionCriteria",
+        "deadledgerRef"
+      ],
+      "properties": {
+        "sliceId": {
+          "type": "string",
+          "description": "Stable identifier for this region+seed slice; used as a join key in telemetry and Dead-Ledger proofs."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Originating AiAuthoringRequest ID for traceability."
+        },
+        "objectKinds": {
+          "type": "array",
+          "description": "Object kinds carried by this slice; must be exactly regionContractCard and seedContractCard.",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "regionContractCard",
+              "seedContractCard"
+            ]
+          }
+        },
+        "schemaRefs": {
+          "type": "object",
+          "description": "Explicit schema references for each contract family in the slice.",
+          "additionalProperties": false,
+          "required": [
+            "region",
+            "seed",
+            "registry"
+          ],
+          "properties": {
+            "region": {
+              "type": "string",
+              "description": "Schema identifier for regionContractCard, e.g. schemas/core/regionContractCard.v1.json."
+            },
+            "seed": {
+              "type": "string",
+              "description": "Schema identifier for seedContractCard, e.g. schemas/core/seedContractCard.v1.json."
+            },
+            "registry": {
+              "type": "string",
+              "description": "Schema identifier for the registry entry for this slice, e.g. schemas/registry/region-seed-slice-registry-entry.v1.json."
+            }
+          }
+        },
+        "phase": {
+          "type": "integer",
+          "description": "Lifecycle phase for this slice in the CHATDIRECTOR pipeline. For v1, region/seed cards are Phase 2 Bundles artifacts.",
+          "minimum": 2,
+          "maximum": 2
+        },
+        "tier": {
+          "type": "string",
+          "description": "Target safety/production tier for this slice as defined in the manifest tier model.",
+          "enum": [
+            "Tier1Public",
+            "Tier2Internal",
+            "Tier3Vault"
+          ]
+        },
+        "deadledgerRef": {
+          "type": "string",
+          "description": "Opaque reference into HorrorPlace-Dead-Ledger-Network for proofs about this slice (no inline proof content)."
+        },
+
+        "invariants": {
+          "type": "object",
+          "title": "SliceInvariantEnvelope",
+          "description": "Invariant values bound at the slice level, shared by region and seed. Numeric bands are narrowed subsets of global spine ranges.",
+          "additionalProperties": false,
+          "required": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "LSG",
+            "HVF",
+            "SHCI",
+            "DET",
+            "RRM",
+            "FCF",
+            "SPR",
+            "RWF"
+          ],
+          "properties": {
+            "CIC": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "MDI": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "AOS": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "LSG": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "HVF": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "SHCI": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "DET": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/invariantValueDet"
+                }
+              ]
+            },
+            "RRM": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "FCF": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "SPR": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            },
+            "RWF": {
+              "$ref": "#/definitions/invariantValueNarrow"
+            }
+          }
+        },
+
+        "metrics": {
+          "type": "object",
+          "title": "SliceMetricEnvelope",
+          "description": "Entertainment metric targets shared by region and seed. Values must fall inside global bands and may be further narrowed by tier and archetype.",
+          "additionalProperties": false,
+          "required": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "properties": {
+            "UEC": {
+              "$ref": "#/definitions/metricValueNarrow"
+            },
+            "EMD": {
+              "$ref": "#/definitions/metricValueNarrowSigned"
+            },
+            "STCI": {
+              "$ref": "#/definitions/metricValueNarrow"
+            },
+            "CDL": {
+              "$ref": "#/definitions/metricValueNarrow"
+            },
+            "ARR": {
+              "$ref": "#/definitions/metricValueNarrow"
+            }
+          }
+        },
+
+        "promotionCriteria": {
+          "type": "object",
+          "title": "SlicePromotionCriteria",
+          "description": "Machine-readable predicates that must hold to promote this slice between phases. CHATDIRECTOR itself does not execute these; CLI/CI do.",
+          "additionalProperties": false,
+          "required": [
+            "fromPhase",
+            "toPhase",
+            "rules"
+          ],
+          "properties": {
+            "fromPhase": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2
+            },
+            "toPhase": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 3
+            },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "code",
+                  "description"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Identifier of the promotion predicate, e.g. PROM001, PROM010."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the predicate enforced externally."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "regionCard": {
+      "type": "object",
+      "title": "RegionContractCard",
+      "description": "Region contract card body normalized for CHATDIRECTOR, with invariant bindings and topology hints. This structure must be compatible with schemas/core/regionContractCard.v1.json.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "schemaRef",
+        "objectKind",
+        "tier",
+        "tileClass",
+        "archetypeId",
+        "invariantBindings",
+        "metricTargets",
+        "topologyHints",
+        "registryReady"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Region contract ID; must match registryEntry.regionId."
+        },
+        "schemaRef": {
+          "type": "string",
+          "const": "regionContractCard.v1",
+          "description": "Schema ref for regionContractCard. Kept explicit for validation pipeline."
+        },
+        "objectKind": {
+          "type": "string",
+          "const": "regionContractCard"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "Tier1Public",
+            "Tier2Internal",
+            "Tier3Vault"
+          ]
+        },
+        "tileClass": {
+          "type": "string",
+          "description": "Tile class profile applied to this region, e.g. spawn, battlefront, liminal."
+        },
+        "archetypeId": {
+          "type": "string",
+          "description": "Region archetype key, e.g. marsh, warfront, backrooms, corridor."
+        },
+
+        "invariantBindings": {
+          "type": "object",
+          "description": "Invariant bindings at the region-card level; must be subsets of envelope.invariants and respect per-tileClass bands from the spine.",
+          "additionalProperties": false,
+          "required": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "LSG",
+            "HVF",
+            "SHCI"
+          ],
+          "properties": {
+            "CIC": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            },
+            "MDI": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            },
+            "AOS": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            },
+            "LSG": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            },
+            "HVF": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            },
+            "SHCI": {
+              "$ref": "#/definitions/invariantBindingRegion"
+            }
+          }
+        },
+
+        "metricTargets": {
+          "type": "object",
+          "description": "Region-level metric targets; must be subsets of envelope.metrics and respect archetype/tileClass profiles from the spine.",
+          "additionalProperties": false,
+          "required": [
+            "UEC",
+            "ARR"
+          ],
+          "properties": {
+            "UEC": {
+              "$ref": "#/definitions/metricTargetRegion"
+            },
+            "ARR": {
+              "$ref": "#/definitions/metricTargetRegion"
+            }
+          }
+        },
+
+        "topologyHints": {
+          "type": "object",
+          "description": "Topology guidance for generators; pure metadata, no explicit content.",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Topology type hint, e.g. ridge, corridor, open, enclosed."
+            },
+            "adjacentRegionIds": {
+              "type": "array",
+              "description": "Optional adjacent region IDs from registries; must resolve via manifests and never be inline assets.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+
+        "registryReady": {
+          "type": "boolean",
+          "description": "Indicates whether this region card has passed Phase 2 bundle validation and is eligible for registry promotion."
+        }
+      }
+    },
+
+    "seedCard": {
+      "type": "object",
+      "title": "SeedContractCard",
+      "description": "Seed contract card body normalized for CHATDIRECTOR, with spatial gradients and historical coupling. This structure must be compatible with schemas/core/seedContractCard.v1.json.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "schemaRef",
+        "objectKind",
+        "tier",
+        "pattern",
+        "invariantGradients",
+        "shciCoupling",
+        "metricTrajectories",
+        "registryReady"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Seed contract ID; must match registryEntry.seedId."
+        },
+        "schemaRef": {
+          "type": "string",
+          "const": "seedContractCard.v1",
+          "description": "Schema ref for seedContractCard. Kept explicit for validation pipeline."
+        },
+        "objectKind": {
+          "type": "string",
+          "const": "seedContractCard"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "Tier1Public",
+            "Tier2Internal",
+            "Tier3Vault"
+          ]
+        },
+
+        "pattern": {
+          "type": "string",
+          "description": "Gradation pattern for invariants over space, e.g. gradient-decay, gradient-rise, pocket, wave.",
+          "enum": [
+            "gradient-decay",
+            "gradient-rise",
+            "pocket",
+            "wave"
+          ]
+        },
+
+        "invariantGradients": {
+          "type": "object",
+          "description": "Spatial gradients for core invariants; values must remain subsets of envelope.invariants bands.",
+          "additionalProperties": false,
+          "required": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "LSG",
+            "HVF",
+            "SHCI"
+          ],
+          "properties": {
+            "CIC": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            },
+            "MDI": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            },
+            "AOS": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            },
+            "LSG": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            },
+            "HVF": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            },
+            "SHCI": {
+              "$ref": "#/definitions/invariantGradientSeed"
+            }
+          }
+        },
+
+        "shciCoupling": {
+          "type": "object",
+          "description": "Historical coupling between this seed and referenced events, expressed as SHCI modulation bands. No inline event content; only IDs.",
+          "additionalProperties": false,
+          "required": [
+            "referencedEventIds",
+            "couplingStrength"
+          ],
+          "properties": {
+            "referencedEventIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "couplingStrength": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+
+        "metricTrajectories": {
+          "type": "object",
+          "description": "Metric trajectories over space; must be subsets of envelope.metrics bands and respect contractCard doctrine.",
+          "additionalProperties": false,
+          "required": [
+            "UEC",
+            "ARR"
+          ],
+          "properties": {
+            "UEC": {
+              "$ref": "#/definitions/metricTrajectorySeed"
+            },
+            "ARR": {
+              "$ref": "#/definitions/metricTrajectorySeed"
+            }
+          }
+        },
+
+        "registryReady": {
+          "type": "boolean",
+          "description": "Indicates whether this seed card has passed Phase 2 bundle validation and is eligible for registry promotion."
+        }
+      }
+    },
+
+    "registryEntry": {
+      "type": "object",
+      "title": "RegionSeedSliceRegistryEntry",
+      "description": "Registry entry that makes this slice discoverable. This is the only discovery surface; engines never read raw region/seed files directly in production.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "schemaRef",
+        "sliceKind",
+        "regionId",
+        "seedId",
+        "bundleref",
+        "tier",
+        "intensityBand",
+        "invariantBundleId",
+        "metricsIntent",
+        "targetRepo",
+        "targetPaths",
+        "hashes",
+        "deadledgerRef"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Registry entry ID, usually equal to envelope.sliceId."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Schema identifier for this registry entry, e.g. registry/region-seed-slice-registry-entry.v1.json."
+        },
+        "sliceKind": {
+          "type": "string",
+          "enum": [
+            "RegionSeedSliceV1"
+          ]
+        },
+        "regionId": {
+          "type": "string",
+          "description": "Foreign key to regionCard.id."
+        },
+        "seedId": {
+          "type": "string",
+          "description": "Foreign key to seedCard.id."
+        },
+        "bundleref": {
+          "type": "object",
+          "description": "Opaque binding into Black-Archivum or equivalent invariant bundle repository; no inline history or trauma content.",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Identifier of the upstream invariant bundle in HorrorPlace-Black-Archivum."
+            },
+            "deadledgerRef": {
+              "type": "string",
+              "description": "Optional dedicated Dead-Ledger ref for the historical bundle binding."
+            }
+          }
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "Tier1Public",
+            "Tier2Internal",
+            "Tier3Vault"
+          ]
+        },
+        "intensityBand": {
+          "type": "integer",
+          "description": "Normalized intensity band 0–10 as used by Atrocity-Seeds. High-intensity slices (≥8) must carry a valid deadledgerRef.",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "invariantBundleId": {
+          "type": "string",
+          "description": "Stable ID tying this slice to a canonical invariant bundle snapshot."
+        },
+        "metricsIntent": {
+          "type": "object",
+          "description": "Declarative metric intent for this slice, used by planning and telemetry.",
+          "additionalProperties": false,
+          "required": [
+            "UEC",
+            "ARR",
+            "CDL",
+            "STCI",
+            "EMD"
+          ],
+          "properties": {
+            "UEC": {
+              "$ref": "#/definitions/metricBandIntent"
+            },
+            "ARR": {
+              "$ref": "#/definitions/metricBandIntent"
+            },
+            "CDL": {
+              "$ref": "#/definitions/metricBandIntent"
+            },
+            "STCI": {
+              "$ref": "#/definitions/metricBandIntent"
+            },
+            "EMD": {
+              "$ref": "#/definitions/metricBandIntentSigned"
+            }
+          }
+        },
+        "targetRepo": {
+          "type": "string",
+          "description": "Canonical repository where the region/seed contract files live, e.g. HorrorPlace-Atrocity-Seeds."
+        },
+        "targetPaths": {
+          "type": "object",
+          "description": "Canonical file paths for region and seed contract files, used by manifests and Orchestrator.",
+          "additionalProperties": false,
+          "required": [
+            "region",
+            "seed"
+          ],
+          "properties": {
+            "region": {
+              "type": "string",
+              "description": "Path to region contract file within targetRepo, e.g. regions/<id>.json."
+            },
+            "seed": {
+              "type": "string",
+              "description": "Path to seed contract file within targetRepo, e.g. seeds/<id>.json."
+            }
+          }
+        },
+        "hashes": {
+          "type": "object",
+          "description": "Canonical content hashes for integrity and Dead-Ledger attestation; no inline proofs.",
+          "additionalProperties": false,
+          "required": [
+            "regionSha256",
+            "seedSha256"
+          ],
+          "properties": {
+            "regionSha256": {
+              "type": "string",
+              "description": "Hex-encoded SHA-256 hash of the canonicalized region contract JSON."
+            },
+            "seedSha256": {
+              "type": "string",
+              "description": "Hex-encoded SHA-256 hash of the canonicalized seed contract JSON."
+            }
+          }
+        },
+        "deadledgerRef": {
+          "type": "string",
+          "description": "Opaque reference to a Dead-Ledger proof envelope attesting this slice and its hashes."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Optional tag list for discovery and routing. Tags are opaque labels, not narrative text.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "invariantValueNarrow": {
+      "type": "object",
+      "description": "Invariant value with narrowing; value must lie within 0.0–1.0 and be compatible with spine-defined bands for this tier.",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "author",
+            "telemetry",
+            "derived"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+
+    "invariantValueDet": {
+      "type": "object",
+      "description": "DET value with a 0.0–10.0 cap as specified in the spine.",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "author",
+            "telemetry",
+            "derived"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+
+    "metricValueNarrow": {
+      "type": "object",
+      "description": "Metric value in canonical 0.0–1.0 band, with provenance and confidence.",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "author",
+            "telemetry",
+            "derived"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+
+    "metricValueNarrowSigned": {
+      "type": "object",
+      "description": "Signed metric value, typically for EMD, with bounds -1.0–1.0.",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "author",
+            "telemetry",
+            "derived"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+
+    "invariantBindingRegion": {
+      "type": "object",
+      "description": "Region-level invariant binding; value must be consistent with envelope.invariants and region/tileClass bands in the spine.",
+      "additionalProperties": false,
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "metricTargetRegion": {
+      "type": "object",
+      "description": "Region-level metric target band.",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "band"
+      ],
+      "properties": {
+        "target": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "band": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+
+    "invariantGradientSeed": {
+      "type": "object",
+      "description": "Seed-level spatial gradient for an invariant; startValue and endValue must remain within canonical 0.0–1.0 bands and respect envelope.invariants.",
+      "additionalProperties": false,
+      "required": [
+        "startValue",
+        "endValue"
+      ],
+      "properties": {
+        "startValue": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "endValue": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "metricTrajectorySeed": {
+      "type": "object",
+      "description": "Seed-level trajectory for a metric over space.",
+      "additionalProperties": false,
+      "required": [
+        "startTarget",
+        "endTarget",
+        "band"
+      ],
+      "properties": {
+        "startTarget": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "endTarget": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "band": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+
+    "metricBandIntent": {
+      "type": "object",
+      "description": "Intent band for a non-signed metric in registries.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "metricBandIntentSigned": {
+      "type": "object",
+      "description": "Intent band for a signed metric like EMD in registries.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  },
+
+  "invariants_used": [
+    "CIC",
+    "MDI",
+    "AOS",
+    "RRM",
+    "FCF",
+    "SPR",
+    "RWF",
+    "DET",
+    "HVF",
+    "LSG",
+    "SHCI"
+  ],
+  "metrics_used": [
+    "UEC",
+    "EMD",
+    "STCI",
+    "CDL",
+    "ARR"
+  ],
+  "tiers": [
+    "Tier1Public",
+    "Tier2Internal",
+    "Tier3Vault"
+  ],
+  "deadledger_surface": [
+    "zkpproof_schema",
+    "verifiers_registry",
+    "bundle_attestation"
+  ]
+}
