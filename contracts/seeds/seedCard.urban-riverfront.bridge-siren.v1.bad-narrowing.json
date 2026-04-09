@@ -1,0 +1,50 @@
+{
+  "schemaref": "schema.horror.place/contract/seedContractCard.v1.json",
+  "id": "SEED.URBAN.RIVERFRONT.BRIDGE-SIREN.V1",
+  "tier": "public",
+  "parentRef": "REGION.URBAN.RIVERFRONT.V1",
+  "name": "Siren on the Floodline",
+  "description": "A rumor about a singing presence that surfaces when the river runs high.",
+  "invariants": {
+    "CIC": { "min": 0.4, "max": 0.9 },
+    "MDI": { "min": 0.2, "max": 0.8 },
+    "AOS": { "min": 0.3, "max": 0.95 },
+    "RRM": { "min": 0.1, "max": 0.8 },
+    "FCF": { "min": 0.2, "max": 0.9 },
+    "SPR": { "min": 0.3, "max": 0.95 },
+    "RWF": { "min": 0.5, "max": 0.95 },
+    "HVF": { "min": 0.3, "max": 0.95 },
+    "LSG": { "min": 0.4, "max": 0.95 },
+    "SHCI": { "min": 0.4, "max": 0.95 },
+    "DET": { "min": 1.0, "max": 8.0 }
+  },
+  "metrics": {
+    "UEC": { "min": 0.3, "max": 0.9 },
+    "EMD": { "min": 0.4, "max": 1.0 },
+    "STCI": { "min": 0.4, "max": 0.95 },
+    "CDL": { "min": 0.2, "max": 0.8 },
+    "ARR": { "min": 0.5, "max": 1.0 }
+  },
+  "region": {
+    "regionId": "REGION.URBAN.RIVERFRONT",
+    "tiles": [
+      "URBAN.RIVERFRONT.FLOODLINE-STAIR",
+      "URBAN.RIVERFRONT.SUBMERGED-ALLEY"
+    ]
+  },
+  "style": {
+    "styleId": "STYLE.URBAN.RIVERFRONT.MIST-LIGHTS.V1"
+  },
+  "deadledgerref": {
+    "proofEnvelopeId": "DL.ENVELOPE.SEED.URBAN.RIVERFRONT.BRIDGE-SIREN.V1",
+    "verifierRef": "DL.VERIFIER.SEED.DEFAULT.V1",
+    "circuitType": "seed-contract",
+    "protocolVersion": "1.0.0"
+  },
+  "narrowingViolationHints": [
+    "CIC.min below parent.min (0.4 < 0.5)",
+    "CIC.max above parent.max (0.9 > 0.8)",
+    "DET.min below parent.min (1.0 < 2.0)",
+    "DET.max above parent.max (8.0 > 6.5)"
+  ]
+}
