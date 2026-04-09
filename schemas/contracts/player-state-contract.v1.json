@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/contracts/player-state-contract.v1.json",
+  "title": "Player State Contract v1",
+  "description": "Canonical player envelope for HorrorPlace engines. Binds stamina, sanity, movement, and light state to invariant and metric bands.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schemaref",
+    "invariants",
+    "metricsTargets",
+    "movementProfile",
+    "staminaProfile",
+    "sanityProfile",
+    "lightProfile",
+    "metadata"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable contract identifier.",
+      "pattern": "player-state\\.[a-z0-9.-]+\\.v[0-9]+"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this contract.",
+      "pattern": "v[0-9]+\\.[0-9]+\\.[0-9]+"
+    },
+    "schemaref": {
+      "type": "string",
+      "description": "Schema reference identifier.",
+      "const": "horror.place.schema.contracts.player-state.v1"
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Target invariant bands for regions where this player profile is expected to operate.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "MDI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RRM": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "FCF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SPR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RWF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "HVFmag": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricsTargets": {
+      "type": "object",
+      "description": "Desired experience metric bands for this player envelope.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "EMD": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "STCI": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "CDL": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "ARR": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "movementProfile": {
+      "type": "object",
+      "description": "Movement modes and speed multipliers.",
+      "additionalProperties": false,
+      "required": [ "walkSpeed", "sprintSpeed", "crouchSpeed" ],
+      "properties": {
+        "walkSpeed": { "type": "number", "minimum": 0.0 },
+        "sprintSpeed": { "type": "number", "minimum": 0.0 },
+        "crouchSpeed": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "staminaProfile": {
+      "type": "object",
+      "description": "Normalized stamina configuration.",
+      "additionalProperties": false,
+      "required": [ "max", "drainPerSecond", "regenPerSecond" ],
+      "properties": {
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "drainPerSecond": { "type": "number", "minimum": 0.0 },
+        "regenPerSecond": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "sanityProfile": {
+      "type": "object",
+      "description": "Sanity response to invariants and metrics.",
+      "additionalProperties": false,
+      "required": [ "base", "pressureGain", "anchorGain" ],
+      "properties": {
+        "base": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "pressureGain": { "type": "number", "minimum": 0.0 },
+        "anchorGain": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "lightProfile": {
+      "type": "object",
+      "description": "Default bindings to flashlight / perceptual cone behavior.",
+      "additionalProperties": false,
+      "required": [ "flashlightPolicyId" ],
+      "properties": {
+        "flashlightPolicyId": {
+          "type": "string",
+          "description": "ID of a PerceptualDevice.Flashlight policy contract."
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Standard governance metadata.",
+      "additionalProperties": false,
+      "required": [ "createdAt", "updatedAt", "maintainer" ],
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "maintainer": { "type": "string" }
+      }
+    }
+  }
+}
