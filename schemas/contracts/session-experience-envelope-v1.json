@@ -1,0 +1,524 @@
+{
+  "invariants_used": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
+  "metrics_used": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+  "tiers": ["standard", "mature", "research"],
+  "deadledger_surface": ["zkpproof_schema", "bundle_attestation", "agent_attestation"],
+  "$id": "https://horror.place/constellation/schemas/contracts/session-experience-envelope-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "session-experience-envelope-v1",
+  "description": "Declarative, dual-purpose contract describing intended player experience bands and budgets over a session, consumable both by LLMs (as a generation target) and by runtime systems (as enforcement input).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaFamily",
+    "schemaVersion",
+    "sessionId",
+    "sessionKind",
+    "phase",
+    "tier",
+    "experienceWindows",
+    "metricBudgets",
+    "invariantContext",
+    "telemetryHooks"
+  ],
+  "properties": {
+    "schemaFamily": {
+      "type": "string",
+      "const": "session-experience-envelope",
+      "description": "Family discriminator used by CHAT_DIRECTOR and AI authoring tools for routing and narrowing."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version for this schema family, e.g. 1.0.0."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Stable identifier for this authored session or arc. This is not a runtime instance ID; it is the design-time contract ID."
+    },
+    "sessionLabel": {
+      "type": "string",
+      "description": "Human-oriented name or label for this session (non-enforced metadata)."
+    },
+    "sessionKind": {
+      "type": "string",
+      "enum": ["one-shot", "chaptered", "campaign", "experimental"],
+      "description": "High-level classification driving default band assumptions and analysis buckets."
+    },
+    "phase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "Lifecycle phase in the CHAT_DIRECTOR model (0=Schema, 1=Registry, 2=Bundles, 3=LuaPolicy, 4=Adapters). For authored envelopes, this will typically be 2 (Bundles)."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault"],
+      "description": "Target safety/stability tier; determines allowed metric bands and enforcement strictness."
+    },
+    "aiProfileRef": {
+      "type": "string",
+      "description": "Optional reference to an ai-safe-authoring-profile-v1 document governing this envelope."
+    },
+    "authoringContractRef": {
+      "type": "string",
+      "description": "Optional reference to the ai-safe-authoring-contract-v1 under which this envelope was authored."
+    },
+    "schemaSpineRef": {
+      "type": "string",
+      "format": "uri",
+      "description": "Pointer into the schema spine index that describes the invariants/metrics grammar this envelope is written against."
+    },
+    "capabilitySpineRef": {
+      "type": "string",
+      "format": "uri",
+      "description": "Pointer into a capability-spine document describing which APIs/tools are available to the runtime director for this session."
+    },
+    "discoveryContractRef": {
+      "type": "string",
+      "description": "Optional reference to a discovery-contract-v1 that introduced or negotiated this envelope."
+    },
+    "deadledgerRef": {
+      "type": "string",
+      "description": "Opaque reference to a Dead-Ledger proof envelope attesting to the session contract where required (e.g., high-intensity bands at mature tier)."
+    },
+    "timeModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["windowUnit", "windowDurationMinutes"],
+      "properties": {
+        "windowUnit": {
+          "type": "string",
+          "enum": ["segment", "chapter", "act", "custom"],
+          "description": "Semantic label for one experience window."
+        },
+        "windowDurationMinutes": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 480,
+          "description": "Expected real-time duration per window, used for normalization of per-minute budgets."
+        },
+        "maxSessionDurationMinutes": {
+          "type": "number",
+          "minimum": 5,
+          "maximum": 1440,
+          "description": "Upper bound on total session duration assumed when budgeting metrics (used in offline analysis)."
+        }
+      },
+      "description": "How the session is partitioned into windows that experienceWindows indexes over."
+    },
+    "experienceWindows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/experienceWindow"
+      },
+      "description": "Ordered list of windows describing the intended entertainment metric bands for each segment of the session."
+    },
+    "metricBudgets": {
+      "$ref": "#/definitions/metricBudgets",
+      "description": "Global budget constraints for each entertainment metric over the entire session (e.g., max time above a threshold)."
+    },
+    "invariantContext": {
+      "$ref": "#/definitions/invariantContext",
+      "description": "Declarative summary of the canonical invariant environment this session is designed for, used to bind envelopes to region/seed contracts."
+    },
+    "pacingContractRef": {
+      "type": "string",
+      "description": "Optional reference to a pacing-contract that refines event densities and DET rhythms compatible with this envelope."
+    },
+    "pacingInline": {
+      "$ref": "#/definitions/pacingInline",
+      "description": "Optional embedded pacing hints for systems that do not support a full external pacing-contract-v1."
+    },
+    "runtimeHints": {
+      "$ref": "#/definitions/runtimeHints",
+      "description": "Machine-readable hints consumed by CHAT_DIRECTOR or engine adapters to interpret this envelope at runtime."
+    },
+    "llmGuidance": {
+      "$ref": "#/definitions/llmGuidance",
+      "description": "Structured guidance to LLMs describing how generated seeds/events/personas should relate to the envelope bands."
+    },
+    "telemetryHooks": {
+      "$ref": "#/definitions/telemetryHooks",
+      "description": "Configuration of telemetry sources and metrics that will be used to evaluate compliance with this envelope."
+    },
+    "provenance": {
+      "$ref": "#/definitions/provenance",
+      "description": "Minimal provenance metadata for audit and replay."
+    }
+  },
+  "definitions": {
+    "band01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "description": "Closed interval [min, max] on [0,1] for normalized metrics."
+    },
+    "bandDet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
+      },
+      "description": "Closed interval [min, max] on [0,10] for DET and other 0–10 invariants."
+    },
+    "windowId": {
+      "type": "string",
+      "pattern": "^[a-z0-9\\-_.]+$",
+      "description": "Short, stable identifier for an experience window."
+    },
+    "experienceWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "windowId",
+        "index",
+        "label",
+        "uecBand",
+        "emdBand",
+        "stciBand",
+        "cdlBand",
+        "arrBand"
+      ],
+      "properties": {
+        "windowId": {
+          "$ref": "#/definitions/windowId"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based index in experienceWindows; used by runtime to align with timeline segments."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable description of this window’s intended experience (e.g., 'slow build', 'rupture', 'denouement')."
+        },
+        "tileClassHints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["spawn", "battlefront", "liminal", "sanctuary", "corridor", "other"]
+          },
+          "description": "Optional hints about dominant tileClasses expected in this window, informing region/seed selection."
+        },
+        "regionContractRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional references to regionContractCard artifacts that primarily realize this window."
+        },
+        "seedContractRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional references to seedContractCard artifacts that are intended to execute within this window."
+        },
+        "uecBand": {
+          "$ref": "#/definitions/band01",
+          "description": "Target UEC band for this window."
+        },
+        "emdBand": {
+          "$ref": "#/definitions/band01",
+          "description": "Target EMD band for this window."
+        },
+        "stciBand": {
+          "$ref": "#/definitions/band01",
+          "description": "Target STCI band for this window."
+        },
+        "cdlBand": {
+          "$ref": "#/definitions/band01",
+          "description": "Target CDL band for this window."
+        },
+        "arrBand": {
+          "$ref": "#/definitions/band01",
+          "description": "Target ARR band for this window."
+        },
+        "detBand": {
+          "$ref": "#/definitions/bandDet",
+          "description": "Optional DET band for this window, used for consistency with contract cards and pacing constraints."
+        },
+        "maxCdlAboveTargetMinutes": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 480.0,
+          "description": "Budget for total minutes in this window where CDL may exceed cdlBand.max before being considered a violation."
+        },
+        "maxOverwhelmMinutes": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 480.0,
+          "description": "Budget for minutes where any metric exceeds its window band max by a policy-defined margin."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional design notes; not interpreted by runtime."
+        }
+      },
+      "description": "Per-window target bands and local budgets for entertainment metrics."
+    },
+    "metricBudgetEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "maxTimeAbove", "threshold"],
+      "properties": {
+        "metric": {
+          "type": "string",
+          "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+          "description": "Metric this budget entry applies to."
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Normalized threshold in [0,1] considered 'high' for this budget."
+        },
+        "maxTimeAbove": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1440.0,
+          "description": "Maximum total minutes over the entire session that this metric may exceed threshold."
+        }
+      },
+      "description": "Global budget constraint for a single entertainment metric."
+    },
+    "metricBudgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/metricBudgetEntry"
+          }
+        }
+      },
+      "description": "Optional global metric budgets; empty or omitted means use policy defaults from ai-safe-authoring-profile."
+    },
+    "invariantBand01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "description": "Canonical band for invariants that live in [0,1]."
+    },
+    "invariantContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultBands": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "CIC": { "$ref": "#/definitions/invariantBand01" },
+            "MDI": { "$ref": "#/definitions/invariantBand01" },
+            "AOS": { "$ref": "#/definitions/invariantBand01" },
+            "RRM": { "$ref": "#/definitions/invariantBand01" },
+            "FCF": { "$ref": "#/definitions/invariantBand01" },
+            "SPR": { "$ref": "#/definitions/invariantBand01" },
+            "RWF": { "$ref": "#/definitions/invariantBand01" },
+            "HVF": { "$ref": "#/definitions/invariantBand01" },
+            "LSG": { "$ref": "#/definitions/invariantBand01" },
+            "SHCI": { "$ref": "#/definitions/invariantBand01" }
+          },
+          "description": "Canonical invariant bands expected for the majority of regions/seeds in this session; derived from spine for Tier/tileClass."
+        },
+        "detBandGlobal": {
+          "$ref": "#/definitions/bandDet",
+          "description": "Global DET band this session is expected to inhabit; window-level detBand must narrow within this."
+        },
+        "archetypeHints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional freeform hints mapping this session to archetypes defined in the invariants spine (e.g., 'industrial corridor', 'liminal backrooms')."
+        },
+        "policyEnvelopeRef": {
+          "type": "string",
+          "description": "Optional policyEnvelope reference whose ranges this envelope must stay within; used to enforce narrowing (no widening) rules."
+        }
+      },
+      "description": "Bindings to the invariant spine and policies that contextualize this envelope."
+    },
+    "pacingInline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetEventsPerMinuteBand": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 60.0
+          },
+          "description": "Soft band for target events per minute over the whole session."
+        },
+        "maxHighDetEventsPer10Min": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Hard cap on high-DET events per 10 minutes across the session."
+        },
+        "rhythmPatternIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional IDs mapping to pacing templates (slow-burn, rupture, etc.) from the spine."
+        }
+      },
+      "description": "Lightweight pacing constraints for runtimes that do not support full pacing-contract objects."
+    },
+    "runtimeHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enforcementMode": {
+          "type": "string",
+          "enum": ["strict", "lenient", "advisory"],
+          "description": "Controls whether runtime should treat band violations as hard errors, warnings, or telemetry-only."
+        },
+        "adaptationStrategy": {
+          "type": "string",
+          "enum": ["nudge-events", "gate-high-det", "throttle-pacing", "telemetry-only"],
+          "description": "Preferred strategy the runtime director should use when metrics drift from envelope bands."
+        },
+        "llmRuntimeRole": {
+          "type": "string",
+          "enum": ["architect", "implementer", "advisor"],
+          "description": "Role the LLM is expected to play when generating content under this envelope; used to bind against authoring session roles."
+        }
+      },
+      "description": "Hints used by CHAT_DIRECTOR and engine adapters to operationalize this envelope during a live session."
+    },
+    "llmGuidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetObjectKinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["moodContract", "eventContract", "regionContractCard", "seedContractCard", "personaContract"]
+          },
+          "description": "Contract families the LLM is expected to generate in service of this envelope."
+        },
+        "generationObjectives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "High-level instructions for LLM generation (e.g., 'keep UEC within window bands', 'avoid long CDL spikes')."
+        },
+        "metricPriorityWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "description": "Relative weights indicating which metrics the LLM should prioritize when resolving trade-offs while staying within bands."
+        }
+      },
+      "description": "Explicit, structured guidance that allows an LLM to treat this envelope as a concrete optimization target instead of vague prose."
+    },
+    "telemetryHooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sessionMetricsStreamId"],
+      "properties": {
+        "sessionMetricsStreamId": {
+          "type": "string",
+          "description": "Identifier for the NDJSON or telemetry stream carrying per-tick/session metrics (UEC, EMD, STCI, CDL, ARR) used to validate this envelope."
+        },
+        "windowAssignmentSignal": {
+          "type": "string",
+          "description": "Name of the telemetry field or derived signal that assigns runtime samples to experienceWindows[index]."
+        },
+        "violationCodes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "uecUnderTargetCode": { "type": "string" },
+            "uecOverTargetCode": { "type": "string" },
+            "arrBelowMinCode": { "type": "string" },
+            "cdlOverBudgetCode": { "type": "string" }
+          },
+          "description": "Canonical error/diagnostic codes emitted by analysis tools when this envelope is violated."
+        }
+      },
+      "description": "How runtime/analysis telemetry is wired back into this contract for empirical validation."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["createdBy", "createdAt"],
+      "properties": {
+        "createdBy": {
+          "type": "string",
+          "description": "Agent or tool that created this envelope (AI or human)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp in RFC 3339 format."
+        },
+        "lastModifiedBy": {
+          "type": "string",
+          "description": "Agent or tool that last modified this envelope."
+        },
+        "lastModifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp in RFC 3339 format."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Optional ai-authoring-request-v1 identifier that produced this envelope."
+        }
+      },
+      "description": "Minimal provenance data aligning this envelope with ai-authoring and Dead-Ledger audit trails."
+    }
+  }
+}
