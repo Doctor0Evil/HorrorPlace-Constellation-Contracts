@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry-player-envelope-fps-tick-v1.json",
+  "title": "PlayerEnvelope.FPS Tick Telemetry",
+  "type": "object",
+  "required": [
+    "t",
+    "sessionId",
+    "resurrectionId",
+    "playerId",
+    "regionId",
+    "tileId",
+    "state",
+    "invariants",
+    "metrics",
+    "bci",
+    "input"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "t": { "type": "number", "minimum": 0.0 },
+    "sessionId": { "type": "string" },
+    "resurrectionId": { "type": "string" },
+    "playerId": { "type": "string" },
+    "regionId": { "type": "string" },
+    "tileId": { "type": "string" },
+    "state": {
+      "type": "object",
+      "required": ["v", "stamina", "sanity", "R", "O", "battery"],
+      "properties": {
+        "v": { "type": "number" },
+        "stamina": { "type": "number" },
+        "sanity": { "type": "number" },
+        "R": { "type": "number" },
+        "O": { "type": "number" },
+        "battery": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "invariants": {
+      "type": "object",
+      "properties": {
+        "CIC": { "type": "number" },
+        "AOS": { "type": "number" },
+        "DET": { "type": "number" },
+        "LSG": { "type": "number" },
+        "HVF": {
+          "type": "object",
+          "properties": {
+            "mag": { "type": "number" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "UEC": { "type": "number" },
+        "EMD": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" },
+        "ARR": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "bci": {
+      "type": "object",
+      "properties": {
+        "arousal": { "type": "number" },
+        "overload": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "move": { "type": "number" },
+        "sprint": { "type": "number" },
+        "flash": { "type": "number" },
+        "deadlantern": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
