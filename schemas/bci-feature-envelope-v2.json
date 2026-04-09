@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci-feature-envelope-v2.json",
+  "title": "BCI Feature Envelope v2",
+  "description": "Minimally processed, NDJSON-safe multimodal BCI feature envelope. v2 adds a discriminated modality union while preserving EEGCanonicalV1 / EEGFeatureContractv1 as the `eeg` branch.",
+  "type": "object",
+  "required": [
+    "version",
+    "schemaref",
+    "windowId",
+    "sessionId",
+    "timestamp",
+    "samplingRateHz",
+    "windowDurationSec",
+    "channelLayout",
+    "modality",
+    "features"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this envelope instance, e.g., 2.0.0."
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "schemas/bci-feature-envelope-v2.json",
+      "description": "Local schema reference for validation tooling."
+    },
+    "windowId": {
+      "type": "string",
+      "description": "Stable identifier for this feature window within a session."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Locally scoped session identifier. Must not be exported beyond Tier-3 unchanged."
+    },
+    "timestamp": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp at the center of the window."
+        },
+        {
+          "type": "number",
+          "description": "Seconds since session start at the center of the window."
+        }
+      ]
+    },
+    "samplingRateHz": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Effective sampling rate in Hz for the primary modality in this window."
+    },
+    "windowDurationSec": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Duration of the window in seconds."
+    },
+    "channelLayout": {
+      "type": "object",
+      "description": "Logical channel layout for this window; interpretation is modality-specific but shape is shared.",
+      "required": [
+        "channels",
+        "referenceScheme"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "channels": {
+          "type": "array",
+          "description": "List of logical channel identifiers in acquisition order.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "referenceScheme": {
+          "type": "string",
+          "description": "Reference or montage scheme identifier, e.g., 'average', 'linked-ears', 'single-ended'."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional human-readable description of the montage or sensor placement."
+        }
+      }
+    },
+    "modality": {
+      "type": "string",
+      "enum": [
+        "eeg",
+        "eda",
+        "hr",
+        "resp",
+        "motion"
+      ],
+      "description": "Primary modality for this feature window. Determines which modality* block must be present."
+    },
+    "eeg": {
+      "$ref": "https://horror.place/schemas/EEGFeatureContractv1.json",
+      "description": "EEGCanonicalV1 feature structure. This branch must remain semantically identical to EEGFeatureContractv1 and is used when modality == 'eeg'."
+    },
+    "eda": {
+      "type": "object",
+      "description": "EDA-specific feature block, used when modality == 'eda'.",
+      "required": [
+        "windowType",
+        "tonicLevel",
+        "phasicCount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "windowType": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "experimental"
+          ],
+          "description": "Indicates whether this follows the canonical EDA pipeline or an experimental variant."
+        },
+        "tonicLevel": {
+          "type": "number",
+          "description": "Normalized tonic (slow-varying) EDA level for the window."
+        },
+        "phasicCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of detected phasic responses in this window."
+        },
+        "phasicAmplitudeMean": {
+          "type": "number",
+          "description": "Mean amplitude of phasic responses in this window, in normalized units."
+        },
+        "artifactFlag": {
+          "type": "boolean",
+          "description": "True if the window is likely contaminated by artifacts."
+        }
+      }
+    },
+    "hr": {
+      "type": "object",
+      "description": "Heart rate / HRV-specific features, used when modality == 'hr'.",
+      "required": [
+        "windowType",
+        "meanHrBpm"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "windowType": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "experimental"
+          ]
+        },
+        "meanHrBpm": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Mean heart rate in beats per minute for this window."
+        },
+        "sdnn": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Standard deviation of NN intervals (SDNN) in seconds or normalized units."
+        },
+        "rmssd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Root mean square of successive differences between NN intervals."
+        },
+        "lfPower": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Low-frequency HRV band power (normalized)."
+        },
+        "hfPower": {
+          "type": "number",
+          "minimum": 0,
+          "description": "High-frequency HRV band power (normalized)."
+        },
+        "artifactFlag": {
+          "type": "boolean",
+          "description": "True if the window is likely contaminated by artifacts."
+        }
+      }
+    },
+    "resp": {
+      "type": "object",
+      "description": "Respiration-specific features, used when modality == 'resp'.",
+      "required": [
+        "windowType",
+        "breathRateHz"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "windowType": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "experimental"
+          ]
+        },
+        "breathRateHz": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated breathing rate in Hz for this window."
+        },
+        "amplitude": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Normalized amplitude of the respiratory signal."
+        },
+        "irregularityIndex": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Normalized index of respiratory irregularity."
+        },
+        "artifactFlag": {
+          "type": "boolean"
+        }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "description": "Motion / accelerometer-specific features, used when modality == 'motion'.",
+      "required": [
+        "windowType",
+        "activityIndex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "windowType": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "experimental"
+          ]
+        },
+        "activityIndex": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Normalized scalar activity index (e.g., magnitude of acceleration)."
+        },
+        "stepCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated step count within the window, if applicable."
+        },
+        "artifactFlag": {
+          "type": "boolean"
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "description": "Flat feature list for NDJSON analysis and generic tooling. For EEG, these align with EEGFeatureContractv1; for other modalities, they mirror the modality block.",
+      "items": {
+        "type": "object",
+        "required": [
+          "featureId",
+          "featureType",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "Stable identifier for this feature within the canonical pipeline."
+          },
+          "featureType": {
+            "type": "string",
+            "description": "Feature family/type, e.g., 'bandpower', 'differential-entropy', 'tonic-level', 'hrv-sdnn'."
+          },
+          "channel": {
+            "type": "string",
+            "description": "Logical channel identifier for channel-specific features, when applicable."
+          },
+          "band": {
+            "type": "string",
+            "description": "Band label for spectral features, e.g., 'delta', 'theta', 'alpha', 'beta', 'gamma', 'lf', 'hf'."
+          },
+          "value": {
+            "type": "number",
+            "description": "Numeric feature value, typically normalized or log-transformed, but unsmoothed with respect to EMA."
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional, strictly derived metadata. Must not contain raw samples or PII.",
+      "additionalProperties": false,
+      "properties": {
+        "pipelineId": {
+          "type": "string",
+          "description": "Identifier of the canonical pipeline descriptor used, e.g., 'bci-canonical-pipeline-v1'."
+        },
+        "deviceLogicalId": {
+          "type": "string",
+          "description": "Logical device ID from EEGDeviceRegistry or similar, not a hardware serial number."
+        },
+        "quality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional normalized signal quality indicator."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "modality": {
+            "const": "eeg"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "eeg"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "modality": {
+            "const": "eda"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "eda"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "modality": {
+            "const": "hr"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "modality": {
+            "const": "resp"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "resp"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "modality": {
+            "const": "motion"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "motion"
+        ]
+      }
+    }
+  ]
+}
