@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema.Horror.Place.schemas.contracts.PerceptualDevice.Flashlight.v1",
+  "title": "H.PerceptualCone.Flashlight.v1",
+  "description": "Contract schema for a first-person flashlight perceptual cone, binding beam geometry, intensity, color temperature, battery behavior, and flicker into invariant- and metric-aware envelopes.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "id",
+    "schemaref",
+    "safetyTier",
+    "intensityBand",
+    "detCap",
+    "invariantBindings",
+    "implicationRules",
+    "cone",
+    "battery",
+    "flicker"
+  ],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this flashlight contract."
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "schema.Horror.Place.schemas.contracts.PerceptualDevice.Flashlight.v1",
+      "description": "Self-referencing schema URI for this contract type."
+    },
+    "safetyTier": {
+      "type": "string",
+      "enum": ["standard", "mature", "research"],
+      "description": "Tier classification used by routers and policy envelopes."
+    },
+    "intensityBand": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 10.0,
+      "description": "Logical intensity band index for this device within the multisensory stack."
+    },
+    "detCap": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Maximum DET contribution allowed from this flashlight in normalized 0–1 space."
+    },
+
+    "invariantBindings": {
+      "type": "object",
+      "description": "How cone behavior reads and weights invariants around the player.",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "HVF", "LSG", "SHCI"],
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "implicationRules": {
+      "type": "object",
+      "description": "Metric deltas implied by flashlight operation, capped by detCap and tier.",
+      "additionalProperties": false,
+      "required": ["deltaUEC", "deltaEMD", "deltaSTCI", "deltaCDL", "deltaARR"],
+      "properties": {
+        "deltaUEC": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "deltaEMD": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "deltaSTCI": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "deltaCDL": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "deltaARR": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "cone": {
+      "type": "object",
+      "description": "Beam geometry and photometric parameters.",
+      "additionalProperties": false,
+      "required": [
+        "innerAngleMin",
+        "innerAngleMax",
+        "outerAngleMin",
+        "outerAngleMax",
+        "rangeMin",
+        "rangeMax",
+        "falloffExponent"
+      ],
+      "properties": {
+        "innerAngleMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 180.0
+        },
+        "innerAngleMax": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 180.0
+        },
+        "outerAngleMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 180.0
+        },
+        "outerAngleMax": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 180.0
+        },
+        "rangeMin": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "rangeMax": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "falloffExponent": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 8.0
+        },
+        "colorTemperatureNeutral": {
+          "type": "number",
+          "minimum": 2000,
+          "maximum": 9000
+        },
+        "colorTemperatureColdBias": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "battery": {
+      "type": "object",
+      "description": "Flashlight battery capacity and drain policy.",
+      "additionalProperties": false,
+      "required": [
+        "capacity",
+        "initialCharge",
+        "minSafe",
+        "drainSteady",
+        "drainHighBeam",
+        "drainFlicker"
+      ],
+      "properties": {
+        "capacity": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Nominal battery capacity units."
+        },
+        "initialCharge": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "minSafe": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "drainSteady": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "drainHighBeam": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "drainFlicker": {
+          "type": "number",
+          "minimum": 0.0
+        }
+      }
+    },
+
+    "flicker": {
+      "type": "object",
+      "description": "Flicker activation and comfort envelope.",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "thresholdBattery",
+        "thresholdDET",
+        "frequencyMinHz",
+        "frequencyMaxHz",
+        "amplitudeMin",
+        "amplitudeMax"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "thresholdBattery": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "thresholdDET": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "frequencyMinHz": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 30.0
+        },
+        "frequencyMaxHz": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 30.0
+        },
+        "amplitudeMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "amplitudeMax": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "description": "Content- and policy-level flags reused from multisensory contracts.",
+      "additionalProperties": false,
+      "required": [
+        "explicitViolenceForbidden",
+        "anatomicalDetailForbidden"
+      ],
+      "properties": {
+        "explicitViolenceForbidden": {
+          "type": "boolean"
+        },
+        "anatomicalDetailForbidden": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
