@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/player-envelope-fps-policy.v1.json",
+  "title": "H.PlayerEnvelope.FPS.Policy.v1",
+  "type": "object",
+  "description": "Canonical per-tier policy for the H.PlayerEnvelope.FPS dynamical system, including sigmoidal sanity decay parameters, tiered safe-set caps, and references to sanity band and sanity budget policies.",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "policyId",
+    "mode",
+    "tierId",
+    "sessionMaxSeconds",
+    "speed",
+    "stamina",
+    "sanity",
+    "risk",
+    "obscurity",
+    "battery",
+    "noise",
+    "sanityBandPolicyRef",
+    "sanityBudgetTelemetryRef"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "https://horror.place/schemas/runtime/player-envelope-fps-policy.v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "policyId": {
+      "type": "string",
+      "description": "Stable identifier for this envelope policy, e.g. player-envelope-fps.standard.default.v1.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Envelope mode this policy targets.",
+      "enum": [
+        "fps-horror-standard",
+        "fps-horror-mature",
+        "fps-horror-research"
+      ]
+    },
+    "tierId": {
+      "type": "string",
+      "description": "Safety / maturity tier for this envelope.",
+      "enum": [
+        "standard",
+        "mature",
+        "research"
+      ]
+    },
+    "sessionMaxSeconds": {
+      "type": "number",
+      "description": "Maximum allowed session horizon T (seconds) assumed by worst-case excursion proofs.",
+      "minimum": 60,
+      "maximum": 14400
+    },
+    "speed": {
+      "type": "object",
+      "description": "Parameters for velocity dynamics v_t.",
+      "additionalProperties": false,
+      "required": [
+        "kv",
+        "kFriction",
+        "vMaxTier"
+      ],
+      "properties": {
+        "kv": {
+          "type": "number",
+          "description": "Acceleration gain.",
+          "minimum": 0
+        },
+        "kFriction": {
+          "type": "number",
+          "description": "Friction coefficient on v_t.",
+          "minimum": 0
+        },
+        "vMaxTier": {
+          "type": "number",
+          "description": "Tier-specific maximum speed cap.",
+          "minimum": 0
+        }
+      }
+    },
+    "stamina": {
+      "type": "object",
+      "description": "Parameters for stamina dynamics.",
+      "additionalProperties": false,
+      "required": [
+        "dbase",
+        "dDET",
+        "rbase",
+        "staminaFloor"
+      ],
+      "properties": {
+        "dbase": {
+          "type": "number",
+          "description": "Baseline stamina drain coefficient.",
+          "minimum": 0
+        },
+        "dDET": {
+          "type": "number",
+          "description": "Additional stamina drain coefficient from DET-driven stress.",
+          "minimum": 0
+        },
+        "rbase": {
+          "type": "number",
+          "description": "Baseline stamina regeneration rate when conditions allow.",
+          "minimum": 0
+        },
+        "staminaFloor": {
+          "type": "number",
+          "description": "Tier-specific stamina lower bound.",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "sanity": {
+      "type": "object",
+      "description": "Canonical sigmoidal sanity decay policy.",
+      "additionalProperties": false,
+      "required": [
+        "equationId",
+        "sMax",
+        "alphaDET",
+        "alphaCDL",
+        "alphaARR",
+        "alphaBCI",
+        "sanityFloor",
+        "sanityMax"
+      ],
+      "properties": {
+        "equationId": {
+          "type": "string",
+          "description": "Identifier of the sanity decay equation that implementations must use.",
+          "enum": [
+            "sigmoid-logistic-v1"
+          ]
+        },
+        "sMax": {
+          "type": "number",
+          "description": "Maximum sanity decay rate per second; must satisfy worst-case excursion bounds given sessionMaxSeconds and sanityFloor.",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "alphaDET": {
+          "type": "number",
+          "description": "Weight of DET in the sanity stress signal.",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "alphaCDL": {
+          "type": "number",
+          "description": "Weight of CDL in the sanity stress signal.",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "alphaARR": {
+          "type": "number",
+          "description": "Weight of ARR (recovery) in the sanity stress signal; typically reduces stress.",
+          "minimum": -10,
+          "maximum": 10
+        },
+        "alphaBCI": {
+          "type": "number",
+          "description": "Weight of BCI overload index in the sanity stress signal.",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "sanityFloor": {
+          "type": "number",
+          "description": "Tier-specific sanity lower bound sanity_min^(tier).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sanityMax": {
+          "type": "number",
+          "description": "Upper cap for sanity; typically 1.0.",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "description": "Parameters for risk accumulator R_t.",
+      "additionalProperties": false,
+      "required": [
+        "rhoDET",
+        "rhoSTCI",
+        "RMaxTier"
+      ],
+      "properties": {
+        "rhoDET": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rhoSTCI": {
+          "type": "number",
+          "minimum": 0
+        },
+        "RMaxTier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "obscurity": {
+      "type": "object",
+      "description": "Parameters for obscurity accumulator O_t.",
+      "additionalProperties": false,
+      "required": [
+        "omegaUEC",
+        "omegaEMD",
+        "omegaARR",
+        "OMaxTier"
+      ],
+      "properties": {
+        "omegaUEC": {
+          "type": "number",
+          "minimum": 0
+        },
+        "omegaEMD": {
+          "type": "number",
+          "minimum": 0
+        },
+        "omegaARR": {
+          "type": "number",
+          "minimum": -10,
+          "maximum": 10
+        },
+        "OMaxTier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "battery": {
+      "type": "object",
+      "description": "Parameters for perceptual device battery dynamics.",
+      "additionalProperties": false,
+      "required": [
+        "b0",
+        "bCIC",
+        "bHVF",
+        "batteryFloor"
+      ],
+      "properties": {
+        "b0": {
+          "type": "number",
+          "description": "Base battery drain coefficient.",
+          "minimum": 0
+        },
+        "bCIC": {
+          "type": "number",
+          "description": "Additional drain scaling with CIC.",
+          "minimum": 0
+        },
+        "bHVF": {
+          "type": "number",
+          "description": "Additional drain scaling with HVF.",
+          "minimum": 0
+        },
+        "batteryFloor": {
+          "type": "number",
+          "description": "Tier-specific minimum battery reserve.",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "noise": {
+      "type": "object",
+      "description": "Per-component cumulative noise budgets for the stochastic term.",
+      "additionalProperties": false,
+      "required": [
+        "v",
+        "stamina",
+        "sanity",
+        "R",
+        "O",
+        "battery"
+      ],
+      "properties": {
+        "v": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stamina": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sanity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "R": {
+          "type": "number",
+          "minimum": 0
+        },
+        "O": {
+          "type": "number",
+          "minimum": 0
+        },
+        "battery": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "sanityBandPolicyRef": {
+      "type": "string",
+      "description": "Reference ID for the SanityBandPolicy.FPS.v1 contract that defines sanity_min, sanity_comfort, and sanity_high for this tier.",
+      "pattern": "^[a-z0-9._-]+$"
+    },
+    "sanityBudgetTelemetryRef": {
+      "type": "string",
+      "description": "Schema ID for Telemetry.SanityBudgetSummary.v1 used to summarize sanity budgets per run.",
+      "pattern": "^[a-z0-9A-Z:/._-]+$"
+    }
+  }
+}
