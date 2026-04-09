@@ -1,0 +1,42 @@
+{
+  "schemaref": "schema.horror.place/contract/regionContractCard.v1.json",
+  "id": "REGION.URBAN.RIVERFRONT.V1",
+  "tier": "public",
+  "parentRef": "POLICY.GLOBAL.DEFAULT.V1",
+  "name": "Urban Riverfront Anomaly Belt",
+  "description": "A dense riverfront district with long CIC scars and high liminal stress near the waterline.",
+  "invariants": {
+    "CIC": { "min": 0.5, "max": 0.8 },
+    "MDI": { "min": 0.3, "max": 0.7 },
+    "AOS": { "min": 0.4, "max": 0.9 },
+    "RRM": { "min": 0.2, "max": 0.7 },
+    "FCF": { "min": 0.3, "max": 0.8 },
+    "SPR": { "min": 0.4, "max": 0.9 },
+    "RWF": { "min": 0.6, "max": 0.9 },
+    "HVF": { "min": 0.4, "max": 0.9 },
+    "LSG": { "min": 0.5, "max": 0.9 },
+    "SHCI": { "min": 0.5, "max": 0.9 },
+    "DET": { "min": 2.0, "max": 6.5 }
+  },
+  "metrics": {
+    "UEC": { "min": 0.4, "max": 0.8 },
+    "EMD": { "min": 0.5, "max": 0.9 },
+    "STCI": { "min": 0.5, "max": 0.9 },
+    "CDL": { "min": 0.3, "max": 0.7 },
+    "ARR": { "min": 0.6, "max": 0.95 }
+  },
+  "region": {
+    "regionId": "REGION.URBAN.RIVERFRONT",
+    "tags": ["urban", "riverfront", "industrial-ruin"],
+    "historyRefs": [
+      "HIST.ATROCITY.RIVERFIRE.1979",
+      "HIST.VANISHING.WHARFLINE.1987"
+    ]
+  },
+  "deadledgerref": {
+    "proofEnvelopeId": "DL.ENVELOPE.REGION.URBAN.RIVERFRONT.V1",
+    "verifierRef": "DL.VERIFIER.POLICY.DEFAULT.V1",
+    "circuitType": "policy-envelope",
+    "protocolVersion": "1.0.0"
+  }
+}
