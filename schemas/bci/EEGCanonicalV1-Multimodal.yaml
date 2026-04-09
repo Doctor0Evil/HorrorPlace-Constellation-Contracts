@@ -1,0 +1,544 @@
+# Repository: HorrorPlace-Constellation-Contracts
+# File path: schemas/bci/EEGCanonicalV1-Multimodal.yaml
+
+invariants_used:
+  - CIC
+  - MDI
+  - AOS
+  - RRM
+  - FCF
+  - SPR
+  - RWF
+  - DET
+  - HVF
+  - LSG
+  - SHCI
+
+metrics_used:
+  - UEC
+  - EMD
+  - STCI
+  - CDL
+  - ARR
+
+tiers:
+  - standard
+  - mature
+  - research
+
+deadledger_surface:
+  - zkpproof_schema
+  - verifiers_registry
+  - bundle_attestation
+  - spectral_seed_attestation
+  - agent_attestation
+  - bci_state_proof
+
+# ---------------------------------------------------------------------------
+# EEGCanonicalV1-Multimodal Processing Spec v1
+# ---------------------------------------------------------------------------
+
+id: EEGCanonicalV1-Multimodal
+version: 1.0.0
+kind: bci.canonical_pipeline
+description: >
+  Spine-level, schema-first description of the canonical multimodal BCI
+  processing pipeline. Defines windowing, preprocessing, feature extraction,
+  alignment, fusion, and bcistate derivation for EEG, EDA, HRV, RESP, and
+  motion. Python and Rust implementations MUST treat this spec as the sole
+  source of truth for all numeric parameters.
+
+timeBase:
+  tickSeconds: 0.0166667           # 60 Hz logical engine tick
+  windowSeconds: 4.0               # analysis window duration
+  updateIntervalSeconds: 0.5       # hop size between consecutive windows
+  alignmentPolicy:
+    grid: window_center            # windows aligned to centered timestamps
+    toleranceSeconds: 0.05         # max allowed deviation when snapping samples to windows
+
+modalities:
+  # -------------------------------------------------------------------------
+  # EEG modality block
+  # -------------------------------------------------------------------------
+  eeg:
+    enabled: true
+    sampling:
+      expectedRateHz: 256.0
+      minRateHz: 128.0
+      maxRateHz: 512.0
+      resampleStrategy: resample_to_expected   # resample / aggregate / drop
+    preprocess:
+      steps:
+        - name: bandpass
+          type: iir_bandpass
+          params:
+            lowHz: 0.5
+            highHz: 45.0
+            order: 4
+        - name: notch
+          type: iir_notch
+          params:
+            centerHz: 50.0
+            qFactor: 30.0
+        - name: detrend
+          type: linear_detrend
+          params: {}
+        - name: rereference
+          type: average_reference
+          params: {}
+    psd:
+      method: welch
+      params:
+        nfftMode: fixed
+        nfft: 512
+        windowType: hann
+        overlapFraction: 0.5
+    bands:
+      delta:   [0.5, 4.0]
+      theta:   [4.0, 8.0]
+      alpha:   [8.0, 13.0]
+      beta:    [13.0, 30.0]
+      gamma:   [30.0, 45.0]
+    features:
+      # Relative band powers per channel
+      - id: eeg.rel_band_power
+        type: per_channel_band_power
+        inputs:
+          bands: [delta, theta, alpha, beta, gamma]
+        formula: |
+          rel_power(band, ch) = band_power(band, ch) / sum_over_all_bands(band_power(b, ch))
+      # Global arousal index
+      - id: eeg.arousal
+        type: composite_scalar
+        inputs:
+          bands: [beta, gamma]
+        formula: |
+          arousal = mean_over_channels( rel_power(beta, ch) + rel_power(gamma, ch) )
+      # Global valence index (left-right frontal asymmetry)
+      - id: eeg.valence
+        type: composite_scalar
+        inputs:
+          bands: [alpha]
+          channels:
+            left:  [F3, F7]
+            right: [F4, F8]
+        formula: |
+          valence = mean_rel_power(alpha, right) - mean_rel_power(alpha, left)
+      # Fear index candidate
+      - id: eeg.fear_index
+        type: composite_scalar
+        inputs:
+          bands: [beta, gamma]
+        formula: |
+          fear_index = clamp01( mean_over_channels( rel_power(beta, ch) + rel_power(gamma, ch) ) )
+      # Overload index candidate
+      - id: eeg.overload_index
+        type: composite_scalar
+        inputs:
+          bands: [beta, gamma]
+        formula: |
+          overload_index = clamp01( percentile_over_channels(beta_power, 90) )
+
+    quality:
+      flags:
+        - id: eeg.artifact_motion
+          type: band_ratio_threshold
+          formula: |
+            flag = rel_power(delta, ch) > delta_motion_threshold
+        - id: eeg.bad_contact
+          type: amplitude_threshold
+          formula: |
+            flag = channel_rms(ch) < low_contact_rms
+      thresholds:
+        delta_motion_threshold: 0.6
+        low_contact_rms: 1e-6
+
+  # -------------------------------------------------------------------------
+  # EDA modality block
+  # -------------------------------------------------------------------------
+  eda:
+    enabled: true
+    sampling:
+      expectedRateHz: 32.0
+      minRateHz: 8.0
+      maxRateHz: 64.0
+      resampleStrategy: aggregate
+    preprocess:
+      steps:
+        - name: lowpass
+          type: iir_lowpass
+          params:
+            cutoffHz: 5.0
+            order: 4
+        - name: detrend
+          type: linear_detrend
+          params: {}
+    featureExtraction:
+      decomposition:
+        method: cvx_eda_like
+        params:
+          tonicTauSec: 10.0
+          phasicTauSec: 1.0
+      features:
+        - id: eda.tonic_level
+          type: scalar
+          formula: |
+            tonic_level = mean(tonic_component)
+        - id: eda.phasic_count
+          type: scalar
+          formula: |
+            phasic_count = count_peaks(phasic_component, min_amplitude=phasic_min_amp)
+        - id: eda.phasic_amp_mean
+          type: scalar
+          formula: |
+            phasic_amp_mean = mean_over_peaks(phasic_component)
+    quality:
+      flags:
+        - id: eda.motion_artifact
+          type: gradient_threshold
+          formula: |
+            flag = abs(derivative(raw)) > eda_gradient_max
+      thresholds:
+        phasic_min_amp: 0.01
+        eda_gradient_max: 0.5
+
+  # -------------------------------------------------------------------------
+  # HRV modality block
+  # -------------------------------------------------------------------------
+  hrv:
+    enabled: true
+    sampling:
+      expectedRateHz: 1.0          # RR interval series after peak detection
+      minRateHz: 0.5
+      maxRateHz: 4.0
+      resampleStrategy: interpolate
+    preprocess:
+      steps:
+        - name: rr_filter
+          type: outlier_reject
+          params:
+            minRRsec: 0.3
+            maxRRsec: 2.0
+    psd:
+      method: lomb_scargle
+      params:
+        lfBand: [0.04, 0.15]
+        hfBand: [0.15, 0.40]
+    features:
+      - id: hrv.mean_hr_bpm
+        type: scalar
+        formula: |
+          mean_hr_bpm = 60.0 / mean(RR)
+      - id: hrv.sdnn
+        type: scalar
+        formula: |
+          sdnn = std(RR)
+      - id: hrv.rmssd
+        type: scalar
+        formula: |
+          rmssd = sqrt(mean((diff(RR))^2))
+      - id: hrv.lf_power
+        type: scalar
+        formula: |
+          lf_power = band_power_psd(lfBand)
+      - id: hrv.hf_power
+        type: scalar
+        formula: |
+          hf_power = band_power_psd(hfBand)
+    quality:
+      flags:
+        - id: hrv.too_few_rr
+          type: count_threshold
+          formula: |
+            flag = count(RR) < min_rr_count
+      thresholds:
+        min_rr_count: 5
+
+  # -------------------------------------------------------------------------
+  # RESP modality block
+  # -------------------------------------------------------------------------
+  resp:
+    enabled: true
+    sampling:
+      expectedRateHz: 25.0
+      minRateHz: 10.0
+      maxRateHz: 50.0
+      resampleStrategy: resample_to_expected
+    preprocess:
+      steps:
+        - name: bandpass
+          type: iir_bandpass
+          params:
+            lowHz: 0.05
+            highHz: 0.7
+            order: 4
+    features:
+      - id: resp.rate_hz
+        type: scalar
+        formula: |
+          rate_hz = dominant_frequency(resp_signal)
+      - id: resp.amplitude
+        type: scalar
+        formula: |
+          amplitude = peak_to_trough(resp_signal)
+      - id: resp.irregularity
+        type: scalar
+        formula: |
+          irregularity = std(resp_cycle_lengths) / mean(resp_cycle_lengths)
+    quality:
+      flags:
+        - id: resp.saturated
+          type: amplitude_ceiling
+          formula: |
+            flag = amplitude > resp_amp_max
+      thresholds:
+        resp_amp_max: 5.0
+
+  # -------------------------------------------------------------------------
+  # MOTION modality block
+  # -------------------------------------------------------------------------
+  motion:
+    enabled: true
+    sampling:
+      expectedRateHz: 50.0
+      minRateHz: 20.0
+      maxRateHz: 100.0
+      resampleStrategy: aggregate
+    preprocess:
+      steps:
+        - name: highpass
+          type: iir_highpass
+          params:
+            cutoffHz: 0.2
+            order: 2
+    features:
+      - id: motion.activity_index
+        type: scalar
+        formula: |
+          activity_index = mean( sqrt(ax^2 + ay^2 + az^2) )
+      - id: motion.step_count
+        type: scalar
+        formula: |
+          step_count = count_step_events(ax, ay, az)
+    quality:
+      flags:
+        - id: motion.saturated
+          type: amplitude_ceiling
+          formula: |
+            flag = max(|ax|, |ay|, |az|) > accel_max
+      thresholds:
+        accel_max: 16.0
+
+# ---------------------------------------------------------------------------
+# Alignment and fusion rules
+# ---------------------------------------------------------------------------
+
+alignment:
+  strategy: align_by_window_grid
+  windowSeconds: 4.0
+  updateIntervalSeconds: 0.5
+  perModality:
+    eeg:
+      policy: anchor
+      maxLagSeconds: 0.0
+    eda:
+      policy: aggregate
+      maxLagSeconds: 1.0
+    hrv:
+      policy: aggregate
+      maxLagSeconds: 4.0
+    resp:
+      policy: interpolate
+      maxLagSeconds: 1.0
+    motion:
+      policy: aggregate
+      maxLagSeconds: 1.0
+
+fusion:
+  description: >
+    Defines how aligned per-modality feature vectors are fused into a single
+    bcistate vector. This bcistate shape is the only BCI state Dead-Ledger
+    and bcicore-intensity envelopes understand.
+  outputs:
+    fearBand:
+      type: categorical
+      bands:
+        - id: LOW
+          formula: |
+            condition = eeg.fear_index < 0.3
+        - id: MED
+          formula: |
+            condition = eeg.fear_index >= 0.3 && eeg.fear_index < 0.7
+        - id: HIGH
+          formula: |
+            condition = eeg.fear_index >= 0.7
+    overloadFlag:
+      type: boolean
+      formula: |
+        overloadFlag = (
+          eeg.overload_index > 0.8
+          || (eda.phasic_count > 5 && eda.phasic_amp_mean > 0.5)
+          || (hrv.lf_power / (hrv.lf_power + hrv.hf_power + eps) > 0.7)
+        )
+    exposureDose:
+      type: scalar
+      description: >
+        Accumulates time spent in elevated fearBand / overloadFlag states,
+        normalized and later mapped into DET slices.
+      formula: |
+        exposureDose_t = clamp01(
+          exposureDose_{t-1}
+          + dt * (
+              w_fearBand_HIGH * I[fearBand == HIGH]
+              + w_overload * I[overloadFlag]
+            )
+        )
+      parameters:
+        w_fearBand_HIGH: 0.2
+        w_overload: 0.5
+    resilienceIndex:
+      type: scalar
+      description: >
+        Optional resilience proxy combining recovery in HRV and reductions
+        in EDA phasic activity after overload.
+      formula: |
+        resilienceIndex = clamp01(
+          norm_recovery_hrv(hfv_increase)
+          + norm_recovery_eda(phasic_drop)
+        ) / 2.0
+
+  bcistateVector:
+    fields:
+      - fearBand
+      - overloadFlag
+      - exposureDose
+      - resilienceIndex
+    schemaRef: "schemas/bci/bcistate-v1.json"
+
+# ---------------------------------------------------------------------------
+# Stage graph (ordering)
+# ---------------------------------------------------------------------------
+
+graph:
+  perModalityStages:
+    - id: raw
+      description: "Raw samples as delivered by the converter or device driver."
+    - id: preprocess
+      description: "Apply modality-specific preprocessing filters."
+    - id: featureExtraction
+      description: "Derive modality-specific features for each aligned window."
+    - id: qualityFlags
+      description: "Compute artifact and quality flags per modality."
+    - id: alignedFeatureVector
+      description: "Per-window feature vectors aligned to the canonical grid."
+
+  crossModalityStages:
+    - id: alignByTimestamp
+      description: "Align modal features onto the EEG-based window grid."
+    - id: fuseFeatures
+      description: "Apply fusion rules to produce fused multimodal features."
+    - id: deriveBcistate
+      description: "Compute bcistate vector {fearBand, overloadFlag, exposureDose, resilienceIndex}."
+
+# ---------------------------------------------------------------------------
+# Test vectors (synthetic fixtures)
+# ---------------------------------------------------------------------------
+
+testVectors:
+  version: 1.0.0
+  description: >
+    Canonical synthetic fixtures for cross-language verification. Python and
+    Rust implementations must process these signals and match expected
+    feature and bcistate outputs within specified tolerances.
+  eeg:
+    - id: eeg.delta_pure
+      signal: "pure_tone"
+      params:
+        freqHz: 2.0
+        amplitude: 1.0
+      expected:
+        dominantBand: delta
+        relBandPowers:
+          delta: 0.8
+          theta: 0.1
+          alpha: 0.05
+          beta: 0.03
+          gamma: 0.02
+    - id: eeg.alpha_pure
+      signal: "pure_tone"
+      params:
+        freqHz: 10.0
+        amplitude: 1.0
+      expected:
+        dominantBand: alpha
+  eda:
+    - id: eda.step_rise
+      signal: "step"
+      params:
+        amplitude: 1.0
+        riseSeconds: 2.0
+      expected:
+        tonic_level_increase: "positive"
+        phasic_count_min: 1
+  hrv:
+    - id: hrv.lf_dominant
+      signal: "synthetic_rr"
+      params:
+        lfComponentHz: 0.1
+        hfComponentHz: 0.25
+      expected:
+        lf_over_hf_ratio_gt: 1.5
+  resp:
+    - id: resp.normal_breath
+      signal: "sinusoid"
+      params:
+        freqHz: 0.25
+      expected:
+        rate_hz_approx: 0.25
+  motion:
+    - id: motion.walking
+      signal: "gait_like"
+      params:
+        stepRateHz: 1.8
+      expected:
+        step_count_per_window: "approx_stepRate_times_window"
+
+  bcistate:
+    - id: bcistate.high_fear_overload
+      description: >
+        Combined synthetic pattern with EEG high beta/gamma, EDA bursts,
+        LF-dominant HRV, and moderate motion.
+      expected:
+        fearBand: HIGH
+        overloadFlag: true
+        exposureDose_increase: "monotonic"
+
+# ---------------------------------------------------------------------------
+# Implementation notes (non-normative)
+# ---------------------------------------------------------------------------
+
+implementation:
+  referencePython:
+    module: "EEGCanonicalV1_Multimodal"
+    repoHint: "NeuralResonanceLab"
+    contract: |
+      - MUST read this spec as data (YAML/JSON), not re-encode parameters.
+      - MUST implement stages exactly in the order defined by `graph`.
+      - MUST emit feature objects whose modality blocks match bci-feature-envelope-v2.
+  referenceRust:
+    crate: "bci_canonical_pipeline"
+    repoHint: "Death-Engine / lab tooling"
+    contract: |
+      - MUST parse the same spec file and mirror the Python stage order.
+      - MUST expose API(s) that take buffers + this spec and emit envelopes.
+      - MUST participate in CI fixtures comparing against Python outputs.
+  ci:
+    gates:
+      - name: ci-bci-schema-gate
+        responsibility: "Validate spec and fixture JSON/YAML against schemas."
+      - name: ci-bci-numerical-gate
+        responsibility: "Run Python and Rust on `testVectors`, compare outputs."
+      - name: ci-bci-policy-gate
+        responsibility: "Ensure bcistate ranges and exposureDose semantics obey BCI policies."
+      - name: ci-bci-governance-gate
+        responsibility: "Block unapproved changes to this spec (band edges, thresholds, fusion rules)."
