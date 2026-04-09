@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/tooling/ai-safe-authoring-profile-v1.json",
+  "title": "AI Safe Authoring Profile v1",
+  "description": "Per-agent capability and constraint profile for CHAT_DIRECTOR authoring sessions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "version",
+    "agentSelector",
+    "capabilities",
+    "limits",
+    "planPolicy",
+    "metricTargets",
+    "sessionPolicy"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for this authoring profile."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the profile contract, e.g. 1.0.0."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable summary of the profile's purpose and scope."
+    },
+    "agentSelector": {
+      "type": "object",
+      "description": "Criteria used by CHAT_DIRECTOR to bind runtime agents or templates to this profile.",
+      "additionalProperties": false,
+      "required": [
+        "agentKinds",
+        "templateIds",
+        "tiers",
+        "repos"
+      ],
+      "properties": {
+        "agentKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Logical agent kinds or roles (e.g., chat, editor, orchestrator).",
+          "default": []
+        },
+        "templateIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "AI-chat template IDs that should use this profile.",
+          "default": []
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed constellation tiers for this profile (e.g., Tier1Public, Tier2Internal).",
+          "default": []
+        },
+        "repos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Canonical repo identifiers this profile may target.",
+          "default": []
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Feature-level capabilities for this agent profile.",
+      "additionalProperties": false,
+      "required": [
+        "allowedObjectKinds",
+        "allowedDocTypes",
+        "allowsClamp",
+        "allowsSchemaUpgrade",
+        "mayAddFields",
+        "mayTouchDeadLedger"
+      ],
+      "properties": {
+        "allowedObjectKinds": {
+          "type": "array",
+          "description": "Contract families and artifact kinds this profile may author.",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "allowedDocTypes": {
+          "type": "array",
+          "description": "Markdown doc contract types this profile may emit (e.g., guide-v1, spec-v1, workplan-v1).",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "allowsClamp": {
+          "type": "boolean",
+          "description": "If true, this agent may tighten invariant/metric bands within the spine-defined ranges."
+        },
+        "allowsSchemaUpgrade": {
+          "type": "boolean",
+          "description": "If true, this agent may propose schema version upgrades or new schema families."
+        },
+        "mayAddFields": {
+          "type": "boolean",
+          "description": "If false, agent responses must not introduce any new JSON fields beyond those present in skeletons or existing artifacts."
+        },
+        "mayTouchDeadLedger": {
+          "type": "boolean",
+          "description": "If true, this agent may write or update fields that reference Dead-Ledger surfaces."
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "description": "Hard structural and volume limits enforced per request/response.",
+      "additionalProperties": false,
+      "required": [
+        "maxArtifactsPerResponse",
+        "maxSchemaRefsPerRequest",
+        "maxNestedObjectDepth",
+        "maxLinesPerArtifact"
+      ],
+      "properties": {
+        "maxArtifactsPerResponse": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of artifacts the agent may emit in a single response."
+        },
+        "maxSchemaRefsPerRequest": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of distinct schemaRef values allowed in one ai-authoring-request."
+        },
+        "maxNestedObjectDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum allowed JSON nesting depth in generated artifacts."
+        },
+        "maxLinesPerArtifact": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Soft cap on approximate line count per artifact. Used for CI and guidance."
+        }
+      }
+    },
+    "invariantBands": {
+      "type": "object",
+      "description": "Profile-level caps and floors for invariants, usually a subset of the spine ranges.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": {
+          "$ref": "#/$defs/band"
+        },
+        "MDI": {
+          "$ref": "#/$defs/band"
+        },
+        "AOS": {
+          "$ref": "#/$defs/band"
+        },
+        "RRM": {
+          "$ref": "#/$defs/band"
+        },
+        "FCF": {
+          "$ref": "#/$defs/band"
+        },
+        "SPR": {
+          "$ref": "#/$defs/band"
+        },
+        "RWF": {
+          "$ref": "#/$defs/band"
+        },
+        "DET": {
+          "$ref": "#/$defs/band"
+        },
+        "HVF": {
+          "$ref": "#/$defs/band"
+        },
+        "LSG": {
+          "$ref": "#/$defs/band"
+        },
+        "SHCI": {
+          "$ref": "#/$defs/band"
+        }
+      }
+    },
+    "metricTargets": {
+      "type": "object",
+      "description": "Target bands and hard constraints for entertainment metrics, optionally per objectKind.",
+      "additionalProperties": false,
+      "required": [
+        "global"
+      ],
+      "properties": {
+        "global": {
+          "type": "object",
+          "description": "Profile-wide metric bands that apply to all artifacts unless overridden.",
+          "additionalProperties": false,
+          "properties": {
+            "UEC": {
+              "$ref": "#/$defs/band"
+            },
+            "EMD": {
+              "$ref": "#/$defs/band"
+            },
+            "STCI": {
+              "$ref": "#/$defs/band"
+            },
+            "CDL": {
+              "$ref": "#/$defs/band"
+            },
+            "ARR": {
+              "$ref": "#/$defs/band"
+            }
+          }
+        },
+        "byObjectKind": {
+          "type": "object",
+          "description": "Optional overrides per objectKind (e.g., moodContract, eventContract).",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "UEC": {
+                "$ref": "#/$defs/band"
+              },
+              "EMD": {
+                "$ref": "#/$defs/band"
+              },
+              "STCI": {
+                "$ref": "#/$defs/band"
+              },
+              "CDL": {
+                "$ref": "#/$defs/band"
+              },
+              "ARR": {
+                "$ref": "#/$defs/band"
+              }
+            }
+          }
+        }
+      }
+    },
+    "planPolicy": {
+      "type": "object",
+      "description": "Rules governing the PLAN phase and plan→body coupling.",
+      "additionalProperties": false,
+      "required": [
+        "requireInvariantBands",
+        "requireMetricBands",
+        "minPlanRefs",
+        "enforceNoEscalationBeyondPlan"
+      ],
+      "properties": {
+        "requireInvariantBands": {
+          "type": "boolean",
+          "description": "If true, plans must declare invariant bands before any body is accepted."
+        },
+        "requireMetricBands": {
+          "type": "boolean",
+          "description": "If true, plans must declare metric target bands before any body is accepted."
+        },
+        "minPlanRefs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum number of referenced IDs (regions, seeds, moods, personas) required in a plan."
+        },
+        "enforceNoEscalationBeyondPlan": {
+          "type": "boolean",
+          "description": "If true, final artifacts may not widen invariant/metric bands beyond those declared in the accepted plan."
+        }
+      }
+    },
+    "sessionPolicy": {
+      "type": "object",
+      "description": "Constraints over multi-turn authoring sessions.",
+      "additionalProperties": false,
+      "required": [
+        "maxArtifactsPerSession",
+        "maxFailedPlansPerSession",
+        "allowedStates"
+      ],
+      "properties": {
+        "maxArtifactsPerSession": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of artifacts this profile may author in a single logical session."
+        },
+        "maxFailedPlansPerSession": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of rejected plans allowed before the session must be terminated or escalated."
+        },
+        "allowedStates": {
+          "type": "array",
+          "description": "Set of allowed session state labels for this profile (e.g., DISCOVERY, PLAN_PENDING, PLAN_CONFIRMED, BODY_AUTHORED, CI_PENDING, COMPLETE, FAILED).",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "researchFlags": {
+      "type": "object",
+      "description": "Optional flags for experimental or research-only profiles.",
+      "additionalProperties": false,
+      "properties": {
+        "isResearchProfile": {
+          "type": "boolean",
+          "description": "If true, this profile is intended for Tier-3 research or lab repos only."
+        },
+        "requiresManualApproval": {
+          "type": "boolean",
+          "description": "If true, artifacts created under this profile require human approval before apply."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "band": {
+      "type": "object",
+      "description": "Numeric band constraint for an invariant or metric.",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}
