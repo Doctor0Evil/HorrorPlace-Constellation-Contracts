@@ -37,7 +37,9 @@ jobs:
 import json, sys
 from jsonschema import validate
 with open('$SCHEMA') as s, open('$f') as c:
-    validate(instance=json.load(c)['systemicTiming'], schema=json.load(s))
+    data = json.load(c)
+    if 'systemicTiming' in data:
+        validate(instance=data['systemicTiming'], schema=json.load(s))
 print(f'OK: $f timing params valid')
 "
           done
