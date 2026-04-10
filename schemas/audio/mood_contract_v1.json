@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio/mood_contract_v1.json",
+  "title": "AudioMoodContractV1",
+  "description": "Contract describing invariant bands, tile roles, and target experience metric windows for an audio mood preset (e.g., subdued_dread, constant_pressure, combat_nightmare).",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "moodId",
+    "label",
+    "tileRoleProfiles",
+    "invariantBands",
+    "metricTargets",
+    "audioDimensionBounds",
+    "rtpcBounds",
+    "validation"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "audio_mood_contract_v1"
+    },
+    "moodId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\.:-]+$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "tileRoleProfiles": {
+      "type": "array",
+      "description": "Per-tile-role profiles; each tile role can have different invariant bands and targets under the same mood.",
+      "items": {
+        "type": "object",
+        "required": ["tileRoleId", "description"],
+        "properties": {
+          "tileRoleId": {
+            "type": "string",
+            "enum": [
+              "liminal",
+              "sanctuary",
+              "battlefront",
+              "spawn",
+              "corridor",
+              "vista",
+              "hub",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+
+    "invariantBands": {
+      "type": "object",
+      "description": "Required invariant ranges for tiles governed by this mood. Values are normalized in [0,1].",
+      "properties": {
+        "CIC": {
+          "$ref": "#/definitions/band"
+        },
+        "AOS": {
+          "$ref": "#/definitions/band"
+        },
+        "MDI": {
+          "$ref": "#/definitions/band"
+        },
+        "RRM": {
+          "$ref": "#/definitions/band"
+        },
+        "HVF_mag": {
+          "$ref": "#/definitions/band"
+        },
+        "LSG": {
+          "$ref": "#/definitions/band"
+        },
+        "SPR": {
+          "$ref": "#/definitions/band"
+        },
+        "SHCI": {
+          "$ref": "#/definitions/band"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "metricTargets": {
+      "type": "object",
+      "description": "Target windows for experience metrics under this mood.",
+      "properties": {
+        "UEC": {
+          "$ref": "#/definitions/band"
+        },
+        "EMD": {
+          "$ref": "#/definitions/band"
+        },
+        "STCI": {
+          "$ref": "#/definitions/band"
+        },
+        "CDL": {
+          "$ref": "#/definitions/band"
+        },
+        "ARR": {
+          "$ref": "#/definitions/band"
+        },
+        "DET": {
+          "$ref": "#/definitions/band"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "audioDimensionBounds": {
+      "type": "object",
+      "description": "Normalized bounds [0,1] for abstract audio dimensions produced by H.Audio.* for this mood.",
+      "properties": {
+        "density": {
+          "$ref": "#/definitions/band"
+        },
+        "clarity": {
+          "$ref": "#/definitions/band"
+        },
+        "historicity": {
+          "$ref": "#/definitions/band"
+        },
+        "directionality": {
+          "$ref": "#/definitions/band"
+        },
+        "repetition": {
+          "$ref": "#/definitions/band"
+        },
+        "intensity_cap": {
+          "$ref": "#/definitions/band"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "rtpcBounds": {
+      "type": "object",
+      "description": "Engine-agnostic RTPC bounds; concrete engines map these logical RTPCs to middleware.",
+      "properties": {
+        "bf_intensity": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_pressure_lf": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_stereo_width": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_orbit0_clarity": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_orbit0_weight": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_orbit1_clarity": {
+          "$ref": "#/definitions/rtpcBand"
+        },
+        "bf_orbit1_weight": {
+          "$ref": "#/definitions/rtpcBand"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "styleRefs": {
+      "type": "array",
+      "description": "Optional references into audiolandscape_style_v1 documents that implement this mood.",
+      "items": {
+        "type": "object",
+        "required": ["styleId"],
+        "properties": {
+          "styleId": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+
+    "validation": {
+      "type": "object",
+      "description": "CI and runtime validation thresholds for this contract.",
+      "required": ["minTileCoverage", "maxViolationRate"],
+      "properties": {
+        "minTileCoverage": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum fraction of tiles assigned this mood that must satisfy invariant bands in offline validation."
+        },
+        "maxViolationRate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum fraction of runtime samples allowed to leave metric target bands before the mood is flagged."
+        },
+        "tensionEnvelope": {
+          "type": "object",
+          "description": "Optional envelope for local tension index T over time.",
+          "properties": {
+            "T_min": {
+              "type": "number"
+            },
+            "T_max": {
+              "type": "number"
+            },
+            "maxSlope": {
+              "type": "number",
+              "description": "Maximum allowed absolute slope |dT/dt|."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "band": {
+      "type": "object",
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "rtpcBand": {
+      "type": "object",
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
