@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace/telemetry/systemic_timing_formula_run_v1.json",
+  "title": "Systemic Timing Formula Run v1",
+  "description": "Telemetry record for a single invocation of a systemic timing helper.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaId",
+    "runId",
+    "sessionId",
+    "timestamp",
+    "mechanicKind",
+    "mechanicContractId",
+    "timingParamsId",
+    "helperName",
+    "invariants",
+    "metricsBefore",
+    "formulaParameters",
+    "computedOutput",
+    "decisionTaken",
+    "metricsAfter"
+  ],
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "HorrorPlace/telemetry/systemic_timing_formula_run_v1"
+    },
+    "runId": {
+      "type": "string",
+      "description": "Unique id for this helper invocation within the session."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Gameplay or test session identifier."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the helper ran."
+    },
+    "mechanicKind": {
+      "type": "string",
+      "enum": ["CoyoteTime", "RuleOfThree", "AdaptiveDamage", "Other"]
+    },
+    "mechanicContractId": {
+      "type": "string",
+      "description": "ID of the mechanic contract that selected this helper."
+    },
+    "timingParamsId": {
+      "type": "string",
+      "description": "ID of mechanic_contract_timing_params_v1 used."
+    },
+    "helperName": {
+      "type": "string",
+      "description": "Concrete helper function name, e.g. systemic_timing.coyote_probability."
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CIC", "DET", "LSG", "SHCI"],
+      "properties": {
+        "CIC": { "type": "number" },
+        "DET": { "type": "number" },
+        "LSG": { "type": "number" },
+        "SHCI": { "type": "number" },
+        "AOS": { "type": "number" },
+        "RRM": { "type": "number" },
+        "HVF": { "type": "number" },
+        "TMI": { "type": "number" },
+        "RPI": { "type": "number" },
+        "ADI": { "type": "number" }
+      }
+    },
+    "metricsBefore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "ARR"],
+      "properties": {
+        "UEC": { "type": "number" },
+        "ARR": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" }
+      }
+    },
+    "formulaParameters": {
+      "type": "object",
+      "description": "Flattened view of the coefficients used from the timing contract.",
+      "additionalProperties": { "type": "number" }
+    },
+    "computedOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawValue", "clampedValue"],
+      "properties": {
+        "rawValue": { "type": "number" },
+        "clampedValue": { "type": "number" }
+      }
+    },
+    "decisionTaken": {
+      "type": "string",
+      "description": "Semantic decision made based on clampedValue, e.g. grant_coyote, deny_coyote, scale_damage."
+    },
+    "metricsAfter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "ARR"],
+      "properties": {
+        "UEC": { "type": "number" },
+        "ARR": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" }
+      }
+    }
+  }
+}
