@@ -241,3 +241,66 @@ To fully activate this pillar:
 4. Expand `entertainmentmetricsv1` telemetry to carry intensity compliance flags and per-channel realized values to support `ρ_R` and related analytics.
 
 This keeps v1 compact but end-to-end: authors must provide a full cross-stage intensity envelope from day one, engines must respect it numerically, and telemetry must track how well reality matches the envelope.
+
+---
+
+## 8. Normative Linter: Cross-Stage Bands and Charter Floors
+
+The numeric rules for cross-stage behavior of Seed-Ritual bands are enforced by a dedicated Tier-1 linter:
+
+- `tools/lint-seed-ritual-stage-bands.py`
+
+This linter is the normative reference for three constraints that are intentionally **not** encoded purely in JSON Schema:
+
+1. **STCI/CDL monotonicity into Confrontation**  
+   For the `stageMetricBands` object, the linter expects:
+
+   - `STCI_min` to be non-decreasing across `probe → evidence → confrontation`.
+   - `CDL_min` to be non-decreasing across `probe → evidence → confrontation`.
+
+   Authoring implications:
+
+   - It is valid for Evidence or Confrontation to “plateau” (equal to the previous stage).
+   - It is invalid for Evidence or Confrontation to drop below the previous stage’s `STCI_min` or `CDL_min`.  
+   - CI failures for this rule will be reported as:
+     - `STCI_min monotonicity violated`
+     - `CDL_min monotonicity violated`
+
+2. **Non-zero Probe intensity when defined**  
+   For `stageIntensityEnvelopes.probe`:
+
+   - If a Probe `audioIntensity`/`visualIntensity` block is present, both `min` values must be strictly greater than `0.0`.
+   - A ritual that declares a Probe intensity profile with `min == 0.0` is treated as having “dead air” at the moment the ritual formally begins.
+
+   CI failures for this rule will be reported as:
+
+   - `Probe audioIntensity.min=... must be > 0`
+   - `Probe visualIntensity.min=... must be > 0`
+
+   Authors who genuinely want a “cold open” can omit the Probe intensity profile entirely, but any explicit profile must keep the atmosphere non-zero.
+
+3. **Charter-aligned ARR_min minima**  
+   For all stages in `stageMetricBands`:
+
+   - `ARR_min` is required to remain at or above a global Charter minimum (normalized).
+   - The Charter minimum is configured inside the linter as `CHARter_ARR_MIN` and is treated as a hard lower bound.
+
+   CI failures for this rule will be reported as:
+
+   - `ARR_min=... is below Charter minimum ...`
+
+   Authors should treat this as a red flag that their ritual is attempting to undercut sovereign entertainment floors and must be retuned rather than waived.
+
+### 8.1 How to interpret CI failures
+
+When CI fails on Seed-Ritual changes:
+
+- Look for `lint-seed-ritual-stage-bands` in the workflow logs.
+- Identify which of the three patterns above was violated.
+- Adjust:
+
+  - `STCI_min`/`CDL_min` across Probe/Evidence/Confrontation to be non-decreasing.
+  - Probe `audioIntensity.min` / `visualIntensity.min` to be strictly > 0 when defined.
+  - `ARR_min` to be ≥ the Charter minimum.
+
+The intent is to keep `seed-ritual-contract-v1.json` readable and local, while centralizing all cross-stage and Charter coupling logic in a single, auditable Python tool that can evolve without schema churn.
