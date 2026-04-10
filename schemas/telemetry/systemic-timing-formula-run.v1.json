@@ -1,0 +1,44 @@
+{
+  "$id": "schema://HorrorPlace-Constellation-Contracts/telemetry/systemicTimingFormulaRun.v1.json",
+  "title": "Systemic Timing Formula Evaluation Frame v1",
+  "type": "object",
+  "required": ["schemaRef", "formulaId", "inputMetrics", "computedOutput", "decisionTaken"],
+  "properties": {
+    "schemaRef": { "type": "string", "const": "telemetry.systemicTimingFormulaRun.v1" },
+    "formulaId": { "type": "string", "description": "Identifier for the evaluated formula (e.g., 'coyote.sigmoid.v1')" },
+    "inputMetrics": {
+      "type": "object",
+      "required": ["DET", "ARR", "UEC"],
+      "properties": {
+        "DET": { "type": "number", "minimum": 0, "maximum": 10 },
+        "ARR": { "type": "number", "minimum": 0, "maximum": 1 },
+        "UEC": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "formulaParameters": {
+      "type": "object",
+      "description": "Coefficients used in evaluation (w1, w2, threshold, etc.)",
+      "additionalProperties": { "type": "number" }
+    },
+    "computedOutput": {
+      "type": "object",
+      "required": ["rawValue", "clampedValue"],
+      "properties": {
+        "rawValue": { "type": "number" },
+        "clampedValue": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "decisionTaken": {
+      "type": "string",
+      "enum": ["grant_coyote", "deny_coyote", "downgrade_lethal", "maintain_lethal", "scale_damage"]
+    },
+    "outcomeMetrics": {
+      "type": "object",
+      "properties": {
+        "UEC_delta": { "type": "number" },
+        "ARR_delta": { "type": "number" },
+        "playerSurvived": { "type": "boolean" }
+      }
+    }
+  }
+}
