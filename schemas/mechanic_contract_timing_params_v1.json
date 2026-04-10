@@ -1,0 +1,50 @@
+{
+  "$id": "schema://HorrorPlace-Constellation-Contracts/mechanic_contract_timing_params_v1.json",
+  "title": "Mechanic Contract Timing Parameters v1",
+  "type": "object",
+  "properties": {
+    "coyoteTime": {
+      "type": "object",
+      "properties": {
+        "w1": { "type": "number", "minimum": 0, "maximum": 10 },
+        "w2": { "type": "number", "minimum": 0, "maximum": 10 },
+        "threshold": { "type": "number" },
+        "det_min": { "type": "number", "minimum": 0, "maximum": 10 },
+        "det_max": { "type": "number", "minimum": 0, "maximum": 10 },
+        "arr_min": { "type": "number", "minimum": 0, "maximum": 1 },
+        "arr_max": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["w1", "w2", "threshold", "det_min", "det_max", "arr_min", "arr_max"]
+    },
+    "ruleOfThree": {
+      "type": "object",
+      "properties": {
+        "a1": { "type": "number", "minimum": 0 },
+        "a2": { "type": "number", "minimum": 0 },
+        "a3": { "type": "number", "minimum": 0 },
+        "a4": { "type": "number", "minimum": 0 },
+        "bias": { "type": "number" },
+        "det_cap": { "type": "number", "minimum": 0, "maximum": 10 },
+        "arr_floor": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_attempts": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["a1", "a2", "a3", "a4", "bias", "det_cap", "arr_floor", "max_attempts"]
+    },
+    "adaptiveDamage": {
+      "type": "object",
+      "properties": {
+        "m_base": { "type": "number", "minimum": 0.1 },
+        "alpha": { "type": "number", "minimum": -1, "maximum": 1 },
+        "beta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "m_min": { "type": "number", "minimum": 0 },
+        "m_max": { "type": "number", "minimum": 0 },
+        "det_base": { "type": "number", "minimum": 0, "maximum": 10 },
+        "det_range": { "type": "number", "minimum": 0 },
+        "arr_base": { "type": "number", "minimum": 0, "maximum": 1 },
+        "arr_range": { "type": "number", "minimum": 0 }
+      },
+      "required": ["m_base", "alpha", "beta", "m_min", "m_max", "det_base", "det_range", "arr_base", "arr_range"]
+    }
+  },
+  "required": ["coyoteTime", "ruleOfThree", "adaptiveDamage"]
+}
