@@ -1,0 +1,109 @@
+{
+  "$schema": "https://horror.place/schemas/moodcontractv1.json",
+  "moodId": "mood.subdued_dread.v1",
+  "version": "1.0.0",
+  "tier": "Tier1Public",
+  "description": "Low-level, persistent tension layer that keeps the player in a state of subdued dread without overwhelming them.",
+  "intensityBand": 2,
+  "applicableRegionClasses": [
+    "archive_lowAOS",
+    "threshold_corridor",
+    "warruin_buffer"
+  ],
+  "invariantTargets": {
+    "CIC": {
+      "min": 0.25,
+      "max": 0.55
+    },
+    "AOS": {
+      "min": 0.35,
+      "max": 0.65
+    },
+    "LSG": {
+      "min": 0.20,
+      "max": 0.55
+    },
+    "DET": {
+      "min": 0.05,
+      "max": 0.25
+    }
+  },
+  "metricTargets": {
+    "UEC": {
+      "min": 0.40,
+      "max": 0.65
+    },
+    "EMD": {
+      "min": 0.35,
+      "max": 0.60
+    },
+    "STCI": {
+      "min": 0.30,
+      "max": 0.55
+    },
+    "CDL": {
+      "min": 0.25,
+      "max": 0.55
+    },
+    "ARR": {
+      "min": 0.55,
+      "max": 0.80
+    }
+  },
+  "audioStyle": {
+    "styleContractId": "audiolandscapestylev1",
+    "styleId": "HELLSCAPE.subdued_dread.v1",
+    "canonicalPalettes": [
+      "palette.warruin_lowCIC_lowDET",
+      "palette.archive_lowAOS",
+      "palette.marsh_lowLSG"
+    ],
+    "rtpcFamilies": [
+      {
+        "familyId": "audio.family.subdued_dread.pressure.v1",
+        "familyCode": "0xPKSIG",
+        "outputs": [
+          "H.Audio.pressure"
+        ]
+      },
+      {
+        "familyId": "audio.family.subdued_dread.hissBed.v1",
+        "familyCode": "0xPKOSC",
+        "outputs": [
+          "H.Audio.hissLevel",
+          "H.Audio.staticBed"
+        ]
+      }
+    ]
+  },
+  "bciMappingProfiles": {
+    "profileIds": [
+      "bci.audio.profile.subdued_dread.v1"
+    ],
+    "requiredIntensityModes": [
+      "CALM",
+      "FOCUSED"
+    ],
+    "disableOnOverload": true
+  },
+  "rtpcBands": {
+    "pressure": {
+      "min": 0.15,
+      "max": 0.40
+    },
+    "whisperDensity": {
+      "min": 0.00,
+      "max": 0.15
+    },
+    "hissLevel": {
+      "min": 0.10,
+      "max": 0.35
+    }
+  },
+  "safety": {
+    "maxPressureDeltaPerSecond": 0.35,
+    "maxWhisperDeltaPerSecond": 0.25,
+    "maxHissDeltaPerSecond": 0.30,
+    "detCeilingScale": 0.8
+  }
+}
