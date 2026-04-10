@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema.HorrorPlace-Constellation-Contracts.seed-ritual-contract-v1.json",
-  "title": "Seed Ritual Contract v1",
+  "title": "Seed-Ritual Contract v1",
   "description": "Tier-1 policy band for Seeds, defining minimum entertainment bands, allowed gore/violence assembly styles, and per-stage audiovisual intensity envelopes. A Seed is only valid under this ritual if its simulated/projected behavior satisfies all ritual floors and caps.",
   "type": "object",
   "additionalProperties": false,
@@ -9,13 +9,13 @@
     "id",
     "version",
     "schema_ref",
+    "tier",
+    "safety_tier",
     "ritual_profile",
     "applies_to",
     "min_entertainment_bands",
     "gore_assembly_profile",
-    "min_intensity_envelope",
-    "tier",
-    "safety_tier"
+    "min_intensity_envelope"
   ],
   "properties": {
     "id": {
@@ -61,7 +61,7 @@
       "type": "object",
       "description": "Named ritual profile describing qualitative pacing and use (e.g., Slow-burn Threshold Corridor, Confrontation Tile Cluster).",
       "additionalProperties": false,
-      "required": ["name", "kind", "description"],
+      "required": ["name", "kind", "description", "target_stage"],
       "properties": {
         "name": {
           "type": "string",
@@ -167,7 +167,7 @@
 
     "min_entertainment_bands": {
       "type": "object",
-      "description": "Minimum entertainment bands this ritual requires for Seeds evaluated under it. The runtime linter must ensure that projected/realized Seed metrics do not fall below these floors.",
+      "description": "Global minimum entertainment bands this ritual requires for Seeds evaluated under it. Runtime and CI must ensure projected/realized Seed metrics do not fall below these floors.",
       "additionalProperties": false,
       "required": [
         "UEC_min",
