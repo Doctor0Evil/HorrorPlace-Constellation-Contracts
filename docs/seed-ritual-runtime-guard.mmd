@@ -1,0 +1,34 @@
+flowchart TD
+    A[PCG Module 10\nGenerate candidate Seed s] --> B[Lookup attached\nSeed-Ritual R]
+    B --> C[Load SeedContractV1\nΔm_seed and invariants]
+    C --> D[Read current metrics\nm_cur from resurrection spine]
+    D --> E[Project metrics\nm_proj = f(m_cur, Δm_seed, c)]
+    E --> F{All m_proj >=\nR.min_entertainment_bands?}
+    F -- no --> F1[Reject seed s\n(reason: floor violation)]
+    F1 --> Z[Return: do_not_register]
+
+    F -- yes --> G[Check DET budget\nC_DET + w_s·ΔDET(s) <= B_DET^R?]
+    G -- no --> G1[Reject seed s\n(reason: DET over budget)]
+    G1 --> Z
+
+    G -- yes --> H[Resolve gore styles\nallowed_style_refs]
+    H --> I[Filter styles by GXI\nand consent tier]
+    I --> J{Any style s* with\nA(s*) = 1?}
+    J -- no --> J1[Reject seed s\n(reason: no admissible style)]
+    J1 --> Z
+
+    J -- yes --> K[Bind Seed s to\nSeed-Ritual R\nand style subset]
+    K --> L[Register Seed s\ninto registry]
+
+    %% Runtime branch
+    L --> R0[Runtime helper\nH.should_trigger_sequence]
+    R0 --> R1[Read active ritual R\nand player state]
+    R1 --> R2[Recompute m_proj,\nupdate E_DET, enforce floors]
+    R2 --> R3{Floors and DET\nbudget satisfied?}
+    R3 -- no --> R4[Return false\n(do not fire)]
+    R4 --> Z2[Runtime: candidate discarded]
+
+    R3 -- yes --> R5[Evaluate stage\nmin_intensity_envelope]
+    R5 --> R6[Clamp Director's AV\nplan to ritual floors]
+    R6 --> R7[Trigger Seed s\nwith bound styles]
+    R7 --> Z3[Runtime: fired\nand logged]
