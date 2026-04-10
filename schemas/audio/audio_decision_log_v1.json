@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio/audio_decision_log_v1.json",
+  "title": "AudioDecisionLogV1",
+  "description": "Telemetry envelope capturing how invariants and audio descriptors relate to metric deltas for offline analysis and AI-guided evolution.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "sessionId",
+    "segmentId",
+    "timestamp",
+    "regionId",
+    "tileId",
+    "playerId",
+    "invariants",
+    "metricsBefore",
+    "metricsAfter",
+    "descriptor",
+    "styleId",
+    "moodId"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "audio_decision_log_v1"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "segmentId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "regionId": {
+      "type": "string"
+    },
+    "tileId": {
+      "type": "string"
+    },
+    "playerId": {
+      "type": "string"
+    },
+
+    "moodId": {
+      "type": "string",
+      "description": "Audio mood contract ID in effect when this decision was made."
+    },
+    "styleId": {
+      "type": "string",
+      "description": "Audio landscape style ID in effect when this decision was made."
+    },
+
+    "invariants": {
+      "type": "object",
+      "properties": {
+        "CIC": { "type": "number" },
+        "AOS": { "type": "number" },
+        "MDI": { "type": "number" },
+        "RRM": { "type": "number" },
+        "HVF_mag": { "type": "number" },
+        "HVF_dir_x": { "type": "number" },
+        "HVF_dir_y": { "type": "number" },
+        "LSG": { "type": "number" },
+        "SPR": { "type": "number" },
+        "SHCI": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+
+    "metricsBefore": {
+      "type": "object",
+      "description": "Experience metrics immediately before applying this audio decision.",
+      "properties": {
+        "UEC": { "type": "number" },
+        "EMD": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" },
+        "ARR": { "type": "number" },
+        "DET": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+
+    "metricsAfter": {
+      "type": "object",
+      "description": "Experience metrics after a short evaluation window following this decision.",
+      "properties": {
+        "UEC": { "type": "number" },
+        "EMD": { "type": "number" },
+        "STCI": { "type": "number" },
+        "CDL": { "type": "number" },
+        "ARR": { "type": "number" },
+        "DET": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+
+    "descriptor": {
+      "type": "object",
+      "description": "Abstract descriptor produced by H.Audio.* for this decision.",
+      "properties": {
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "density": { "type": "number" },
+            "clarity": { "type": "number" },
+            "historicity": { "type": "number" },
+            "directionality": { "type": "number" },
+            "repetition": { "type": "number" },
+            "intensity_cap": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "families": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "geohistorical_bed",
+              "liminal_threshold",
+              "ritual_residue",
+              "combat_horror",
+              "other"
+            ]
+          }
+        },
+        "rtpc": {
+          "type": "object",
+          "properties": {
+            "bf_intensity": { "type": "number" },
+            "bf_pressure_lf": { "type": "number" },
+            "bf_stereo_width": { "type": "number" },
+            "bf_orbit0_clarity": { "type": "number" },
+            "bf_orbit0_weight": { "type": "number" },
+            "bf_orbit1_clarity": { "type": "number" },
+            "bf_orbit1_weight": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "curveFamily": {
+          "type": "string",
+          "enum": [
+            "HKLIN",
+            "HKSIG",
+            "HKHYS",
+            "HKOSC",
+            "HKNOISE"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "budget": {
+      "type": "object",
+      "description": "Optional snapshot of audio-related budget state.",
+      "properties": {
+        "budgetBefore": { "type": "number" },
+        "budgetAfter": { "type": "number" },
+        "budgetDelta": { "type": "number" },
+        "consentTier": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
