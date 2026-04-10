@@ -1,0 +1,115 @@
+{
+  "$schema": "https://horror.place/schemas/moodcontractv1.json",
+  "moodId": "mood.constant_pressure.v1",
+  "version": "1.0.0",
+  "tier": "Tier1Public",
+  "description": "Mid-intensity, unbroken tension layer that maintains constant pressure in traversal and investigation segments.",
+  "intensityBand": 4,
+  "applicableRegionClasses": [
+    "warruin_highCIC",
+    "industrial_ring",
+    "archive_highAOS"
+  ],
+  "invariantTargets": {
+    "CIC": {
+      "min": 0.45,
+      "max": 0.80
+    },
+    "AOS": {
+      "min": 0.50,
+      "max": 0.85
+    },
+    "LSG": {
+      "min": 0.35,
+      "max": 0.75
+    },
+    "DET": {
+      "min": 0.20,
+      "max": 0.55
+    }
+  },
+  "metricTargets": {
+    "UEC": {
+      "min": 0.55,
+      "max": 0.80
+    },
+    "EMD": {
+      "min": 0.45,
+      "max": 0.75
+    },
+    "STCI": {
+      "min": 0.45,
+      "max": 0.80
+    },
+    "CDL": {
+      "min": 0.35,
+      "max": 0.70
+    },
+    "ARR": {
+      "min": 0.60,
+      "max": 0.85
+    }
+  },
+  "audioStyle": {
+    "styleContractId": "audiolandscapestylev1",
+    "styleId": "HELLSCAPE.constant_pressure.v1",
+    "canonicalPalettes": [
+      "palette.warruin_highCIC_highAOS",
+      "palette.archive_highAOS",
+      "palette.industrial_pressure"
+    ],
+    "rtpcFamilies": [
+      {
+        "familyId": "audio.family.constant_pressure.pressure.v1",
+        "familyCode": "0xPKLIN",
+        "outputs": [
+          "H.Audio.pressure"
+        ]
+      },
+      {
+        "familyId": "audio.family.constant_pressure.whispers.v1",
+        "familyCode": "0xPKSIG",
+        "outputs": [
+          "H.Audio.whisperDensity"
+        ]
+      },
+      {
+        "familyId": "audio.family.constant_pressure.archival.v1",
+        "familyCode": "0xPKSIG",
+        "outputs": [
+          "H.Audio.archivalVoices"
+        ]
+      }
+    ]
+  },
+  "bciMappingProfiles": {
+    "profileIds": [
+      "bci.audio.profile.constant_pressure.v1"
+    ],
+    "requiredIntensityModes": [
+      "FOCUSED",
+      "TENSE"
+    ],
+    "disableOnOverload": true
+  },
+  "rtpcBands": {
+    "pressure": {
+      "min": 0.40,
+      "max": 0.70
+    },
+    "whisperDensity": {
+      "min": 0.20,
+      "max": 0.55
+    },
+    "archivalVoices": {
+      "min": 0.15,
+      "max": 0.50
+    }
+  },
+  "safety": {
+    "maxPressureDeltaPerSecond": 0.40,
+    "maxWhisperDeltaPerSecond": 0.35,
+    "maxArchivalDeltaPerSecond": 0.35,
+    "detCeilingScale": 1.0
+  }
+}
