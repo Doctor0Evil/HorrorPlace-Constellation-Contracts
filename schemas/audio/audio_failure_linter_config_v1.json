@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio/audio_failure_linter_config_v1.json",
+  "title": "AudioFailureLinterConfigV1",
+  "description": "Configuration for NDJSON-based audio failure linters driven by the audio failure atlas.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "configId",
+    "atlasRef",
+    "thresholds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "audio_failure_linter_config_v1"
+    },
+    "configId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_.:-]+$"
+    },
+    "label": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "atlasRef": {
+      "type": "string",
+      "description": "URI or path to an audio_failure_atlas_v1 document."
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "Global thresholds for treating atlas hits as CI failures.",
+      "properties": {
+        "maxTileViolationRate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed fraction of tiles per region matching any failure pattern."
+        },
+        "maxRegionViolationRate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed fraction of regions matching a failure pattern."
+        },
+        "minCorrelationForPromotion": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum correlation between failure pattern and bad outcomes required before atlas entry is promoted from experimental to enforced."
+        }
+      },
+      "additionalProperties": false
+    },
+    "perFailureOverrides": {
+      "type": "array",
+      "description": "Optional per-failure overrides.",
+      "items": {
+        "type": "object",
+        "required": ["failureId"],
+        "properties": {
+          "failureId": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "maxTileViolationRate": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "maxRegionViolationRate": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Paths or URIs the linter should consume.",
+      "properties": {
+        "invariantMapNdjsonGlob": {
+          "type": "string",
+          "description": "Glob for NDJSON invariant maps (tiles/regions)."
+        },
+        "moodContractGlob": {
+          "type": "string",
+          "description": "Glob for mood contract JSON documents."
+        },
+        "telemetrySummaryGlob": {
+          "type": "string",
+          "description": "Optional glob for metric summary NDJSON (UEC/EMD/STCI/CDL/ARR)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Outputs and CI integration knobs.",
+      "properties": {
+        "violationReportPath": {
+          "type": "string",
+          "description": "Path for JSON/NDJSON report of tile/region violations."
+        },
+        "failCiOnError": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
