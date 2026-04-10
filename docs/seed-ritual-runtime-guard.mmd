@@ -2,7 +2,7 @@ flowchart TD
     A[PCG Module 10\nGenerate candidate Seed s] --> B[Lookup attached\nSeed-Ritual R]
     B --> C[Load SeedContractV1\nΔm_seed and invariants]
     C --> D[Read current metrics\nm_cur from resurrection spine]
-    D --> E[Project metrics\nm_proj = f(m_cur, Δm_seed, c)]
+    D --> E[Project metrics\nm_proj = f(m_cur, Δm_seed, c\])]
     E --> F{All m_proj >=\nR.min_entertainment_bands?}
     F -- no --> F1[Reject seed s\n(reason: floor violation)]
     F1 --> Z[Return: do_not_register]
