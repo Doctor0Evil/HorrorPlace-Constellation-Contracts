@@ -1,34 +1,34 @@
 flowchart TD
-    A[PCG Module 10\nGenerate candidate Seed s] --> B[Lookup attached\nSeed-Ritual R]
-    B --> C[Load SeedContractV1\nΔm_seed and invariants]
-    C --> D[Read current metrics\nm_cur from resurrection spine]
-    D --> E[Project metrics\nm_proj = f(m_cur, Δm_seed, c\])]
-    E --> F{All m_proj >=\nR.min_entertainment_bands?}
-    F -- no --> F1[Reject seed s\n(reason: floor violation)]
-    F1 --> Z[Return: do_not_register]
+    A["PCG Module 10<br/>Generate candidate Seed s"] --> B["Lookup attached<br/>Seed-Ritual R"]
+    B --> C["Load SeedContractV1<br/>&Delta;m_seed and invariants"]
+    C --> D["Read current metrics<br/>m_cur from resurrection spine"]
+    D --> E["Project metrics<br/>m_proj = f(m_cur, &Delta;m_seed, c)"]
+    E --> F{"All m_proj &ge;<br/>R.min_entertainment_bands?"}
+    F -- no --> F1["Reject seed s<br/>(reason: floor violation)"]
+    F1 --> Z["Return: do_not_register"]
 
-    F -- yes --> G[Check DET budget\nC_DET + w_s·ΔDET(s) <= B_DET^R?]
-    G -- no --> G1[Reject seed s\n(reason: DET over budget)]
+    F -- yes --> G["Check DET budget<br/>C_DET + w_s &middot; &Delta;DET(s) &le; B_DET^R?"]
+    G -- no --> G1["Reject seed s<br/>(reason: DET over budget)"]
     G1 --> Z
 
-    G -- yes --> H[Resolve gore styles\nallowed_style_refs]
-    H --> I[Filter styles by GXI\nand consent tier]
-    I --> J{Any style s* with\nA(s*) = 1?}
-    J -- no --> J1[Reject seed s\n(reason: no admissible style)]
+    G -- yes --> H["Resolve gore styles<br/>allowed_style_refs"]
+    H --> I["Filter styles by GXI<br/>and consent tier"]
+    I --> J{"Any style s* with<br/>A(s*) = 1?"}
+    J -- no --> J1["Reject seed s<br/>(reason: no admissible style)"]
     J1 --> Z
 
-    J -- yes --> K[Bind Seed s to\nSeed-Ritual R\nand style subset]
-    K --> L[Register Seed s\ninto registry]
+    J -- yes --> K["Bind Seed s to<br/>Seed-Ritual R<br/>and style subset"]
+    K --> L["Register Seed s<br/>into registry"]
 
     %% Runtime branch
-    L --> R0[Runtime helper\nH.should_trigger_sequence]
-    R0 --> R1[Read active ritual R\nand player state]
-    R1 --> R2[Recompute m_proj,\nupdate E_DET, enforce floors]
-    R2 --> R3{Floors and DET\nbudget satisfied?}
-    R3 -- no --> R4[Return false\n(do not fire)]
-    R4 --> Z2[Runtime: candidate discarded]
+    L --> R0["Runtime helper<br/>H.should_trigger_sequence"]
+    R0 --> R1["Read active ritual R<br/>and player state"]
+    R1 --> R2["Recompute m_proj,<br/>update E_DET, enforce floors"]
+    R2 --> R3{"Floors and DET<br/>budget satisfied?"}
+    R3 -- no --> R4["Return false<br/>(do not fire)"]
+    R4 --> Z2["Runtime: candidate discarded"]
 
-    R3 -- yes --> R5[Evaluate stage\nmin_intensity_envelope]
-    R5 --> R6[Clamp Director's AV\nplan to ritual floors]
-    R6 --> R7[Trigger Seed s\nwith bound styles]
-    R7 --> Z3[Runtime: fired\nand logged]
+    R3 -- yes --> R5["Evaluate stage<br/>min_intensity_envelope"]
+    R5 --> R6["Clamp Director's AV<br/>plan to ritual floors"]
+    R6 --> R7["Trigger Seed s<br/>with bound styles"]
+    R7 --> Z3["Runtime: fired<br/>and logged"]
