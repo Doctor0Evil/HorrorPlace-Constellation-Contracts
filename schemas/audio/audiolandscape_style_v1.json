@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio/audiolandscape_style_v1.json",
+  "title": "AudioLandscapeStyleV1",
+  "description": "Declarative contract describing how Hellscape Mixer maps invariants to abstract audio dimensions, SFX families, and RTPC envelopes for a given style.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "styleId",
+    "label",
+    "invariantBands",
+    "dimensionMappings",
+    "familyWeights",
+    "rtpcMappings",
+    "metricExpectations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "audiolandscape_style_v1"
+    },
+    "styleId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\.:-]+$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "invariantBands": {
+      "type": "object",
+      "description": "Invariant ranges that this style is designed for.",
+      "properties": {
+        "CIC": { "$ref": "#/definitions/band" },
+        "AOS": { "$ref": "#/definitions/band" },
+        "MDI": { "$ref": "#/definitions/band" },
+        "RRM": { "$ref": "#/definitions/band" },
+        "HVF_mag": { "$ref": "#/definitions/band" },
+        "LSG": { "$ref": "#/definitions/band" },
+        "SPR": { "$ref": "#/definitions/band" },
+        "SHCI": { "$ref": "#/definitions/band" }
+      },
+      "additionalProperties": false
+    },
+
+    "dimensionMappings": {
+      "type": "object",
+      "description": "Functions and parameters mapping invariants to normalized audio dimensions.",
+      "properties": {
+        "density": {
+          "$ref": "#/definitions/mapping"
+        },
+        "clarity": {
+          "$ref": "#/definitions/mapping"
+        },
+        "historicity": {
+          "$ref": "#/definitions/mapping"
+        },
+        "directionality": {
+          "$ref": "#/definitions/mapping"
+        },
+        "repetition": {
+          "$ref": "#/definitions/mapping"
+        },
+        "intensity_cap": {
+          "$ref": "#/definitions/mapping"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "familyWeights": {
+      "type": "object",
+      "description": "Relative weights for abstract SFX families under this style.",
+      "properties": {
+        "geohistorical_bed": {
+          "$ref": "#/definitions/weight"
+        },
+        "liminal_threshold": {
+          "$ref": "#/definitions/weight"
+        },
+        "ritual_residue": {
+          "$ref": "#/definitions/weight"
+        },
+        "combat_horror": {
+          "$ref": "#/definitions/weight"
+        },
+        "other": {
+          "$ref": "#/definitions/weight"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "rtpcMappings": {
+      "type": "object",
+      "description": "Mappings from abstract dimensions to RTPCs used by middleware.",
+      "properties": {
+        "bf_intensity": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_pressure_lf": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_stereo_width": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_orbit0_clarity": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_orbit0_weight": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_orbit1_clarity": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        },
+        "bf_orbit1_weight": {
+          "$ref": "#/definitions/dimensionToRtpc"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "metricExpectations": {
+      "type": "object",
+      "description": "Expected behavior of high-level experience metrics under this style.",
+      "properties": {
+        "UEC": { "$ref": "#/definitions/band" },
+        "EMD": { "$ref": "#/definitions/band" },
+        "STCI": { "$ref": "#/definitions/band" },
+        "CDL": { "$ref": "#/definitions/band" },
+        "ARR": { "$ref": "#/definitions/band" }
+      },
+      "additionalProperties": false
+    },
+
+    "curveFamily": {
+      "type": "string",
+      "description": "Global curve gene for this style; more precise families can be overridden per mapping.",
+      "enum": [
+        "HKLIN",
+        "HKSIG",
+        "HKHYS",
+        "HKOSC",
+        "HKNOISE"
+      ]
+    },
+
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "band": {
+      "type": "object",
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "weight": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["inputs", "family"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "description": "Names of invariants and metrics used in this mapping.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "family": {
+          "type": "string",
+          "enum": [
+            "HKLIN",
+            "HKSIG",
+            "HKHYS",
+            "HKPIECEWISE"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "description": "Family parameters, e.g. a,b for linear; k,x0 for sigmoid; thresholds and slopes for hysteresis.",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "bounds": {
+          "$ref": "#/definitions/band"
+        },
+        "maxSlope": {
+          "type": "number",
+          "description": "Maximum allowed absolute slope |dy/dx| for this mapping."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimensionToRtpc": {
+      "type": "object",
+      "required": ["sourceDimensions"],
+      "properties": {
+        "sourceDimensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "density",
+              "clarity",
+              "historicity",
+              "directionality",
+              "repetition",
+              "intensity_cap"
+            ]
+          }
+        },
+        "blend": {
+          "type": "string",
+          "enum": [
+            "weighted_sum",
+            "max",
+            "min"
+          ],
+          "default": "weighted_sum"
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "rtpcMin": {
+          "type": "number"
+        },
+        "rtpcMax": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
