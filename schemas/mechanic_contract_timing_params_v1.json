@@ -6,45 +6,142 @@
     "coyoteTime": {
       "type": "object",
       "properties": {
-        "w1": { "type": "number", "minimum": 0, "maximum": 10 },
-        "w2": { "type": "number", "minimum": 0, "maximum": 10 },
-        "threshold": { "type": "number" },
-        "det_min": { "type": "number", "minimum": 0, "maximum": 10 },
-        "det_max": { "type": "number", "minimum": 0, "maximum": 10 },
-        "arr_min": { "type": "number", "minimum": 0, "maximum": 1 },
-        "arr_max": { "type": "number", "minimum": 0, "maximum": 1 }
+        "w1": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Weight for DET in coyote probability"
+        },
+        "w2": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Weight for (1-ARR) in coyote probability"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Sigmoid threshold for coyote granting"
+        },
+        "det_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "det_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "arr_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "arr_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
       },
-      "required": ["w1", "w2", "threshold", "det_min", "det_max", "arr_min", "arr_max"]
+      "required": ["w1", "w2", "threshold", "det_min", "det_max", "arr_min", "arr_max"],
+      "additionalProperties": false
     },
     "ruleOfThree": {
       "type": "object",
       "properties": {
-        "a1": { "type": "number", "minimum": 0 },
-        "a2": { "type": "number", "minimum": 0 },
-        "a3": { "type": "number", "minimum": 0 },
-        "a4": { "type": "number", "minimum": 0 },
-        "bias": { "type": "number" },
-        "det_cap": { "type": "number", "minimum": 0, "maximum": 10 },
-        "arr_floor": { "type": "number", "minimum": 0, "maximum": 1 },
-        "max_attempts": { "type": "integer", "minimum": 1 }
+        "a1": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Coefficient for DET in downgrade fatigue"
+        },
+        "a2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Coefficient for UEC in downgrade fatigue"
+        },
+        "a3": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Coefficient for (1-ARR) in downgrade fatigue"
+        },
+        "a4": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Coefficient for deathCount in downgrade fatigue"
+        },
+        "bias": {
+          "type": "number",
+          "description": "Baseline bias for downgrade probability"
+        },
+        "det_cap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "arr_floor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1
+        }
       },
-      "required": ["a1", "a2", "a3", "a4", "bias", "det_cap", "arr_floor", "max_attempts"]
+      "required": ["a1", "a2", "a3", "a4", "bias", "det_cap", "arr_floor", "max_attempts"],
+      "additionalProperties": false
     },
     "adaptiveDamage": {
       "type": "object",
       "properties": {
-        "m_base": { "type": "number", "minimum": 0.1 },
-        "alpha": { "type": "number", "minimum": -1, "maximum": 1 },
-        "beta": { "type": "number", "minimum": -1, "maximum": 1 },
-        "m_min": { "type": "number", "minimum": 0 },
-        "m_max": { "type": "number", "minimum": 0 },
-        "det_base": { "type": "number", "minimum": 0, "maximum": 10 },
-        "det_range": { "type": "number", "minimum": 0 },
-        "arr_base": { "type": "number", "minimum": 0, "maximum": 1 },
-        "arr_range": { "type": "number", "minimum": 0 }
+        "m_base": {
+          "type": "number",
+          "minimum": 0.1,
+          "description": "Base damage multiplier"
+        },
+        "alpha": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "DET sensitivity coefficient"
+        },
+        "beta": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "ARR sensitivity coefficient"
+        },
+        "m_min": {
+          "type": "number",
+          "minimum": 0
+        },
+        "m_max": {
+          "type": "number",
+          "minimum": 0
+        },
+        "det_base": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "det_range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arr_base": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "arr_range": {
+          "type": "number",
+          "minimum": 0
+        }
       },
-      "required": ["m_base", "alpha", "beta", "m_min", "m_max", "det_base", "det_range", "arr_base", "arr_range"]
+      "required": ["m_base", "alpha", "beta", "m_min", "m_max", "det_base", "det_range", "arr_base", "arr_range"],
+      "additionalProperties": false
     }
   },
-  "required": ["coyoteTime", "ruleOfThree", "adaptiveDamage"]
+  "required": ["coyoteTime", "ruleOfThree", "adaptiveDamage"],
+  "additionalProperties": false
 }
