@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio-rtpc-mapping-telemetry-frame-v1.json",
+  "title": "Audio RTPC Mapping Telemetry Frame v1",
+  "description": "Per-frame telemetry record capturing invariants, BCI inputs, mapping family, RTPC outputs, and entertainment metric deltas for audio mapping experiments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "frameTime",
+    "profileId",
+    "familyId",
+    "regionClass",
+    "personaId",
+    "bciPhase",
+    "invariants",
+    "bciInputs",
+    "rtpcOutputs",
+    "metricsBefore",
+    "metricsAfter"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "description": "Opaque identifier for the gameplay or lab session.",
+      "pattern": "^[A-Za-z0-9._:-]{4,128}$"
+    },
+    "frameTime": {
+      "type": "number",
+      "description": "Timestamp in seconds since session start for this frame.",
+      "minimum": 0.0
+    },
+    "profileId": {
+      "type": "string",
+      "description": "Identifier of the audio mapping profile under test.",
+      "pattern": "^[a-z0-9._-]{4,64}$"
+    },
+    "familyId": {
+      "type": "string",
+      "description": "familyId from audiortpc-mapping-family-v1.json used to produce this frame's outputs.",
+      "pattern": "^[a-z0-9._-]{4,64}$"
+    },
+    "regionClass": {
+      "type": "string",
+      "description": "Region or tile class (e.g., warruin, archive, marsh).",
+      "pattern": "^[a-z0-9._-]{1,64}$"
+    },
+    "personaId": {
+      "type": "string",
+      "description": "Persona identifier e.g., Archivist, Witness, Echo.",
+      "pattern": "^[A-Za-z0-9._-]{1,64}$"
+    },
+    "bciPhase": {
+      "type": "string",
+      "description": "BCI phase bucket for this frame.",
+      "enum": [
+        "CALM",
+        "FOCUSED",
+        "TENSE",
+        "OVERLOADED",
+        "UNKNOWN"
+      ]
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Snapshot of invariant values at this frame.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "MDI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RRM": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "bciInputs": {
+      "type": "object",
+      "description": "Canonical BCI inputs visible to audio mapping.",
+      "additionalProperties": false,
+      "properties": {
+        "bciattentionfocus": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bcifearindex": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bcistartlespike": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bcicognitiveload": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bcivisualoverloadscore": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bciheartsyncratio": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bcibreathphase": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "rtpcOutputs": {
+      "type": "object",
+      "description": "RTPC output values produced by the mapping for this frame.",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "metricsBefore": {
+      "type": "object",
+      "description": "Entertainment metrics immediately before applying this frame's mapping outputs.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricsAfter": {
+      "type": "object",
+      "description": "Entertainment metrics after applying this frame's mapping outputs.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "overloadFlag": {
+      "type": "boolean",
+      "description": "Whether this frame is classified as overloaded by the BCI intensity envelope."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional freeform notes for lab analysis.",
+      "maxLength": 512
+    }
+  }
+}
