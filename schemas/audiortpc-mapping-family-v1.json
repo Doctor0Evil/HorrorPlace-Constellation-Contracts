@@ -1,0 +1,378 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audiortpc-mapping-family-v1.json",
+  "title": "Audio RTPC Mapping Family v1",
+  "description": "Schema for hex-coded audio RTPC mapping families that transform invariants and BCI inputs into engine RTPC outputs under DET-scaled safety envelopes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "familyId",
+    "familyCode",
+    "version",
+    "tier",
+    "inputs",
+    "outputs",
+    "parameters",
+    "safety"
+  ],
+  "properties": {
+    "familyId": {
+      "type": "string",
+      "description": "Opaque identifier for this mapping family profile, used in telemetry and registries.",
+      "pattern": "^[a-z0-9._-]{4,64}$"
+    },
+    "familyCode": {
+      "type": "string",
+      "description": "Short hex-coded family code indicating curve type and behavior.",
+      "enum": [
+        "0xPKLIN",
+        "0xPKSIG",
+        "0xPKHYS",
+        "0xPKOSC"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this mapping family definition.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+    },
+    "tier": {
+      "type": "string",
+      "description": "Governance tier for this mapping family.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault"
+      ]
+    },
+    "labels": {
+      "type": "array",
+      "description": "Optional freeform labels to support clustering and persona preferences.",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Normalized inputs this mapping family consumes from invariants and BCI metrics.",
+      "additionalProperties": false,
+      "required": [
+        "bci",
+        "invariants"
+      ],
+      "properties": {
+        "bci": {
+          "type": "array",
+          "description": "List of BCI input fields this family expects, drawn from the canonical BCI metrics schema.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "bciattentionfocus",
+              "bcifearindex",
+              "bcistartlespike",
+              "bcicognitiveload",
+              "bcivisualoverloadscore",
+              "bciheartsyncratio",
+              "bcibreathphase"
+            ]
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "invariants": {
+          "type": "array",
+          "description": "Invariants this mapping family reads from the shared horror invariant spine.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "MDI",
+              "AOS",
+              "RRM",
+              "HVF",
+              "LSG",
+              "SHCI",
+              "DET"
+            ]
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Engine RTPC outputs controlled by this mapping family.",
+      "additionalProperties": false,
+      "required": [
+        "rtpcChannels"
+      ],
+      "properties": {
+        "rtpcChannels": {
+          "type": "array",
+          "description": "Named RTPC channels this family writes to, such as pressure, whisperDensity, or filterCutoff.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]{1,64}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "parameters": {
+      "description": "Curve parameters for this family, discriminated by familyCode.",
+      "oneOf": [
+        {
+          "title": "Linear family parameters (0xPKLIN)",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "familyCode": {
+              "const": "0xPKLIN"
+            },
+            "kFear": {
+              "type": "number",
+              "description": "Weight for bcifearindex-like inputs.",
+              "minimum": -4.0,
+              "maximum": 4.0
+            },
+            "kCIC": {
+              "type": "number",
+              "description": "Weight for CIC invariant.",
+              "minimum": -4.0,
+              "maximum": 4.0
+            },
+            "kLSG": {
+              "type": "number",
+              "description": "Weight for LSG invariant.",
+              "minimum": -4.0,
+              "maximum": 4.0
+            },
+            "kDET": {
+              "type": "number",
+              "description": "Weight for DET invariant, usually negative to cap intensity.",
+              "minimum": -4.0,
+              "maximum": 0.0
+            },
+            "bias": {
+              "type": "number",
+              "description": "Additive bias term before clamping.",
+              "minimum": -2.0,
+              "maximum": 2.0
+            }
+          },
+          "required": [
+            "familyCode",
+            "kFear",
+            "kCIC",
+            "kLSG",
+            "kDET",
+            "bias"
+          ]
+        },
+        {
+          "title": "Sigmoid family parameters (0xPKSIG)",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "familyCode": {
+              "const": "0xPKSIG"
+            },
+            "kFear": {
+              "type": "number",
+              "minimum": -10.0,
+              "maximum": 10.0
+            },
+            "kCIC": {
+              "type": "number",
+              "minimum": -10.0,
+              "maximum": 10.0
+            },
+            "kLSG": {
+              "type": "number",
+              "minimum": -10.0,
+              "maximum": 10.0
+            },
+            "kDET": {
+              "type": "number",
+              "minimum": -10.0,
+              "maximum": 0.0
+            },
+            "x0": {
+              "type": "number",
+              "description": "Center of the sigmoid.",
+              "minimum": -2.0,
+              "maximum": 2.0
+            },
+            "gain": {
+              "type": "number",
+              "description": "Global gain applied before sigmoid.",
+              "minimum": 0.0,
+              "maximum": 10.0
+            }
+          },
+          "required": [
+            "familyCode",
+            "kFear",
+            "kCIC",
+            "kLSG",
+            "kDET",
+            "x0",
+            "gain"
+          ]
+        },
+        {
+          "title": "Hysteresis family parameters (0xPKHYS)",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "familyCode": {
+              "const": "0xPKHYS"
+            },
+            "xOn": {
+              "type": "number",
+              "description": "Threshold for switching on.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "xOff": {
+              "type": "number",
+              "description": "Threshold for switching off, must be <= xOn.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "riseGain": {
+              "type": "number",
+              "description": "Gain factor when rising toward the on state.",
+              "minimum": 0.0,
+              "maximum": 10.0
+            },
+            "fallGain": {
+              "type": "number",
+              "description": "Gain factor when falling toward the off state.",
+              "minimum": 0.0,
+              "maximum": 10.0
+            }
+          },
+          "required": [
+            "familyCode",
+            "xOn",
+            "xOff",
+            "riseGain",
+            "fallGain"
+          ]
+        },
+        {
+          "title": "Oscillatory family parameters (0xPKOSC)",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "familyCode": {
+              "const": "0xPKOSC"
+            },
+            "baseFreqHz": {
+              "type": "number",
+              "description": "Base oscillation frequency in Hz.",
+              "minimum": 0.01,
+              "maximum": 10.0
+            },
+            "freqModDepth": {
+              "type": "number",
+              "description": "Depth of frequency modulation from BCI inputs.",
+              "minimum": 0.0,
+              "maximum": 5.0
+            },
+            "ampBase": {
+              "type": "number",
+              "description": "Base amplitude of oscillation.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "ampModDepth": {
+              "type": "number",
+              "description": "Amplitude modulation depth from invariants.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          },
+          "required": [
+            "familyCode",
+            "baseFreqHz",
+            "freqModDepth",
+            "ampBase",
+            "ampModDepth"
+          ]
+        }
+      ]
+    },
+    "safety": {
+      "type": "object",
+      "description": "Safety envelope and velocity limits used by Rust and Kotlin analysis tools.",
+      "additionalProperties": false,
+      "required": [
+        "detCeilingScale",
+        "outputMin",
+        "outputMax",
+        "maxDeltaPerSecond",
+        "lipschitzEstimate"
+      ],
+      "properties": {
+        "detCeilingScale": {
+          "type": "number",
+          "description": "Scaling factor applied to DET when computing hard ceilings.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "outputMin": {
+          "type": "number",
+          "description": "Minimum allowed RTPC value after mapping and clamping.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "outputMax": {
+          "type": "number",
+          "description": "Maximum allowed RTPC value after mapping and clamping.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxDeltaPerSecond": {
+          "type": "number",
+          "description": "Maximum allowed change in RTPC value per second to bound |dp/dt|.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "lipschitzEstimate": {
+          "type": "number",
+          "description": "Conservative estimate of the mapping's Lipschitz constant, used by CI to validate stability.",
+          "minimum": 0.0,
+          "maximum": 100.0
+        }
+      }
+    },
+    "telemetryHints": {
+      "type": "object",
+      "description": "Hints for telemetry logging and experiment analysis.",
+      "additionalProperties": false,
+      "properties": {
+        "logPerFrame": {
+          "type": "boolean",
+          "description": "If true, mapping decisions for this family should be logged every frame."
+        },
+        "logAggregate": {
+          "type": "boolean",
+          "description": "If true, aggregate statistics should be emitted in summary telemetry."
+        },
+        "featureFlags": {
+          "type": "array",
+          "description": "Optional flags used by Kotlin analysis to group mapping families.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
