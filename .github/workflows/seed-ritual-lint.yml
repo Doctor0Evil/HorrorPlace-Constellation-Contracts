@@ -1,0 +1,67 @@
+name: Seed-Ritual Lint
+
+on:
+  pull_request:
+    paths:
+      - "schemas/seed-ritual/**"
+      - "schemas/seed/**"
+      - "schemas/seedcontractv1.json"
+      - "schemas/seed-ritual-contract-v1.json"
+      - "tools/seed_ritual_lint.rs"
+      - "tools/Cargo.toml"
+  push:
+    branches:
+      - main
+    paths:
+      - "schemas/seed-ritual/**"
+      - "schemas/seed/**"
+      - "schemas/seedcontractv1.json"
+      - "schemas/seed-ritual-contract-v1.json"
+      - "tools/seed_ritual_lint.rs"
+      - "tools/Cargo.toml"
+
+jobs:
+  seed-ritual-lint:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/target
+          key: ${{ runner.os }}-seed-ritual-tools-${{ hashFiles('tools/Cargo.toml', 'tools/seed_ritual_lint.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-seed-ritual-tools-
+
+      - name: Build seed_ritual_lint
+        run: cargo build --bin seed_ritual_lint --release
+
+      - name: Run seed_ritual_lint
+        run: |
+          RITUALS_DIR="../schemas/seed-ritual"
+          SEEDS_DIR="../schemas/seed"
+
+          if [ ! -d "$RITUALS_DIR" ]; then
+            echo "No Seed-Ritual directory found at $RITUALS_DIR, skipping."
+            exit 0
+          fi
+
+          if [ ! -d "$SEEDS_DIR" ]; then
+            echo "No Seed directory found at $SEEDS_DIR, skipping."
+            exit 0
+          fi
+
+          ./target/release/seed_ritual_lint "$RITUALS_DIR" "$SEEDS_DIR"
