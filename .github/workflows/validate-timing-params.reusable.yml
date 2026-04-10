@@ -1,0 +1,43 @@
+name: Validate Timing Formula Parameters (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      mechanic_contract_glob:
+        description: "Glob pattern for mechanic contract JSON files"
+        required: true
+        type: string
+
+jobs:
+  validate-timing-params:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Download timing params schema
+        uses: actions/checkout@v4
+        with:
+          repository: Doctor0Evil/HorrorPlace-Constellation-Contracts
+          path: constellation-contracts
+
+      - name: Validate mechanic contracts
+        run: |
+          SCHEMA="constellation-contracts/schemas/mechanic_contract_timing_params_v1.json"
+          for f in $(git ls-files "${{ inputs.mechanic_contract_glob }}"); do
+            python -c "
+import json, sys
+from jsonschema import validate
+with open('$SCHEMA') as s, open('$f') as c:
+    validate(instance=json.load(c)['systemicTiming'], schema=json.load(s))
+print(f'OK: $f timing params valid')
+"
+          done
