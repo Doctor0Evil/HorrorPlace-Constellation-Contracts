@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/audio/audio_failure_atlas_v1.json",
+  "title": "AudioFailureAtlasV1",
+  "description": "Catalog of recurring audio failure patterns mapped to invariant/metric signatures and linter expectations.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "atlasId",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "audio_failure_atlas_v1"
+    },
+    "atlasId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_.:-]+$"
+    },
+    "label": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/failureEntry"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "band01": {
+      "type": "object",
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "failureEntry": {
+      "type": "object",
+      "required": [
+        "failureId",
+        "label",
+        "category",
+        "tileRoles",
+        "invariantSignature",
+        "metricSignature",
+        "symptoms",
+        "linterHints",
+        "contractHints"
+      ],
+      "properties": {
+        "failureId": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.:-]+$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "flat_corridor",
+            "lifeless_firefight",
+            "jump_scare_spam",
+            "safe_spawn",
+            "mismatched_horror",
+            "other"
+          ]
+        },
+        "tileRoles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "corridor",
+              "liminal",
+              "sanctuary",
+              "battlefront",
+              "spawn",
+              "vista",
+              "hub",
+              "other"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "invariantSignature": {
+          "type": "object",
+          "description": "Typical invariant pattern when this failure occurs.",
+          "properties": {
+            "CIC": { "$ref": "#/definitions/band01" },
+            "AOS": { "$ref": "#/definitions/band01" },
+            "MDI": { "$ref": "#/definitions/band01" },
+            "RRM": { "$ref": "#/definitions/band01" },
+            "HVF_mag": { "$ref": "#/definitions/band01" },
+            "LSG": { "$ref": "#/definitions/band01" },
+            "DET": { "$ref": "#/definitions/band01" },
+            "SHCI": { "$ref": "#/definitions/band01" }
+          },
+          "additionalProperties": false
+        },
+        "metricSignature": {
+          "type": "object",
+          "description": "Typical metric anomalies when this failure occurs.",
+          "properties": {
+            "UEC": { "$ref": "#/definitions/band01" },
+            "EMD": { "$ref": "#/definitions/band01" },
+            "STCI": { "$ref": "#/definitions/band01" },
+            "CDL": { "$ref": "#/definitions/band01" },
+            "ARR": { "$ref": "#/definitions/band01" }
+          },
+          "additionalProperties": false
+        },
+        "symptoms": {
+          "type": "object",
+          "properties": {
+            "qualitative": {
+              "type": "string",
+              "description": "Human-readable description of how this failure feels."
+            },
+            "exampleClipRef": {
+              "type": "string",
+              "description": "Optional reference to an example clip or asset id."
+            }
+          },
+          "additionalProperties": false
+        },
+        "linterHints": {
+          "type": "object",
+          "description": "What a linter should look for in NDJSON to catch this pattern.",
+          "properties": {
+            "tilePredicate": {
+              "type": "string",
+              "description": "Free-form description of tile filters (e.g., tileRole == 'corridor')."
+            },
+            "invariantChecks": {
+              "type": "array",
+              "description": "Human/machine hints such as 'CIC < 0.3 and LSG < 0.2'.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metricChecks": {
+              "type": "array",
+              "description": "Hints such as 'STCI ~ 0.0 over segment, ARR < 0.3'.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "eventRateChecks": {
+              "type": "array",
+              "description": "Hints about scare/combat frequency (e.g., 'scareRate > 6 per minute').",
+              "items": {
+                "type": "string"
+              }
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "warning",
+                "error",
+                "fatal"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "contractHints": {
+          "type": "object",
+          "description": "Recommended mood/style contract changes to avoid this failure.",
+          "properties": {
+            "moodContractIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "styleIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "recommendedChanges": {
+              "type": "array",
+              "description": "Short descriptions of the desired adjustments.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
