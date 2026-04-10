@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/execution-string-aggregate.v1.json",
+  "title": "Execution String Aggregate Telemetry v1",
+  "description": "Aggregation schema summarizing execution_string (instant-fail death cinematic) behavior per executionId and executionKind.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "recordedAt",
+    "schemaRef",
+    "executionId",
+    "executionKind",
+    "tier",
+    "counters",
+    "safety",
+    "scores",
+    "deltas",
+    "rwfHint"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for this aggregate record."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "execution-string-aggregate.v1",
+      "description": "Logical schema reference for routing and validation."
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this aggregate was computed."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Stable identifier of the execution_string cinematic or pattern summarized by this aggregate."
+    },
+    "executionKind": {
+      "type": "string",
+      "description": "High-level category of the execution, matching execution-string-run.v1.",
+      "enum": [
+        "visceral",
+        "intimate",
+        "distant",
+        "environmental",
+        "systemic",
+        "other"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "description": "Content tier for this aggregate, aligned with spine tiers.",
+      "enum": ["Tier1Standard", "Tier2Internal", "Tier3Lab", "Research"]
+    },
+    "counters": {
+      "type": "object",
+      "description": "Attempt and gate counters over all runs in this group.",
+      "additionalProperties": false,
+      "required": ["attempts", "allowed", "downgraded"],
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of execution_string runs considered."
+        },
+        "allowed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where the full execution_string cinematic was allowed."
+        },
+        "downgraded": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where the gate downgraded to a partial or non-lethal alternative."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "description": "Aggregate counts of safety-related violations for this execution.",
+      "additionalProperties": false,
+      "required": ["detOverflows", "cdlOverflows", "arrTooLow"],
+      "properties": {
+        "detOverflows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where DET exceeded its configured cap during the event window."
+        },
+        "cdlOverflows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where CDL exceeded its configured cap during the event window."
+        },
+        "arrTooLow": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of runs where ARR after the event fell below the configured floor."
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "description": "Aggregate localScore statistics for this execution.",
+      "additionalProperties": false,
+      "required": ["avgLocal", "p25Local", "p75Local"],
+      "properties": {
+        "avgLocal": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average quality.localScore across all runs."
+        },
+        "p25Local": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "25th percentile of localScore (lower-quartile quality)."
+        },
+        "p75Local": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "75th percentile of localScore (upper-quartile quality)."
+        }
+      }
+    },
+    "deltas": {
+      "type": "object",
+      "description": "Average realized metric deltas for this execution group.",
+      "additionalProperties": false,
+      "required": ["avgDeltaUEC", "avgDeltaARR", "avgDeltaDET"],
+      "properties": {
+        "avgDeltaUEC": {
+          "type": "number",
+          "description": "Average change in UEC across runs (UEC_after - UEC_before)."
+        },
+        "avgDeltaARR": {
+          "type": "number",
+          "description": "Average change in ARR across runs (ARR_after - ARR_before)."
+        },
+        "avgDeltaDET": {
+          "type": "number",
+          "description": "Average DET contribution estimate for this execution, if logged."
+        }
+      }
+    },
+    "rwfHint": {
+      "type": "object",
+      "description": "Reliability hint synthesized from scores and safety behavior.",
+      "additionalProperties": false,
+      "required": ["rwfScore", "status"],
+      "properties": {
+        "rwfScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Reliability weight factor 0–1 for this execution."
+        },
+        "status": {
+          "type": "string",
+          "description": "High-level reliability status tag.",
+          "enum": ["experimental", "provisional", "stable", "quarantine"]
+        }
+      }
+    },
+    "telemetryWindow": {
+      "type": "object",
+      "description": "Optional window metadata describing which runs were included.",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "from": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Inclusive start of the aggregation window."
+        },
+        "to": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Inclusive end of the aggregation window."
+        },
+        "runCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of execution-string-run records actually ingested."
+        }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "description": "Optional linkage back to design-time contracts or bundles.",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "seedId": {
+          "type": ["string", "null"],
+          "description": "Seed or event identifier this execution is primarily associated with."
+        },
+        "schemaRef": {
+          "type": ["string", "null"],
+          "description": "Canonical schemaRef of the originating contract, if known."
+        }
+      }
+    },
+    "extras": {
+      "type": "object",
+      "description": "Extension point for lab or project-specific fields. Tier-1 consumers must ignore.",
+      "additionalProperties": true
+    }
+  }
+}
