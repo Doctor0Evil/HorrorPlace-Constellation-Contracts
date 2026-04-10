@@ -1,0 +1,182 @@
+{
+  "$id": "schema.HorrorPlace-Constellation-Contracts.telemetry.systemicTimingRun.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Systemic Timing Run Frame v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "version",
+    "runId",
+    "playerId",
+    "regionId",
+    "tileId",
+    "timestamp",
+    "mechanicId",
+    "mechanicCategory",
+    "helperKind",
+    "invariants",
+    "metricsBefore",
+    "metricsAfter",
+    "decision",
+    "outcome"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "telemetry.systemicTimingRun.v1"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+
+    "runId":    { "type": "string", "minLength": 1 },
+    "playerId": { "type": "string", "minLength": 1 },
+    "regionId": { "type": "string", "minLength": 1 },
+    "tileId":   { "type": "string", "minLength": 1 },
+
+    "timestamp": {
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "number" }
+      ]
+    },
+
+    "mechanicId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mechanicCategory": {
+      "type": "string",
+      "enum": ["SystemicTiming", "Perceptual", "Other"]
+    },
+    "helperKind": {
+      "type": "string",
+      "enum": ["CoyoteTime", "RuleOfThree", "AdaptiveDamage"]
+    },
+
+    "deathIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "baseDamage": {
+      "type": "number"
+    },
+
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "DET", "HVF", "LSG", "SHCI", "RWF"],
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RWF": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "metricsBefore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "ARR", "EMD", "STCI", "CDL"],
+      "properties": {
+        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD":  { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "metricsAfter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "ARR", "EMD", "STCI", "CDL"],
+      "properties": {
+        "UEC":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD":  { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL":  { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coyoteTimeGranted": {
+          "type": "boolean"
+        },
+        "coyoteTimeWindowSeconds": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 2.0
+        },
+        "coyoteTimeReason": {
+          "type": "string",
+          "enum": ["det_high", "arr_low", "uec_soft", "none"]
+        },
+
+        "ruleOfThreeDowngrade": {
+          "type": "boolean"
+        },
+        "ruleOfThreeSuppression": {
+          "type": "boolean"
+        },
+        "ruleOfThreeReason": {
+          "type": "string",
+          "enum": ["threshold_hit", "segment_exhausted", "none"]
+        },
+
+        "adaptiveDamageMultiplier": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 5.0
+        },
+        "adaptiveDamageScaled": {
+          "type": "number"
+        },
+        "adaptiveDamageClampReason": {
+          "type": "string",
+          "enum": ["det_cap", "arr_floor", "uec_soft", "none"]
+        }
+      }
+    },
+
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcomeKind", "abandonmentFlag"],
+      "properties": {
+        "outcomeKind": {
+          "type": "string",
+          "enum": [
+            "instant_death",
+            "near_lethal_grab",
+            "escaped_with_coyote",
+            "checkpoint_spawned",
+            "other"
+          ]
+        },
+        "abandonmentFlag": {
+          "type": "boolean"
+        }
+      }
+    },
+
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "familyCode": { "type": "string" },
+        "variantId":  { "type": "string" },
+        "policyId":   { "type": "string" }
+      }
+    }
+  }
+}
