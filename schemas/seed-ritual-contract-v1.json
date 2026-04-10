@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema.HorrorPlace-Constellation-Contracts.seed-ritual-contract-v1.json",
+  "title": "Seed Ritual Contract v1",
+  "description": "Tier-1 policy band for Seeds, defining minimum entertainment bands, allowed gore/violence assembly styles, and per-stage audiovisual intensity envelopes. A Seed is only valid under this ritual if its simulated/projected behavior satisfies all ritual floors and caps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schema_ref",
+    "ritual_profile",
+    "applies_to",
+    "min_entertainment_bands",
+    "gore_assembly_profile",
+    "min_intensity_envelope",
+    "tier",
+    "safety_tier"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this Seed-Ritual contract.",
+      "pattern": "^[a-z0-9_.-]{8,64}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this Seed-Ritual contract.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+    },
+    "schema_ref": {
+      "type": "string",
+      "description": "Canonical schema reference for this Seed-Ritual contract.",
+      "const": "schema.HorrorPlace-Constellation-Contracts.seed-ritual-contract-v1.json"
+    },
+    "tier": {
+      "type": "string",
+      "description": "Constellation visibility tier for this ritual.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ]
+    },
+    "safety_tier": {
+      "type": "string",
+      "description": "Safety tier this ritual is intended for.",
+      "enum": [
+        "standard",
+        "mature",
+        "research"
+      ]
+    },
+    "deadledger_ref": {
+      "type": ["string", "null"],
+      "description": "Optional Dead-Ledger attestation reference for high-intensity or gated rituals."
+    },
+
+    "ritual_profile": {
+      "type": "object",
+      "description": "Named ritual profile describing qualitative pacing and use (e.g., Slow-burn Threshold Corridor, Confrontation Tile Cluster).",
+      "additionalProperties": false,
+      "required": ["name", "kind", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "kind": {
+          "type": "string",
+          "description": "Ritual profile kind, used by Directors and PCG.",
+          "enum": [
+            "SlowBurnThresholdCorridor",
+            "ConfrontationTileCluster",
+            "InvestigationSpiral",
+            "EvidenceDrift",
+            "AftermathEcho",
+            "ResidualSeep",
+            "Custom"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "target_stage": {
+          "type": "string",
+          "description": "Primary stage this ritual is designed to emphasize.",
+          "enum": [
+            "stage1_probe",
+            "stage2_evidence",
+            "stage3_confrontation",
+            "stage4_aftermath",
+            "stage5_residual"
+          ]
+        }
+      }
+    },
+
+    "applies_to": {
+      "type": "object",
+      "description": "Selectors that determine which Seeds this ritual attaches to.",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "How this ritual binds to Seeds.",
+          "enum": [
+            "by_seed_ids",
+            "by_seed_tags",
+            "by_region_ids",
+            "by_policy_profile"
+          ]
+        },
+        "seed_ids": {
+          "type": "array",
+          "description": "Explicit Seed IDs to which this ritual applies.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]{8,64}$"
+          }
+        },
+        "seed_tags": {
+          "type": "array",
+          "description": "Seed tags (stage/biome/persona/etc.) this ritual should attach to.",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          }
+        },
+        "region_ids": {
+          "type": "array",
+          "description": "Region IDs whose Seeds are subject to this ritual.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]{8,64}$"
+          }
+        },
+        "policy_profile_id": {
+          "type": "string",
+          "description": "Optional policy envelope ID; Seeds bound to this policy are governed by this ritual.",
+          "maxLength": 128
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "by_seed_ids" } } },
+          "then": { "required": ["seed_ids"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "by_seed_tags" } } },
+          "then": { "required": ["seed_tags"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "by_region_ids" } } },
+          "then": { "required": ["region_ids"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "by_policy_profile" } } },
+          "then": { "required": ["policy_profile_id"] }
+        }
+      ]
+    },
+
+    "min_entertainment_bands": {
+      "type": "object",
+      "description": "Minimum entertainment bands this ritual requires for Seeds evaluated under it. The runtime linter must ensure that projected/realized Seed metrics do not fall below these floors.",
+      "additionalProperties": false,
+      "required": [
+        "UEC_min",
+        "EMD_min",
+        "STCI_min",
+        "CDL_min",
+        "ARR_min"
+      ],
+      "properties": {
+        "UEC_min": {
+          "type": "number",
+          "description": "Minimum Uncertainty Engagement Coefficient.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "EMD_min": {
+          "type": "number",
+          "description": "Minimum Evidential Mystery Density.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "STCI_min": {
+          "type": "number",
+          "description": "Minimum Safe-Threat Contrast Index.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "CDL_min": {
+          "type": "number",
+          "description": "Minimum Cognitive Dissonance Load.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "ARR_min": {
+          "type": "number",
+          "description": "Minimum Ambiguous Resolution Ratio.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "UEC_max": {
+          "type": "number",
+          "description": "Optional ceiling for UEC under this ritual, if needed.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "EMD_max": {
+          "type": "number",
+          "description": "Optional ceiling for EMD.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "STCI_max": {
+          "type": "number",
+          "description": "Optional ceiling for STCI.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "CDL_max": {
+          "type": "number",
+          "description": "Optional ceiling for CDL.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "ARR_max": {
+          "type": "number",
+          "description": "Optional ceiling for ARR.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "gore_assembly_profile": {
+      "type": "object",
+      "description": "Policy over gore/violence assembly; references implication-only gore assembly styles and GXI ranges, never explicit content.",
+      "additionalProperties": false,
+      "required": [
+        "allowed_style_ids",
+        "forbidden_style_ids",
+        "max_gxi_by_consent_tier"
+      ],
+      "properties": {
+        "allowed_style_ids": {
+          "type": "array",
+          "description": "Allowed goreassemblystyle identifiers (e.g., oxidized-fluid residue only, no extreme occlusion states).",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "forbidden_style_ids": {
+          "type": "array",
+          "description": "Explicitly forbidden goreassemblystyle identifiers for this ritual.",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "max_gxi_by_consent_tier": {
+          "type": "object",
+          "description": "Maximum GXI values allowed per consent tier, enforced by governance modules.",
+          "additionalProperties": false,
+          "required": [
+            "standard",
+            "mature",
+            "research"
+          ],
+          "properties": {
+            "standard": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "mature": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "research": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "requires_implication_only": {
+          "type": "boolean",
+          "description": "If true, only implication-only styles may be used under this ritual (no explicit anatomical focus).",
+          "default": true
+        }
+      }
+    },
+
+    "min_intensity_envelope": {
+      "type": "object",
+      "description": "Audiovisual intensity envelopes per stage that runtime must honor when instantiating events from Seeds under this ritual.",
+      "additionalProperties": false,
+      "required": [
+        "stage1_probe",
+        "stage2_evidence",
+        "stage3_confrontation",
+        "stage4_aftermath",
+        "stage5_residual"
+      ],
+      "properties": {
+        "stage1_probe": { "$ref": "#/$defs/stage_envelope" },
+        "stage2_evidence": { "$ref": "#/$defs/stage_envelope" },
+        "stage3_confrontation": { "$ref": "#/$defs/stage_envelope" },
+        "stage4_aftermath": { "$ref": "#/$defs/stage_envelope" },
+        "stage5_residual": { "$ref": "#/$defs/stage_envelope" }
+      }
+    },
+
+    "runtime_hints": {
+      "type": "object",
+      "description": "Optional hints for Director/PCG modules on how to use this ritual.",
+      "additionalProperties": false,
+      "properties": {
+        "preferred_modules": {
+          "type": "array",
+          "description": "Modules expected to enforce this ritual (e.g., SeedGeneratorModule10, DirectorCore).",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "allow_downtier_if_unmet": {
+          "type": "boolean",
+          "description": "If false, Seeds that cannot meet ritual floors must be rejected, not softened.",
+          "default": false
+        },
+        "telemetry_profile_id": {
+          "type": "string",
+          "description": "Optional telemetry/entertainment-metrics profile used to validate ritual performance.",
+          "maxLength": 128
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "stage_envelope": {
+      "type": "object",
+      "description": "Coarse audiovisual intensity bands and metric spikes for a given stage.",
+      "additionalProperties": false,
+      "required": [
+        "audio_min",
+        "audio_max",
+        "visual_min",
+        "visual_max",
+        "UEC_min",
+        "EMD_min",
+        "STCI_min",
+        "CDL_min",
+        "ARR_min"
+      ],
+      "properties": {
+        "audio_min": {
+          "type": "number",
+          "description": "Minimum normalized audio intensity (e.g., presence of non-zero rumble/hiss).",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "audio_max": {
+          "type": "number",
+          "description": "Maximum normalized audio intensity.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "visual_min": {
+          "type": "number",
+          "description": "Minimum normalized visual intensity (e.g., shader distortion, lighting shifts).",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "visual_max": {
+          "type": "number",
+          "description": "Maximum normalized visual intensity.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+
+        "UEC_min": {
+          "type": "number",
+          "description": "Minimum UEC contribution for Seeds at this stage under this ritual.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "EMD_min": {
+          "type": "number",
+          "description": "Minimum EMD contribution.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "STCI_min": {
+          "type": "number",
+          "description": "Minimum STCI contribution.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "CDL_min": {
+          "type": "number",
+          "description": "Minimum CDL contribution.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "ARR_min": {
+          "type": "number",
+          "description": "Minimum ARR contribution (ambiguity floor) at this stage.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+
+        "DET_cap": {
+          "type": "number",
+          "description": "Maximum DET the ritual will permit for this stage (exposure cap).",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "notes": {
+          "type": "string",
+          "description": "Freeform notes for authors and Directors.",
+          "maxLength": 1024
+        }
+      }
+    }
+  }
+}
