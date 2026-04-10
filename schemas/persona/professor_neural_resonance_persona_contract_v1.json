@@ -1,0 +1,339 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "professor_neural_resonance_persona_contract_v1",
+  "description": "Persona contract slice for The Professor as a Neural-Resonance BCI→audio anchor, extending personacontractv1 with invariant bands, metric targets, and BCI/audio specialization fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "schemaVersion",
+    "personaId",
+    "tier",
+    "archetype",
+    "audioSpecialization",
+    "invariantBands",
+    "metricTargets",
+    "stateSpace",
+    "bciGuardrails",
+    "permittedMappingProfiles",
+    "deadledgerRef",
+    "registryRef"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schemas/persona/professor_neural_resonance_persona_contract_v1.json"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "personaId": {
+      "type": "string",
+      "const": "professor_neural_resonance_v1"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["mature", "research"]
+    },
+    "archetype": {
+      "type": "string",
+      "enum": ["Witness", "Echo", "Professor-Neural-Resonance"]
+    },
+    "audioSpecialization": {
+      "type": "boolean"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "invariantBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "RRM", "MDI", "SHCI"],
+      "properties": {
+        "CIC": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "AOS": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "RRM": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "MDI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "SHCI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "metricTargets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "stateSpace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modes"],
+      "properties": {
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["modeId", "kind", "metricTargets"],
+            "properties": {
+              "modeId": {
+                "type": "string",
+                "pattern": "^professor_(voice|environmental)_v1$"
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["narrative_voice", "environmental_agent"]
+              },
+              "metricTargets": {
+                "$ref": "#/properties/metricTargets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "bciGuardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxFearSlopePerSecond",
+        "maxFearDeltaPerMinute",
+        "maxStressSlopePerSecond",
+        "noEscalationWhenOverload",
+        "noEscalationStressThreshold",
+        "labOnly",
+        "allowedBciFields"
+      ],
+      "properties": {
+        "maxFearSlopePerSecond": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxFearDeltaPerMinute": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxStressSlopePerSecond": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "noEscalationWhenOverload": {
+          "type": "boolean"
+        },
+        "noEscalationStressThreshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "labOnly": {
+          "type": "boolean"
+        },
+        "allowedBciFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "attentionBand",
+              "attentionFocus",
+              "stressScore",
+              "fearIndex",
+              "startleSpikeMs",
+              "visualOverloadScore",
+              "heartSyncRatio",
+              "breathPhase",
+              "overloadFlag"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "permittedMappingProfiles": {
+      "type": "array",
+      "description": "List of mappingProfileIds and familyCodes The Professor is allowed to request.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mappingProfileId",
+          "familyCodes",
+          "rtpcTargets",
+          "safetyEnvelope"
+        ],
+        "properties": {
+          "mappingProfileId": {
+            "type": "string"
+          },
+          "familyCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^0x[A-F0-9]{4,8}$"
+            },
+            "uniqueItems": true
+          },
+          "rtpcTargets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "dlpressureLf",
+                "dlwhisperSend",
+                "dlstereoWidth",
+                "dlnoiseGrain",
+                "dlpulseDepth"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "safetyEnvelope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "outputMin",
+              "outputMax",
+              "maxOutputChangePerSecond",
+              "detScaledCeiling"
+            ],
+            "properties": {
+              "outputMin": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "outputMax": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "maxOutputChangePerSecond": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 5.0
+              },
+              "detScaledCeiling": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "deadledgerRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attestationProfileId"],
+      "properties": {
+        "attestationProfileId": {
+          "type": "string"
+        }
+      }
+    },
+    "registryRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registryPath", "entryId"],
+      "properties": {
+        "registryPath": {
+          "type": "string"
+        },
+        "entryId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
