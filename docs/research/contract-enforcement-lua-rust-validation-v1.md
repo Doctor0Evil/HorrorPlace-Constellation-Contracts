@@ -1,360 +1,180 @@
-# Research Documentation: Contract Enforcement & Lua/Rust Mechanic Validation in Horror$Place
+# Contract Enforcement & Lua/Rust Mechanic Validation in Horror$Place
 
-**Target Repository:** `HorrorPlace-Constellation-Contracts`  
-**Target Path:** `docs/research/contract-enforcement-lua-rust-validation-v1.md`  
 **Schema Reference:** `schema://HorrorPlace-Constellation-Contracts/research_doc_v1.json`  
 **Tier:** `T1_public`  
-**Invariants Used:** `[CIC, DET, UEC, ARR, SHCI, RWF]`  
-**Metrics Used:** `[UEC, ARR, CDL, STCI, EMD]`
+**Invariants Used:** `CIC, DET, UEC, ARR, SHCI, RWF`  
+**Metrics Used:** `UEC, ARR, CDL, STCI, EMD`
 
----
+This document maps the existing contract spine and CHATDIRECTOR design into concrete next-steps for enforcing invariant-driven mechanics across Lua and Rust, and for improving code/document quality as a non‑negotiable property of the VM‑constellation. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
 
-## 1. Inventory of Existing Research Objects (Category: Contract Enforcement & Lua/Rust Validation)
+***
 
-The following research objects are already defined across the Horror$Place VM-constellation and directly support the validation of systemic timing mechanics via invariant-driven contracts.
+## 1. Next-Step Research Directions
 
-### 1.1. Schema & Contract Objects
+This section extends the inventory you sketched into clear research paths that directly tighten contract enforcement, systemic timing, and cross-language validation.
 
-| Object ID | Repository | Path | Role in Validation |
-|-----------|-----------|------|-----------------|
-| `invariants_v1.json` | `Horror.Place` | `schemas/invariants_v1.json` | Canonical definitions of CIC, DET, UEC, ARR with ranges and preconditions; used by CI to reject out-of-bounds configs. |
-| `entertainment_metrics_v1.json` | `Horror.Place` | `schemas/entertainment_metrics_v1.json` | Defines UEC, ARR, CDL, STCI, EMD bands; telemetry schemas reference these for before/after logging. |
-| `eventcontract_v1.json` | `Horror.Place` | `schemas/eventcontract_v1.json` | Binds events to invariant/metric targets; Atrocity-Seeds mirrors this for seed validation. |
-| `regioncontract_v1.json` | `Horror.Place` | `schemas/regioncontract_v1.json` | Defines region-level invariant bands (CIC, LSG, SHCI) that gate lethal mechanics. |
-| `policyEnvelope_v1.json` | `HorrorPlace-Constellation-Contracts` | `schemas/policyEnvelope_v1.json` | Formalizes player-envelope inequalities (DET caps, ARR floors) used for runtime gating. |
-| `ai_file_envelope_v1.json` | `HorrorPlace-Constellation-Contracts` | `schemas/ai_file_envelope_v1.json` | Ensures AI-generated artifacts declare target repo/path/schema before CI validation. |
-| `execution-string-run.v1.json` | `HorrorPlace-Constellation-Contracts` | `schemas/telemetry/execution-string-run.v1.json` | Logs individual death events with pre/post invariant/metric snapshots for empirical analysis. |
-| `systemic-timing-run.v1.json` | `HorrorPlace-Constellation-Contracts` | `schemas/telemetry/systemic-timing-run.v1.json` | Logs systemic timing decisions (Coyote Time, Rule of Three, Adaptive Damage) with helper outputs. |
+### 1.1. Unify “narrowing” as a first-class constraint
 
-### 1.2. Implementation Pattern Objects
+You already treat `policyEnvelope → regionContractCard → seedContractCard → styleContract → eventContract` as a parent→child band chain for invariants and metrics. The next step is to make “narrowing” an explicit, shared rule: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
 
-| Object ID | Repository | Path | Role in Validation |
-|-----------|-----------|------|-----------------|
-| `kill_zone.rs` | `HorrorPlace-Codebase-of-Death` | `crates/death_engine/src/systems/kill_zone.rs` | Rust/Bevy ECS system that emits `CinematicDeathPending` without committing health changes. |
-| `cinematic_death.rs` | `HorrorPlace-Codebase-of-Death` | `crates/death_engine/src/systems/cinematic_death.rs` | Handles coyote-time windows and final death commitment; reads `KillZoneTuning` resource. |
-| `horror_invariants_bridge.lua` | `HorrorPlace-Codebase-of-Death` | `lua/horror_invariants_bridge.lua` | Lua layer that queries `H.DET`, `H.ARR`, etc., and pushes tuned parameters to Rust. |
-| `h_kill_cinematic.lua` | `HorrorPlace-Codebase-of-Death` | `engine/runtime/h_kill_cinematic.lua` | Implements Rule of Three and lethal→near-lethal downgrade logic using invariant-aware helpers. |
-| `systemic_timing.lua` | `HorrorPlace-Codebase-of-Death` | `engine/systemic_timing.lua` | Canonical Lua helpers: `CoyoteTime_maybe_grant`, `RuleOfThree_maybe_downgrade`, `AdaptiveDamage_scale`. |
+- Add normalized `invariants` and `metricTargets` blocks with `min`/`max` (and optional `target`) to every contract schema in the constellation, including `styleContract`, `eventContract`, and `sequence-seed-v1`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
+- Require that each card carries a `parentRef` (or equivalent) so validators can walk the chain and enforce interval inclusion for each field: child bands must be subsets of parent bands for every invariant and metric, with special rules like “DET may not widen at Tier 1”. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
 
-### 1.3. Telemetry & Analysis Objects
+Research focus: formalize narrowing as a pure band‑inclusion check that CHATDIRECTOR and Lua linters can share, and treat any widening or illegal drift as a hard error that blocks merges. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
 
-| Object ID | Repository | Path | Role in Validation |
-|-----------|-----------|------|-----------------|
-| `telemetry_metrics.lua` | `HorrorPlace-Codebase-of-Death` | `engine/telemetry_metrics.lua` | Exposes `Metrics.getUEC`, `Metrics.getARR` for Lua helpers; ensures metric reads are auditable. |
-| `execution_string_aggregate.lua` | `HorrorPlace-Codebase-of-Death` | `scripts/telemetry/execution_string_aggregate.lua` | Aggregates `execution-string-run.v1` logs to compute per-pattern DET/ARR deltas and skip rates. |
-| `systemic_timing_analysis.ipynb` | `HorrorPlace-Process-Gods-Research` | `notebooks/systemic_timing_analysis_v1.ipynb` | Jupyter notebook for correlating timing-helper decisions with UEC/ARR outcomes across playtests. |
+### 1.2. Systemic timing mechanics as invariant contracts
 
----
+Your systemic timing family (Coyote Time, Rule of Three, Adaptive Damage) already has contract‑like formulas; they now need to be anchored to `CIC, DET, UEC, ARR` and to the timing‑parameter schema you drafted. The research work is: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
 
-## 2. Proof Structures & Verification Hooks
+- Treat timing behavior as a **mechanic contract** with its own schema (`mechanic_contract_timing_params_v1.json`) and invariant preconditions: DET caps, ARR floors, acceptable bands for UEC and CDL. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+- Refactor Lua helpers (e.g., `systemic_timing.lua`) to compute probabilities and multipliers strictly via those formulas, pulling weights and bounds from the timing contract instead of hard‑coding thresholds. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
 
-The Horror$Place architecture embeds multiple layers of formal and empirical verification to ensure contract compliance.
+This makes every lethal or near‑lethal decision a direct function of invariant geometry and metric bands, not code‑local magic numbers.
 
-### 2.1. Static Proofs (Compile-Time / CI)
+### 1.3. Formal verification hooks for timing formulas
 
-| Proof Type | Mechanism | What It Guarantees |
-|------------|-----------|-------------------|
-| **Schema Validation** | JSON Schema validators in CI (`validateinvariants.rs`, `jsonschema` Python lib) | All JSON/NDJSON artifacts conform to canonical field names, types, and ranges; no `additionalProperties`. |
-| **Interval Inclusion** | Invariant enforcement tables in `spine.rs` | Any region/seed config must satisfy `parent_band ⊇ child_band` for CIC, DET, ARR, etc.; prevents "escalation loopholes". |
-| **Envelope Inequality Checks** | `validate_player_envelope.rs` | Player state variables (stamina, sanity, DET exposure) never violate hard caps over a session; runtime gates are mathematically sound. |
-| **Dead-Ledger Attestation** | ZKP verifier registry in `HorrorPlace-Dead-Ledger-Network` | High-intensity seeds (`intensityband ≥ 8`) have cryptographic proof of age-gating and charter compliance before being surfaced. |
+Once timing formulas are schema‑driven, you can pursue formal verification:
 
-### 2.2. Dynamic Proofs (Runtime)
+- Encode the `p_coyote`, `p_downgrade`, and `m_damage` functions in Lean/Coq with the numeric ranges from `invariants_v1` and `mechanic_contract_timing_params_v1` and prove monotonicity and boundedness. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/47393d1a-9dd6-4304-8ff3-df218ee2c665/this-research-focuses-on-compl-E8Y0Lhm_STKi3dQhIJsfSA.md)
+- Use these proofs to generate or verify the Rust implementations that CHATDIRECTOR and engine helpers call, so Lua relies only on functions that are mathematically constrained not to violate DET caps or ARR floors.  
 
-| Proof Type | Mechanism | What It Guarantees |
-|------------|-----------|-------------------|
-| **Borrow-Checker Safety** | Rust ECS + `CinematicDeathPending` marker pattern | No dangling pointers or race conditions when multiple enemies trigger lethal zones; only one final death commit occurs. |
-| **Metric-Aware Gating** | Lua helpers reading `H.DET`, `H.ARR` before deciding lethal vs. near-lethal | Systemic timing decisions are driven by player state, not hardcoded thresholds; prevents "cheap death" frustration. |
-| **Telemetry-Closed Loop** | `execution-string-run.v1` + aggregation notebooks | Empirical evidence that each death cinematic produces intended DET/ARR deltas; enables data-driven tuning. |
-| **Sanctuary Spawning** | Director persona scheduling relief checkpoints when DET/UEC drift exceeds bands | Player vulnerability resets after high-stress segments; prevents endless instant-fail gauntlets. |
+This track reduces the risk of “hidden” over‑punishing mechanics and makes timing behavior auditably safe.
 
-### 2.3. Implied Formal Verification Paths
+### 1.4. Runtime Lua surface as a minimal invariant/meter contract
 
-While not yet fully implemented, the architecture supports these future proof efforts:
+On the Lua side, the existing H. API blueprint and runtime‑surface research call for a minimal, engine‑agnostic contract: `H.CIC`, `H.DET`, `H.metrics`, `H.contract`, `H.Selector`, `Policy.DeadLedger`, etc. A research goal is to: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
 
-1. **Monotonicity Proofs for Timing Formulas**  
-   Encode `p_downgrade(F)` and `p_coyote(DET, ARR)` in a proof assistant (Lean/Coq) to verify:
-   - Higher DET → higher probability of mercy/downgrade.
-   - Outputs always bounded in `[0, 1]` or `[min_multiplier, max_multiplier]`.
+- Finalize a “H.runtime-core-lua-api-minimal-v1” spec that pins function names, argument envelopes, and schema bindings for invariants, metrics, contract lookup, selector decisions, and Dead‑Ledger gating. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
+- Add CI scanners that forbid direct access to raw invariant tables or vault data; all runtime horror logic must flow through H. functions that themselves are backed by JSON Schemas. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
 
-2. **Non-Interference Guarantees**  
-   Prove that systemic timing helpers cannot inadvertently violate DET caps or ARR floors, even under adversarial input sequences.
+This unifies Lua behavior across engines and makes it easier for CHATDIRECTOR and Rust analysis tools to reason about mechanics.
 
-3. **Telemetry Soundness**  
-   Formalize that `execution-string-run.v1` logs are sufficient to reconstruct the causal chain from invariant state → mechanic decision → metric outcome.
+***
 
----
+## 2. Code-Quality Improvements: Rust, Lua, NDJSON
 
-## 3. Next Research Objectives & Mathematical Formulas
+This section outlines the concrete changes that raise code/document quality and link mechanics tightly back to contracts and metrics.
 
-The following objectives advance the validation of Lua/Rust systemic timing patterns, with concrete formulas ready for implementation and empirical testing.
+### 2.1. Rust CHATDIRECTOR validation pipeline
 
-### 3.1. Objective: Formalize Timing Formulas as Tunable Contracts
+The CHATDIRECTOR spec already defines a multi‑layer validation pipeline (schema → phase → invariants/metrics → manifests → envelopes). Code‑quality work in Rust should: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
 
-Replace hardcoded thresholds in Lua helpers with simple, analyzable functions of DET, ARR, UEC.
+- Complete `validate_invariants.rs` with three passes: raw range check vs. the invariant spine; apply all XMIT cross‑metric rules; post‑XMIT re‑check, emitting diagnostics with `interactionEffects` and `fixOrder`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
+- Tighten `validate/mod.rs` so that layer ordering is enforced and short‑circuiting happens early; surfaced diagnostics must be ranked by severity, layer, and fix cost so AI tools know what to fix first. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
 
-#### 3.1.1. Coyote Time Granting Probability
+This turns CHATDIRECTOR into a stable compiler surface that AI‑chat and CI can trust, and gives you consistent, machine‑readable error codes for every numeric violation.
 
-$$
-p_{\text{coyote}} = \sigma\left(w_1 \cdot \frac{\text{DET} - \text{DET}_{\text{min}}}{\text{DET}_{\text{range}}} + w_2 \cdot \left(1 - \frac{\text{ARR} - \text{ARR}_{\text{min}}}{\text{ARR}_{\text{range}}}\right) - T\right)
-$$
+### 2.2. Rust narrowing validator and narrowing telemetry
 
-- $\sigma(x) = \frac{1}{1 + e^{-x}}$ (sigmoid for smooth probability mapping)
-- $\text{DET}_{\text{range}} = \text{DET}_{\text{max}} - \text{DET}_{\text{min}}$ (from spine bands)
-- $w_1, w_2, T$: tunable weights/threshold stored in mechanic contracts
-- **Guarantee**: $p_{\text{coyote}} \in [0, 1]$; monotone increasing in DET, decreasing in ARR
+To make narrowing operational:
 
-#### 3.1.2. Rule of Three Downgrade Probability
-
-$$
-p_{\text{downgrade}} = \sigma\left(-a_1 \cdot \frac{\text{DET}}{\text{DET}_{\text{cap}}} + a_2 \cdot \text{UEC} - a_3 \cdot \left(1 - \frac{\text{ARR}}{\text{ARR}_{\text{floor}}}\right) + a_4 \cdot \frac{\text{deathCount}}{\text{maxAttempts}} - B\right)
-$$
-
-- $\text{DET}_{\text{cap}}$, $\text{ARR}_{\text{floor}}$: hard bounds from player envelope
-- $a_1 \dots a_4, B$: coefficients in mechanic contract
-- **Guarantee**: Downgrade more likely when DET high, ARR low, deathCount high
-
-#### 3.1.3. Adaptive Damage Scaling Multiplier
-
-$$
-m = \text{clip}\left(m_{\text{base}} \cdot \left(1 + \alpha \cdot \frac{\text{DET} - \text{DET}_{\text{base}}}{\text{DET}_{\text{range}}}\right) \cdot \left(1 - \beta \cdot \frac{\text{ARR} - \text{ARR}_{\text{base}}}{\text{ARR}_{\text{range}}}\right), m_{\text{min}}, m_{\text{max}}\right)
-$$
-
-- $\text{clip}(x, a, b) = \max(a, \min(b, x))$
-- $m_{\text{base}}, \alpha, \beta, m_{\text{min}}, m_{\text{max}}$: contract parameters
-- **Guarantee**: Damage scales smoothly with DET/ARR; never exceeds contract bounds
-
-### 3.2. Objective: Implement Formula-Driven Lua Helpers
-
-Refactor `H.Systemic.*` helpers to consume contract parameters and apply the above formulas.
-
-**Target Repository:** `HorrorPlace-Codebase-of-Death`  
-**Target Path:** `engine/systemic_timing.lua`
-
-```lua
--- engine/systemic_timing.lua (formula-driven stub)
-local H = require "engine.horror_invariants"
-local Metrics = require "engine.telemetry_metrics"
-
-local Systemic = {}
-
--- Sigmoid helper
-local function sigmoid(x)
-    return 1 / (1 + math.exp(-x))
-end
-
--- Coyote Time granting probability (Formula 3.1.1)
-function Systemic.CoyoteTime_probability(region_id, player_id, contract)
-    local det = H.DET(region_id, player_id)
-    local arr = Metrics.getARR(region_id, player_id)
-    
-    local det_norm = (det - contract.det_min) / (contract.det_max - contract.det_min)
-    local arr_norm = (arr - contract.arr_min) / (contract.arr_max - contract.arr_min)
-    
-    local x = contract.w1 * det_norm + contract.w2 * (1 - arr_norm) - contract.threshold
-    return sigmoid(x)
-end
-
--- Rule of Three downgrade probability (Formula 3.1.2)
-function Systemic.RuleOfThree_downgrade_probability(region_id, player_id, contract, death_count)
-    local det = H.DET(region_id, player_id)
-    local arr = Metrics.getARR(region_id, player_id)
-    local uec = Metrics.getUEC(region_id, player_id)
-    
-    local det_norm = det / contract.det_cap
-    local arr_norm = arr / contract.arr_floor
-    
-    local x = -contract.a1 * det_norm 
-            + contract.a2 * uec 
-            - contract.a3 * (1 - arr_norm) 
-            + contract.a4 * (death_count / contract.max_attempts) 
-            - contract.bias
-    return sigmoid(x)
-end
-
-return Systemic
-```
-
-### 3.3. Objective: Empirical Validation via Telemetry Aggregation
-
-Use `systemic-timing-run.v1` logs to measure formula effectiveness.
-
-**Target Repository:** `HorrorPlace-Process-Gods-Research`  
-**Target Path:** `notebooks/systemic_timing_formula_validation_v1.ipynb`
-
-```python
-# Pseudocode for aggregation analysis
-import pandas as pd
-import numpy as np
-
-# Load systemic-timing-run.v1 NDJSON
-df = pd.read_json("telemetry/systemic-timing-run.ndjson", lines=True)
-
-# Group by helper_kind and variant_id
-for (helper, variant), group in df.groupby(["helperKind", "variantId"]):
-    # Compute mean delta metrics
-    delta_uec = group["metricsAfter.UEC"] - group["metricsBefore.UEC"]
-    delta_arr = group["metricsAfter.ARR"] - group["metricsBefore.ARR"]
-    
-    # Correlate with formula parameters
-    params = extract_params(variant)  # e.g., w1, w2, T for CoyoteTime
-    print(f"{helper}/{variant}: ΔUEC={delta_uec.mean():.3f}, ΔARR={delta_arr.mean():.3f}")
-    
-    # Flag variants that improve UEC without collapsing ARR
-    if delta_uec.mean() > 0.05 and delta_arr.mean() > -0.1:
-        print(f"  ✓ Candidate for promotion to default")
-```
-
-### 3.4. Objective: Formal Verification of Formula Properties
-
-**Target Repository:** `HorrorPlace-Process-Gods-Research`  
-**Target Path:** `formal/timing_formulas_monotonicity.lean`
-
-```lean
--- Lean 4 sketch: monotonicity proof for p_coyote
-import Mathlib.Analysis.SpecialFunctions.Exp
-
-def sigmoid (x : ℝ) : ℝ := 1 / (1 + Real.exp (-x))
-
-theorem sigmoid_monotone : Monotone sigmoid := by
-  -- Proof omitted: derivative positive everywhere
-  sorry
-
-def p_coyote (det arr : ℝ) (w1 w2 T det_min det_max arr_min arr_max : ℝ) : ℝ :=
-  let det_norm := (det - det_min) / (det_max - det_min)
-  let arr_norm := (arr - arr_min) / (arr_max - arr_min)
-  sigmoid (w1 * det_norm + w2 * (1 - arr_norm) - T)
-
-theorem p_coyote_det_monotone (h_w1 : 0 ≤ w1) (h_ranges : det_min < det_max ∧ arr_min < arr_max) :
-  Monotone (fun det => p_coyote det arr w1 w2 T det_min det_max arr_min arr_max) := by
-  -- Follows from sigmoid_monotone and linearity of det_norm
-  sorry
-```
-
----
-
-## 4. Concrete Next-Step Artifacts (GitHub-Ready)
-
-### 4.1. Schema Extension: Timing Formula Parameters
-
-**Target Repository:** `HorrorPlace-Constellation-Contracts`  
-**Target Path:** `schemas/mechanic_contract_timing_params_v1.json`
-
-```json
-{
-  "$id": "schema://HorrorPlace-Constellation-Contracts/mechanic_contract_timing_params_v1.json",
-  "title": "Mechanic Contract Timing Parameters v1",
-  "type": "object",
-  "properties": {
-    "coyoteTime": {
-      "type": "object",
-      "properties": {
-        "w1": { "type": "number", "minimum": 0, "maximum": 10 },
-        "w2": { "type": "number", "minimum": 0, "maximum": 10 },
-        "threshold": { "type": "number" },
-        "det_min": { "type": "number", "minimum": 0, "maximum": 10 },
-        "det_max": { "type": "number", "minimum": 0, "maximum": 10 },
-        "arr_min": { "type": "number", "minimum": 0, "maximum": 1 },
-        "arr_max": { "type": "number", "minimum": 0, "maximum": 1 }
-      },
-      "required": ["w1", "w2", "threshold", "det_min", "det_max", "arr_min", "arr_max"]
-    },
-    "ruleOfThree": {
-      "type": "object",
-      "properties": {
-        "a1": { "type": "number", "minimum": 0 },
-        "a2": { "type": "number", "minimum": 0 },
-        "a3": { "type": "number", "minimum": 0 },
-        "a4": { "type": "number", "minimum": 0 },
-        "bias": { "type": "number" },
-        "det_cap": { "type": "number", "minimum": 0, "maximum": 10 },
-        "arr_floor": { "type": "number", "minimum": 0, "maximum": 1 },
-        "max_attempts": { "type": "integer", "minimum": 1 }
-      },
-      "required": ["a1", "a2", "a3", "a4", "bias", "det_cap", "arr_floor", "max_attempts"]
-    },
-    "adaptiveDamage": {
-      "type": "object",
-      "properties": {
-        "m_base": { "type": "number", "minimum": 0.1 },
-        "alpha": { "type": "number", "minimum": -1, "maximum": 1 },
-        "beta": { "type": "number", "minimum": -1, "maximum": 1 },
-        "m_min": { "type": "number", "minimum": 0 },
-        "m_max": { "type": "number", "minimum": 0 },
-        "det_base": { "type": "number", "minimum": 0, "maximum": 10 },
-        "det_range": { "type": "number", "minimum": 0 },
-        "arr_base": { "type": "number", "minimum": 0, "maximum": 1 },
-        "arr_range": { "type": "number", "minimum": 0 }
-      },
-      "required": ["m_base", "alpha", "beta", "m_min", "m_max", "det_base", "det_range", "arr_base", "arr_range"]
-    }
-  },
-  "required": ["coyoteTime", "ruleOfThree", "adaptiveDamage"]
-}
-```
-
-### 4.2. CI Hook: Validate Formula Parameters
-
-**Target Repository:** `HorrorPlace-Constellation-Contracts`  
-**Target Path:** `.github/workflows/validate-timing-params.reusable.yml`
-
-```yaml
-name: Validate Timing Formula Parameters (Reusable)
-
-on:
-  workflow_call:
-    inputs:
-      mechanic_contract_glob:
-        description: "Glob pattern for mechanic contract JSON files"
-        required: true
-        type: string
-
-jobs:
-  validate-timing-params:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout caller repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install jsonschema
-        run: pip install jsonschema
-
-      - name: Download timing params schema
-        uses: actions/checkout@v4
-        with:
-          repository: Doctor0Evil/HorrorPlace-Constellation-Contracts
-          path: constellation-contracts
-
-      - name: Validate mechanic contracts
-        run: |
-          SCHEMA="constellation-contracts/schemas/mechanic_contract_timing_params_v1.json"
-          for f in $(git ls-files "${{ inputs.mechanic_contract_glob }}"); do
-            python -c "
-import json, sys
-from jsonschema import validate
-with open('$SCHEMA') as s, open('$f') as c:
-    validate(instance=json.load(c)['systemicTiming'], schema=json.load(s))
-print(f'OK: $f timing params valid')
-"
-          done
-```
-
----
-
-## 5. Summary & Progression Path
-
-| Phase | Objective | Deliverable | Success Metric |
-|-------|-----------|-------------|---------------|
-| **Phase 1** | Formalize timing formulas as contract parameters | `mechanic_contract_timing_params_v1.json` + Lua stubs | CI validates all mechanic contracts against new schema |
-| **Phase 2** | Implement formula-driven Lua helpers | `engine/systemic_timing.lua` refactored | Helpers produce bounded, monotone outputs; telemetry logs decisions |
-| **Phase 3** | Empirical validation via telemetry aggregation | `systemic_timing_formula_validation_v1.ipynb` | Identify parameter sets that improve UEC without collapsing ARR |
-| **Phase 4** | Formal verification of formula properties | `timing_formulas_monotonicity.lean` + extracted code | Machine-checked proofs that helpers cannot violate invariant bounds |
-
-This research trajectory ensures that Horror$Place's systemic timing mechanics evolve from ad-hoc thresholds to mathematically grounded, empirically validated, and formally verified contracts—preserving the invariant-driven spine while enabling data-driven refinement of player experience.
-
-<div align="center">⁂</div>
+- Add a dedicated narrowing validator in Rust that walks parent→child chains (`policyEnvelope → region → seed → style → event → sequenceSeed`) and checks interval inclusion for each invariant and metric. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
+- Integrate this into the validation pipeline before manifest routing; the narrowing pass emits diagnostics that include parent and child ranges and any DET/SHCI cross‑field rules that were violated. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
+
+For telemetry, you can log narrowing failures and near‑misses as structured events, then aggregate them to discover which invariants and metrics are most often misused by authors or AI, feeding back into better defaults and hints. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
+
+### 2.3. Lua contract linters as front-line compilers
+
+On the Lua side, you already have sketches for `hpc-contract-cards.lua`, `hpc-spineclient.lua`, and related tools. Code‑quality work should: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
+
+- Turn `hpc-contract-cards.lua` into a proper linter that loads a contract card and its parent, uses the spine clients to fetch canonical bands, applies narrowing rules, and prints a concise band‑check summary. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
+- Wire this linter into pre‑commit hooks and into authoring scripts so AI‑chat and humans see narrowing and DET/ARR band violations before CI runs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/c7e27f07-7ccf-4687-aacf-762464846578/this-research-focuses-on-creat-b.QYu2gNRjaV4nBZ03r88w.md)
+
+These linters give designers fast feedback and reduce noisy CI failures, while also producing simple, engine‑agnostic diagnostics that are easy to learn from.
+
+### 2.4. NDJSON schemas and telemetry shapes
+
+Telemetry specs like `execution-string-run.v1` and `systemic-timing-run.v1` already exist conceptually. Code‑quality improvements for NDJSON include: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+
+- Ensuring telemetry schemas have `additionalProperties: false`, normalized field naming for invariants and metrics, and explicit “before/after” structures to support delta analysis. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+- Adding small Rust/CLI tools that validate NDJSON streams against these schemas (using `jsonschema` or equivalent) and compute aggregate ΔUEC/ΔARR/ΔCDL trajectories for each mechanic and contract. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+
+This makes telemetry more reliable and easier to mine for patterns that indicate where mechanics or contracts need retuning.
+
+***
+
+## 3. Enforcement Logic: Contract → Lua → Rust → Telemetry
+
+This section connects contract definitions to concrete enforcement points in Lua and Rust, and shows how they close the loop via telemetry.
+
+### 3.1. Contract-driven systemic timing in Lua
+
+Given the timing formulas specified in your research, Lua helpers in `engine/systemic_timing.lua` should:
+
+- Treat all timing behavior as pure functions of (region_id, player_id, contract_parameters) plus values read via H. and Metrics (e.g., DET, ARR, UEC). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/6e73e024-f705-41be-9f81-7b91e38d04af/compiled-report-of-todos-missi-lHKqTuY4Q8O.bRJJ6b1a4w.md)
+- Log every helper decision (probabilities, random draws, chosen branches, and resulting damage multipliers) into `systemic-timing-run.v1` records so Rust and notebooks can correlate decisions with entertainment metrics and invariant states. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+
+The key quality rule: helpers must not embed undocumented branches; every path should be explainable in terms of contract parameters and spine ranges.
+
+### 3.2. Rust mechanic kernels and safety envelopes
+
+Rust code in Death‑Engine or Codebase‑of‑Death should encapsulate the heavy math:
+
+- Implement timing and damage kernels that accept DET/ARR/UEC, timing parameters, and RWF/invariant bands, and return probabilities or multipliers that are guaranteed to be in range. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+- Provide a narrow API surface so Lua and ALN nodes can call these kernels without re‑implementing math; CHATDIRECTOR can then verify that mechanics only use approved kernels. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+
+These kernels become the “privileged math” layer: once verified (and eventually formally proved), they are the only place where systemic timing behavior is allowed to change.
+
+### 3.3. Telemetry-driven refinement and contract updates
+
+With telemetry and kernels in place, you can:
+
+- Use Process‑Gods notebooks to analyze how often timing helpers grant mercy, downgrade lethal hits, or scale damage, and how those choices affect UEC/ARR/CDL in different regions and tiers. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/1c3e38a9-000b-42d6-bb93-f005b8cfad2f/1-should-the-research-prioriti-tQnn6sdDQ06XDNmNoVKx.g.md)
+- Drive contract updates through AI authoring envelopes: instead of editing Lua directly, AI or humans propose new timing parameters in `mechanic_contract_timing_params` cards, and CHATDIRECTOR validates and applies them. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
+
+This ensures that tuning remains data‑driven and contract‑first, and avoids code drift between Lua and Rust implementations.
+
+***
+
+## 4. Procedural Continuity & GitHub Sovereignty
+
+This section ties the above work back into the three‑artifact model and procedural enforcement you have already defined, ensuring that evolution is gradual, auditable, and cooperative.
+
+### 4.1. Three-artifact changesets and phase rules
+
+Your “spec → contract card → implementation” model, tied to phases 0–4 and enforced by CHATDIRECTOR, is the core non‑negotiable quality gate. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+
+To keep timing and mechanic validation aligned:
+
+- Treat new or changed timing behavior as requiring:  
+  1) a spec update (e.g., doc and schema for timing parameters),  
+  2) updated mechanic contract cards,  
+  3) implementation changes in Lua/Rust limited to calling the new parameters and kernels.  
+- Make it impossible (via CI and CHATDIRECTOR) to land Lua/Rust changes in timing helpers unless the corresponding timing contract has been updated and passes narrowing and invariant checks. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
+
+This preserves the doctrine that “horror is contracts, not scripts” and keeps repos structurally clean.
+
+### 4.2. CI and ZKP hardening
+
+CI already carries schema validation, invariant range checks, manifest routing, and Dead‑Ledger hooks; your research also outlines a future ZKP layer. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/9dd3b6e0-a7d7-49ae-8802-3518a75916f5/this-research-focuses-on-estab-VDAEK1SMQ6.roD7RcqZ5cw.md)
+
+For timing and enforcement:
+
+- Extend CI workflows so that any mechanic contract or timing parameter file is validated against both the timing schema and the invariant spine, and that any change triggers re‑validation of dependent Lua/Rust files via CHATDIRECTOR. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/950fab44-fe6a-42f4-b0fd-d05d596049d4/suggest-the-next-task-below-in-BvOUg9mxQKKnfOeCjfxKsg.md)
+- Plan ZKP circuits that can prove (off‑chain) that a given set of contracts and mechanic parameters respect invariant ranges and narrowing rules; Dead‑Ledger then stores proofs for high‑impact content or Tier‑3 labs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/47393d1a-9dd6-4304-8ff3-df218ee2c665/this-research-focuses-on-compl-E8Y0Lhm_STKi3dQhIJsfSA.md)
+
+GitHub remains the sovereign host of specs and code, but Dead‑Ledger becomes the place where “contract health” is cryptographically attested.
+
+***
+
+## 5. Personas, Telemetry, and Cross-Repo Reasoning
+
+Finally, this work should support and be supported by the persona roster (e.g., Archivist, Process‑Gods, Custodian) and by cross‑repo reasoning patterns.
+
+### 5.1. Persona contracts and enforcement roles
+
+Persona contracts already define metric levers and invariant reads/writes; you can use them as “enforcement roles” for mechanics. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/eba047d5-9403-4fb9-aa08-986e9576057c/this-research-focuses-on-under-izA4GL6tQVusFoK8IYnvYA.md)
+
+- Assign specific enforcement responsibilities: e.g., Custodian / Ledger‑Warden personas monitor DET caps and RWF thresholds; Archivist tracks UEC/ARR effects of mechanics; Process‑Gods observes CI and failure patterns. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+- Use CHATDIRECTOR and runtime telemetry to give these personas structured inputs (band deltas, narrowing violations, RWF changes) so they can be tuned as “governance agents” rather than just narrative voices. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/eba047d5-9403-4fb9-aa08-986e9576057c/this-research-focuses-on-under-izA4GL6tQVusFoK8IYnvYA.md)
+
+This ties mechanical safety and horror pacing to characters designers can think with, while still being fully machine‑enforced.
+
+### 5.2. Cross-repo loops and YAML workflows
+
+To improve computational reasoning capacity across all 12 repos, you can:
+
+- Add small, schema‑aware workflows that regularly scan all contract and telemetry schemas, building summary indices like `telemetry-metric-coverage.json` and `schema-spine-index.json` that personalities and AI tools can query. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/0bf2c643-438d-462a-ba85-5bd4c572b572/this-research-focuses-on-creat-ljc90qNWSjupFy2TJC2IGQ.md)
+- Use these summaries as the basis for “discovery” APIs (in Rust, Lua, or HTTP) that tell AI‑chat what invariants, metrics, personas, and mechanics exist, and what their allowed bands and relationships are, before any file is generated. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_cdb90fc3-8a6a-46e2-89a6-187b2f85f988/51ebf54f-ab08-48b6-8cf2-ce929db3a87a/the-algorithmic-architecture-o-A7N0Cgi2QFqkAHFdhxjM2g.md)
+
+This reinforces the pattern: **discover → constrain → generate → validate → log → refine**, and gives Archivist/Process‑Gods a much richer context for cooperative learning.
