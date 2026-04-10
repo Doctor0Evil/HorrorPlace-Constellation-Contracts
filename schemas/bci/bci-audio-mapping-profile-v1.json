@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci/bci-audio-mapping-profile-v1.json",
+  "title": "BCI Audio Mapping Profile v1",
+  "description": "Lab-only mapping profile for BCI-derived fields into DeadLantern audio RTPCs with safety envelopes and hex-coded mapping families.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "profileId",
+    "hexFamilyCode",
+    "tier",
+    "rtpcTargets",
+    "inputs",
+    "kernels",
+    "safetyEnvelope"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schemas/bci/bci-audio-mapping-profile-v1.json"
+    },
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_.:-]+$",
+      "description": "Opaque, lab-only mapping profile identifier."
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["standard", "mature", "research"]
+    },
+    "hexFamilyCode": {
+      "type": "string",
+      "enum": ["0xPKLIN", "0xPKSIG", "0xPKHYS", "0xPKGEN"],
+      "description": "Mapping family code; semantics shared with HorrorMappingConfig.BCI."
+    },
+    "rtpcTargets": {
+      "type": "array",
+      "description": "RTPC channels this profile may drive.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "dl_pressure_lf",
+          "dl_whisper_send",
+          "dl_stereo_width",
+          "dl_noise_grain",
+          "dl_pulse_depth"
+        ]
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Declares which BCI fields, invariants, and metrics are visible to kernels.",
+      "additionalProperties": false,
+      "required": ["bciDerived", "invariants", "metrics"],
+      "properties": {
+        "bciDerived": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "bci_fear_index",
+              "bci_attention_focus",
+              "bci_startle_spike",
+              "bci_cognitive_load",
+              "bci_overload_flag",
+              "bci_breath_coupling",
+              "bci_heart_coupling",
+              "bci_explore_tendency",
+              "bci_avoid_tendency"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["CIC", "AOS", "LSG", "HVF", "DET", "SHCI"]
+          },
+          "uniqueItems": true
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "kernels": {
+      "type": "array",
+      "description": "Per-RTPC mapping kernels.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rtpc", "enabled", "family", "params", "conditions"],
+        "properties": {
+          "rtpc": {
+            "type": "string",
+            "enum": [
+              "dl_pressure_lf",
+              "dl_whisper_send",
+              "dl_stereo_width",
+              "dl_noise_grain",
+              "dl_pulse_depth"
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "family": {
+            "type": "string",
+            "enum": ["linear", "sigmoid", "hysteresis", "metric_aware"]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "linear": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "description": "Single driving input name."
+                  },
+                  "a": {
+                    "type": "number"
+                  },
+                  "b": {
+                    "type": "number"
+                  },
+                  "yMin": {
+                    "type": "number"
+                  },
+                  "yMax": {
+                    "type": "number"
+                  }
+                },
+                "required": ["input", "a", "b", "yMin", "yMax"]
+              },
+              "sigmoid": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  },
+                  "k": {
+                    "type": "number"
+                  },
+                  "x0": {
+                    "type": "number"
+                  },
+                  "yMin": {
+                    "type": "number"
+                  },
+                  "yMax": {
+                    "type": "number"
+                  }
+                },
+                "required": ["input", "k", "x0", "yMin", "yMax"]
+              },
+              "hysteresis": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  },
+                  "xRise": {
+                    "type": "number"
+                  },
+                  "xFall": {
+                    "type": "number"
+                  },
+                  "yLow": {
+                    "type": "number"
+                  },
+                  "yHigh": {
+                    "type": "number"
+                  }
+                },
+                "required": ["input", "xRise", "xFall", "yLow", "yHigh"]
+              },
+              "metric_aware": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "weights": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  },
+                  "bias": {
+                    "type": "number"
+                  },
+                  "nonlinearity": {
+                    "type": "string",
+                    "enum": ["none", "tanh", "sigmoid"]
+                  },
+                  "yMin": {
+                    "type": "number"
+                  },
+                  "yMax": {
+                    "type": "number"
+                  }
+                },
+                "required": ["weights", "bias", "nonlinearity", "yMin", "yMax"]
+              }
+            }
+          },
+          "conditions": {
+            "type": "object",
+            "description": "Metric/invariant/BCI gates for this kernel.",
+            "additionalProperties": false,
+            "properties": {
+              "minUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxCDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "allowedBciModes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
+                },
+                "uniqueItems": true
+              },
+              "disableOnOverload": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "safetyEnvelope": {
+      "type": "object",
+      "description": "DET-scaled ceilings, slope caps, and session budgets enforced in Rust.",
+      "additionalProperties": false,
+      "required": [
+        "rtpcBounds",
+        "maxSlopePerSec",
+        "pressureBudget",
+        "overloadBudget"
+      ],
+      "properties": {
+        "rtpcBounds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          }
+        },
+        "maxSlopePerSec": {
+          "type": "object",
+          "description": "Per-RTPC |dy/dt| caps.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0
+          }
+        },
+        "pressureBudget": {
+          "type": "object",
+          "description": "Session pressure budget for dl_pressure_lf.",
+          "additionalProperties": false,
+          "required": ["threshold", "maxSecondsAbove"],
+          "properties": {
+            "threshold": { "type": "number" },
+            "maxSecondsAbove": {
+              "type": "number",
+              "minimum": 0.0
+            }
+          }
+        },
+        "overloadBudget": {
+          "type": "object",
+          "description": "BCI overload and DET clamp behavior.",
+          "additionalProperties": false,
+          "required": ["maxOverloadedFraction", "detClamp"],
+          "properties": {
+            "maxOverloadedFraction": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "detClamp": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    }
+  }
+}
