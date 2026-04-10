@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci/bci-audio-telemetry-summary-v1.json",
+  "title": "BCI Audio Telemetry Summary v1",
+  "description": "Session-level summary keyed by (mappingProfileId, regionClass, moodId) for ranking BCI-to-audio mapping profiles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "mappingProfileId",
+    "regionClass",
+    "moodId",
+    "sessionCount",
+    "bciIntensity",
+    "rtpcStats",
+    "detBudget",
+    "entertainmentBands"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schemas/bci/bci-audio-telemetry-summary-v1.json"
+    },
+    "mappingProfileId": {
+      "type": "string"
+    },
+    "regionClass": {
+      "type": "string"
+    },
+    "moodId": {
+      "type": "string"
+    },
+    "sessionCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bciIntensity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fCalm",
+        "fFocused",
+        "fTense",
+        "fOverloaded"
+      ],
+      "properties": {
+        "fCalm": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "fFocused": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "fTense": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "fOverloaded": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "rtpcStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dl_pressure_lf": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": "number" },
+            "max": { "type": "number" },
+            "timeAboveThreshold": { "type": "number", "minimum": 0.0 }
+          }
+        },
+        "dl_whisper_send": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": "number" },
+            "max": { "type": "number" }
+          }
+        },
+        "dl_stereo_width": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": "number" },
+            "min": { "type": "number" }
+          }
+        },
+        "dl_noise_grain": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": "number" }
+          }
+        },
+        "dl_pulse_depth": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean": { "type": "number" }
+          }
+        }
+      }
+    },
+    "detBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detMean",
+        "detMax",
+        "detClampEvents"
+      ],
+      "properties": {
+        "detMean": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "detMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "detClampEvents": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "entertainmentBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "UECMean",
+        "ARRMean",
+        "CDLMean",
+        "UECTargetMin",
+        "UECTargetMax",
+        "ARRTargetMin"
+      ],
+      "properties": {
+        "UECMean": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARRMean": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDLMean": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "UECTargetMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "UECTargetMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARRTargetMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "description": "Optional lab-only ranking fields.",
+      "additionalProperties": false,
+      "properties": {
+        "deadGainEstimate": { "type": "number" },
+        "rankScore": { "type": "number" }
+      }
+    }
+  }
+}
