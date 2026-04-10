@@ -1,147 +1,163 @@
 {
-  "$id": "schema://HorrorPlace-Constellation-Contracts/mechanic_contract_timing_params_v1.json",
-  "title": "Mechanic Contract Timing Parameters v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace/Constellation-Contracts/mechanic_contract_timing_params_v1.json",
+  "title": "HorrorPlace Mechanic Timing Parameters v1",
+  "description": "Contract-first timing parameter schema for systemic timing mechanics (e.g. CoyoteTime, RuleOfThree, AdaptiveDamage).",
   "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "mechanicKind",
+    "policyEnvelopeId",
+    "regionContractId",
+    "safetyTier",
+    "intensityBand",
+    "detBand",
+    "arrBand",
+    "uecBand",
+    "parameterFamilies"
+  ],
   "properties": {
-    "coyoteTime": {
-      "type": "object",
-      "properties": {
-        "w1": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10,
-          "description": "Weight for DET in coyote probability"
-        },
-        "w2": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10,
-          "description": "Weight for (1-ARR) in coyote probability"
-        },
-        "threshold": {
-          "type": "number",
-          "description": "Sigmoid threshold for coyote granting"
-        },
-        "det_min": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10
-        },
-        "det_max": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10
-        },
-        "arr_min": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "arr_max": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
-      },
-      "required": ["w1", "w2", "threshold", "det_min", "det_max", "arr_min", "arr_max"],
-      "additionalProperties": false
+    "id": {
+      "type": "string",
+      "description": "Stable timing-params contract id, e.g. systemicTiming.coyote.standard.v1."
     },
-    "ruleOfThree": {
-      "type": "object",
-      "properties": {
-        "a1": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Coefficient for DET in downgrade fatigue"
-        },
-        "a2": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Coefficient for UEC in downgrade fatigue"
-        },
-        "a3": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Coefficient for (1-ARR) in downgrade fatigue"
-        },
-        "a4": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Coefficient for deathCount in downgrade fatigue"
-        },
-        "bias": {
-          "type": "number",
-          "description": "Baseline bias for downgrade probability"
-        },
-        "det_cap": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10
-        },
-        "arr_floor": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "max_attempts": {
-          "type": "integer",
-          "minimum": 1
-        }
-      },
-      "required": ["a1", "a2", "a3", "a4", "bias", "det_cap", "arr_floor", "max_attempts"],
-      "additionalProperties": false
+    "version": {
+      "type": "string",
+      "description": "Semantic version.",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
-    "adaptiveDamage": {
+    "mechanicKind": {
+      "type": "string",
+      "description": "Mechanic family this timing contract applies to.",
+      "enum": [
+        "CoyoteTime",
+        "RuleOfThree",
+        "AdaptiveDamage",
+        "Other"
+      ]
+    },
+    "policyEnvelopeId": {
+      "type": "string",
+      "description": "Parent policy envelope id for narrowing checks."
+    },
+    "regionContractId": {
+      "type": "string",
+      "description": "Region contract this timing profile is narrowed under."
+    },
+    "safetyTier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "Safety tier (1–3) aligned with constellation doctrine."
+    },
+    "intensityBand": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Nominal intensity band for this mechanic."
+    },
+    "detBand": {
+      "$ref": "#/$defs/rangeDet"
+    },
+    "arrBand": {
+      "$ref": "#/$defs/range01"
+    },
+    "uecBand": {
+      "$ref": "#/$defs/range01"
+    },
+    "parameterFamilies": {
       "type": "object",
+      "description": "Mechanic-specific parameter groups.",
+      "additionalProperties": false,
       "properties": {
-        "m_base": {
-          "type": "number",
-          "minimum": 0.1,
-          "description": "Base damage multiplier"
+        "coyoteTime": {
+          "$ref": "#/$defs/coyoteParams"
         },
-        "alpha": {
-          "type": "number",
-          "minimum": -1,
-          "maximum": 1,
-          "description": "DET sensitivity coefficient"
+        "ruleOfThree": {
+          "$ref": "#/$defs/ruleOfThreeParams"
         },
-        "beta": {
-          "type": "number",
-          "minimum": -1,
-          "maximum": 1,
-          "description": "ARR sensitivity coefficient"
-        },
-        "m_min": {
-          "type": "number",
-          "minimum": 0
-        },
-        "m_max": {
-          "type": "number",
-          "minimum": 0
-        },
-        "det_base": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10
-        },
-        "det_range": {
-          "type": "number",
-          "minimum": 0
-        },
-        "arr_base": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "arr_range": {
-          "type": "number",
-          "minimum": 0
+        "adaptiveDamage": {
+          "$ref": "#/$defs/adaptiveDamageParams"
         }
-      },
-      "required": ["m_base", "alpha", "beta", "m_min", "m_max", "det_base", "det_range", "arr_base", "arr_range"],
-      "additionalProperties": false
+      }
     }
   },
-  "required": ["coyoteTime", "ruleOfThree", "adaptiveDamage"],
-  "additionalProperties": false
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "rangeDet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+      }
+    },
+    "coyoteParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "weightDet",
+        "weightArr",
+        "baseProbability",
+        "maxProbability",
+        "detNormBand",
+        "arrNormBand"
+      ],
+      "properties": {
+        "weightDet": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "weightArr": { "type": "number", "minimum": -10.0, "maximum": 0.0 },
+        "baseProbability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "maxProbability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "detNormBand": { "$ref": "#/$defs/rangeDet" },
+        "arrNormBand": { "$ref": "#/$defs/range01" }
+      }
+    },
+    "ruleOfThreeParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "earlyForgivenessProbability",
+        "latePunishProbability",
+        "arrFloor",
+        "detNormBand"
+      ],
+      "properties": {
+        "earlyForgivenessProbability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "latePunishProbability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "arrFloor": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "detNormBand": { "$ref": "#/$defs/rangeDet" }
+      }
+    },
+    "adaptiveDamageParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minMultiplier",
+        "maxMultiplier",
+        "weightDet",
+        "weightArr",
+        "detNormBand",
+        "arrNormBand"
+      ],
+      "properties": {
+        "minMultiplier": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "maxMultiplier": { "type": "number", "minimum": 0.0, "maximum": 5.0 },
+        "weightDet": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "weightArr": { "type": "number", "minimum": -10.0, "maximum": 0.0 },
+        "detNormBand": { "$ref": "#/$defs/rangeDet" },
+        "arrNormBand": { "$ref": "#/$defs/range01" }
+      }
+    }
+  }
 }
