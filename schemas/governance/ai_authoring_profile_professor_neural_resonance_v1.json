@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai_authoring_profile_professor_neural_resonance_v1",
+  "description": "AI-safe authoring profile for The Professor, constraining schemarefs, invariant/metric bands, and mapping-family choices used by CHAT_DIRECTOR and related tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "schemaVersion",
+    "profileId",
+    "personaId",
+    "allowedObjectKinds",
+    "allowedSchemaRefs",
+    "invariantCaps",
+    "metricCaps",
+    "allowedRepos",
+    "tierConstraints",
+    "mappingFamilyCaps",
+    "errorCodes"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schemas/governance/ai_authoring_profile_professor_neural_resonance_v1.json"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+    "profileId": {
+      "type": "string",
+      "const": "ai_authoring_profile_professor_neural_resonance_v1"
+    },
+    "personaId": {
+      "type": "string",
+      "const": "professor_neural_resonance_v1"
+    },
+    "allowedObjectKinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "personaContract",
+          "personaVariant",
+          "audioMappingProfile",
+          "audioExperimentSpec"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "allowedSchemaRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "invariantCaps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "SHCI"],
+      "properties": {
+        "CIC": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "AOS": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "SHCI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "metricCaps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "allowedRepos": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "HorrorPlace-Constellation-Contracts",
+          "HorrorPlace-Spectral-Foundry",
+          "HorrorPlace-Codebase-of-Death",
+          "HorrorPlace-Neural-Resonance-Lab"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "tierConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minTier", "maxTier", "labOnly"],
+      "properties": {
+        "minTier": {
+          "type": "string",
+          "enum": ["mature", "research"]
+        },
+        "maxTier": {
+          "type": "string",
+          "enum": ["mature", "research"]
+        },
+        "labOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "mappingFamilyCaps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedFamilyCodes", "disallowedFamilyCodes"],
+      "properties": {
+        "allowedFamilyCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^0x[A-F0-9]{4,8}$"
+          },
+          "uniqueItems": true
+        },
+        "disallowedFamilyCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^0x[A-F0-9]{4,8}$"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "errorCodes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileIncompatibleWithSpine", "outOfBandInvariant", "metricBandViolation"],
+      "properties": {
+        "profileIncompatibleWithSpine": {
+          "type": "string"
+        },
+        "outOfBandInvariant": {
+          "type": "string"
+        },
+        "metricBandViolation": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
