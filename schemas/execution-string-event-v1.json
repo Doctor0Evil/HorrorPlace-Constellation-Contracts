@@ -1,0 +1,42 @@
+{
+  "schemaRef": "execution-string-event-v1",
+  "timestamp": "2026-04-09T19:00:12.345Z",
+
+  "sessionId": "sess_9f2f3b12",
+  "playerId": "player_anon_042",
+  "regionId": "basin_of_silence_v1",
+  "tileId": "tile_183_207",
+
+  "executionId": "re4.chainsaw.decap",
+  "enemyKind": "chainsaw_ganado",
+  "deathPatternId": "chainsaw_front_grab_v1",
+
+  "wasDowngradedToNearLethal": false,
+  "wasFastForwarded": true,
+  "deathCountForPattern": 3,
+
+  "invariants": {
+    "cic": 0.82,
+    "aos": 0.71,
+    "lsg": 0.54,
+    "det_before": 0.76,
+    "det_after": 0.84
+  },
+
+  "metrics": {
+    "uec_before": 0.61,
+    "uec_after": 0.55,
+    "arr_before": 0.73,
+    "arr_after": 0.49,
+    "emd_snapshot": 0.68,
+    "stci_snapshot": 0.64,
+    "cdl_snapshot": 0.57
+  },
+
+  "flags": {
+    "wasCheckpointedImmediatelyAfter": true,
+    "bciflag_overload": false
+  },
+
+  "runtimeSource": "H.KillCinematic.handle_instant_death"
+}
