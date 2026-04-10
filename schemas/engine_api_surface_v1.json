@@ -1,0 +1,34 @@
+{
+  "$id": "schema://HorrorPlace-Constellation-Contracts/engine_api_surface_v1.json",
+  "title": "Engine API Surface v1",
+  "description": "Canonical definition of the H.* API that all engine implementations must expose.",
+  "type": "object",
+  "properties": {
+    "invariant_queries": {
+      "type": "object",
+      "properties": {
+        "CIC": { "type": "function", "signature": "(region_id: str, tile_id: str) -> float" },
+        "DET": { "type": "function", "signature": "(region_id: str, player_id: str) -> float" },
+        "UEC": { "type": "function", "signature": "(region_id: str, player_id: str) -> float" },
+        "ARR": { "type": "function", "signature": "(region_id: str, player_id: str) -> float" }
+      },
+      "required": ["CIC", "DET", "UEC", "ARR"]
+    },
+    "systemic_timing_helpers": {
+      "type": "object",
+      "properties": {
+        "CoyoteTime_maybe_grant": { "type": "function", "signature": "(region_id, player_id, contract) -> GrantResult" },
+        "RuleOfThree_maybe_downgrade": { "type": "function", "signature": "(region_id, player_id, contract, death_index) -> DowngradeResult" },
+        "AdaptiveDamage_scale": { "type": "function", "signature": "(region_id, player_id, contract, base_damage) -> ScaledResult" }
+      }
+    },
+    "telemetry_hooks": {
+      "type": "object",
+      "properties": {
+        "log_execution_string": { "type": "function", "signature": "(payload: ExecutionStringRunV1) -> void" },
+        "log_systemic_timing": { "type": "function", "signature": "(payload: SystemicTimingRunV1) -> void" }
+      }
+    }
+  },
+  "required": ["invariant_queries", "systemic_timing_helpers", "telemetry_hooks"]
+}
