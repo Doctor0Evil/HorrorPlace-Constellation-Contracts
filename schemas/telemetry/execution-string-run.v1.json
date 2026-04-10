@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/telemetry/execution-string-run.v1.json",
+  "title": "Execution String Telemetry Run v1",
+  "description": "Single instant-fail death or kill cinematic event (execution_string) with before/after metrics and gating context.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "schemaRef",
+    "recordedAt",
+    "runId",
+    "sessionId",
+    "tier",
+    "regionId",
+    "tileId",
+    "executionId",
+    "executionKind",
+    "source",
+    "invariantsSnapshot",
+    "metricsBefore",
+    "metricsAfter",
+    "gate",
+    "safety",
+    "quality"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for this execution_string run record."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "execution-string-run.v1",
+      "description": "Logical schema reference for routing and validation."
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this execution_string was logged."
+    },
+    "runId": {
+      "type": "string",
+      "description": "Engine-local identifier for the current run or scenario."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Opaque session identifier; no PII or player identity."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Content tier for this run, aligned with spine tiers.",
+      "enum": ["Tier1Standard", "Tier2Internal", "Tier3Lab", "Research"]
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Region contract identifier where this execution occurred."
+    },
+    "tileId": {
+      "type": "string",
+      "description": "Tile or POI identifier within the region."
+    },
+    "seedId": {
+      "type": ["string", "null"],
+      "description": "Optional seed or event contract ID associated with this execution_string."
+    },
+    "personaId": {
+      "type": ["string", "null"],
+      "description": "Optional persona contract ID for the executing entity."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Stable identifier for the execution_string cinematic or pattern."
+    },
+    "executionKind": {
+      "type": "string",
+      "description": "High-level category of the execution (visceral, intimate, distant, systemic, etc.).",
+      "enum": [
+        "visceral",
+        "intimate",
+        "distant",
+        "environmental",
+        "systemic",
+        "other"
+      ]
+    },
+    "styleTags": {
+      "type": "array",
+      "description": "Optional style-layer tags applied to this execution (e.g., gore, restraint, surreal).",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "source": {
+      "type": "object",
+      "description": "Origin information for the execution_string decision.",
+      "additionalProperties": false,
+      "required": ["killZoneId", "stateMachineId"],
+      "properties": {
+        "killZoneId": {
+          "type": "string",
+          "description": "Identifier for the kill-zone or trigger volume."
+        },
+        "stateMachineId": {
+          "type": "string",
+          "description": "Identifier of the state machine or behavior tree node that initiated the execution."
+        },
+        "historyQueryId": {
+          "type": ["string", "null"],
+          "description": "Optional ID for the history layer query or selector decision that led to this execution."
+        }
+      }
+    },
+    "invariantsSnapshot": {
+      "type": "object",
+      "description": "Snapshot of key invariants at the moment the execution_string was triggered.",
+      "additionalProperties": false,
+      "required": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "LSG", "SHCI"],
+      "properties": {
+        "CIC": { "type": "number" },
+        "MDI": { "type": "number" },
+        "AOS": { "type": "number" },
+        "RRM": { "type": "number" },
+        "FCF": { "type": "number" },
+        "SPR": { "type": "number" },
+        "RWF": { "type": "number" },
+        "DET": { "type": "number" },
+        "HVF": { "type": "number" },
+        "LSG": { "type": "number" },
+        "SHCI": { "type": "number" }
+      }
+    },
+    "metricsBefore": {
+      "type": "object",
+      "description": "Entertainment metrics just before control was revoked.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricsAfter": {
+      "type": "object",
+      "description": "Entertainment metrics sampled shortly after the cinematic completes or skips.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "playerEnvelope": {
+      "type": "object",
+      "description": "Optional snapshot of the player envelope at trigger time.",
+      "additionalProperties": false,
+      "required": ["v", "S", "N", "R", "O", "B"],
+      "properties": {
+        "v": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "S": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "N": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "R": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "O": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "B": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "description": "Decision and distance metrics from the execution gate.",
+      "additionalProperties": false,
+      "required": ["allowed", "downgraded", "distance", "noveltyThreshold", "reason"],
+      "properties": {
+        "allowed": {
+          "type": "boolean",
+          "description": "True if the full execution_string cinematic was allowed to play."
+        },
+        "downgraded": {
+          "type": "boolean",
+          "description": "True if the gate downgraded from full execution to a partial or non-lethal alternative."
+        },
+        "distance": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Normalized novelty/distance score used by the gate (e.g., relative to local history)."
+        },
+        "noveltyThreshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Threshold value the gate compared distance against."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Short machine-readable reason for the gate outcome."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "description": "Safety-related flags and overflow indicators for this execution.",
+      "additionalProperties": false,
+      "required": [
+        "detOverflow",
+        "cdlOverflow",
+        "arrTooLow",
+        "repetitionIndex",
+        "repetitionLimitHit"
+      ],
+      "properties": {
+        "detOverflow": {
+          "type": "boolean",
+          "description": "True if DET exceeded its configured cap during this event window."
+        },
+        "cdlOverflow": {
+          "type": "boolean",
+          "description": "True if CDL exceeded its configured cap during this event window."
+        },
+        "arrTooLow": {
+          "type": "boolean",
+          "description": "True if ARR after the event fell below the configured floor."
+        },
+        "repetitionIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based count of how many times this executionId has fired in the current session."
+        },
+        "repetitionLimitHit": {
+          "type": "boolean",
+          "description": "True if a repetition cap was reached or exceeded for this executionId."
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "description": "Local quality scores for this execution_String event.",
+      "additionalProperties": false,
+      "required": ["localScore", "deltaUEC", "deltaARR", "deltaDET", "notes"],
+      "properties": {
+        "localScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Local execution quality score derived from metric deltas and safety behavior."
+        },
+        "deltaUEC": {
+          "type": "number",
+          "description": "UEC_after - UEC_before."
+        },
+        "deltaARR": {
+          "type": "number",
+          "description": "ARR_after - ARR_before."
+        },
+        "deltaDET": {
+          "type": "number",
+          "description": "DET contribution estimate for this event (if available)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional short human/AI-facing note about perceived outcome (e.g., 'too long', 'high jolt')."
+        }
+      }
+    },
+    "extras": {
+      "type": "object",
+      "description": "Extension point for lab-specific fields. Tier-1 consumers must ignore.",
+      "additionalProperties": true
+    }
+  }
+}
