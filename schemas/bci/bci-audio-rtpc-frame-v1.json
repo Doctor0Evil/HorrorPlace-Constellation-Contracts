@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci/bci-audio-rtpc-frame-v1.json",
+  "title": "BCI Audio RTPC Frame v1",
+  "description": "Lab-only per-sample frame capturing BCI-derived inputs, invariants, RTPC outputs, and entertainment metrics for BCI-driven audio experiments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "sessionId",
+    "frameId",
+    "timestamp",
+    "mappingProfileId",
+    "regionId",
+    "moodId",
+    "bciDerived",
+    "invariants",
+    "metrics",
+    "rtpc",
+    "safety"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schemas/bci/bci-audio-rtpc-frame-v1.json"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "frameId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "number" }
+      ]
+    },
+    "mappingProfileId": {
+      "type": "string"
+    },
+    "regionId": {
+      "type": "string"
+    },
+    "regionClass": {
+      "type": "string"
+    },
+    "moodId": {
+      "type": "string"
+    },
+    "bciDerived": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bci_fear_index": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_attention_focus": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_startle_spike": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_cognitive_load": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_overload_flag": { "type": "boolean" },
+        "bci_breath_coupling": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_heart_coupling": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_explore_tendency": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "bci_avoid_tendency": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "bciCoreMode": {
+      "type": "string",
+      "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "rtpc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dl_pressure_lf": { "type": "number" },
+        "dl_whisper_send": { "type": "number" },
+        "dl_stereo_width": { "type": "number" },
+        "dl_noise_grain": { "type": "number" },
+        "dl_pulse_depth": { "type": "number" }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "detClamped": { "type": "boolean" },
+        "overloadClamped": { "type": "boolean" },
+        "rtpcClamped": { "type": "boolean" }
+      }
+    }
+  }
+}
