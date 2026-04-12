@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/entertainment-metrics-spine.v1.json",
+  "title": "Entertainment Metrics Spine Schema v1.0.0",
+  "description": "Canonical definitions for HorrorPlace constellation entertainment metrics: quantitative measures of player experience, system performance, and narrative efficacy. This schema serves as the metrics spine for UEC, EMD, STCI, CDL, ARR and related metric definitions, domains, and tier bands.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spineVersion",
+    "generatedAt",
+    "metrics"
+  ],
+  "properties": {
+    "spineVersion": {
+      "type": "string",
+      "description": "Semantic version of this metrics spine document, e.g., 1.0.0."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this spine instance was generated."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable notes about this metrics spine instance."
+    },
+    "metrics": {
+      "type": "array",
+      "description": "List of entertainment metric definitions keyed by code and tier bands.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "domain",
+          "tierBands",
+          "narrowingRule"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR",
+              "CSI",
+              "QDI",
+              "CEI"
+            ],
+            "description": "Short metric code. UEC: User Engagement Continuity, EMD: Experience Modulation Delta, STCI: Spectral Threat Confidence Index, CDL: Cognitive Dissonance Level, ARR: Adaptive Resonance Ratio, CSI: Cooldown Saturation Index, QDI: Quiet Debt Index, CEI: Code Entropy Index (pipeline health)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Canonical display name for this metric."
+          },
+          "description": {
+            "type": "string",
+            "description": "High-level description of what this metric measures and how it is interpreted at runtime and in telemetry."
+          },
+          "domain": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "min",
+              "max",
+              "unit",
+              "derived"
+            ],
+            "properties": {
+              "min": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 10.0,
+                "description": "Lower bound of the metric domain. Most metrics live in [0.0, 1.0]."
+              },
+              "max": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 10.0,
+                "description": "Upper bound of the metric domain."
+              },
+              "unit": {
+                "type": "string",
+                "description": "Unit or scaling convention for this metric, e.g., normalized-0-1, dimensionless."
+              },
+              "derived": {
+                "type": "boolean",
+                "description": "True if this metric is derived from telemetry (e.g., CSI, QDI, CEI) rather than authored in content contracts."
+              }
+            }
+          },
+          "tierBands": {
+            "type": "array",
+            "description": "Per-tier canonical bands for this metric. Bands are inclusive ranges inside the global domain.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "tier",
+                "min",
+                "max",
+                "bandLabel"
+              ],
+              "properties": {
+                "tier": {
+                  "type": "integer",
+                  "enum": [1, 2, 3],
+                  "description": "Tier that this band applies to. Tier 1: public, Tier 2: vault, Tier 3: research."
+                },
+                "min": {
+                  "type": "number",
+                  "description": "Lower bound for this metric at this tier."
+                },
+                "max": {
+                  "type": "number",
+                  "description": "Upper bound for this metric at this tier."
+                },
+                "bandLabel": {
+                  "type": "string",
+                  "description": "Human-readable label for this tier band, e.g., comfort-safe, suspense-band, experimental-extreme."
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional notes about how this metric behaves at this tier (e.g., typical target bands by objectKind, coupling to BCI envelopes)."
+                }
+              }
+            }
+          },
+          "narrowingRule": {
+            "type": "string",
+            "enum": [
+              "subset-only",
+              "monotone-non-widening",
+              "timing-coupled",
+              "governance-coupled"
+            ],
+            "description": "Specifies how child envelopes may refine this metric: subset-only (children must pick subranges), monotone-non-widening (child bands must be subsets and respect monotonic constraints), timing-coupled (bands narrow as timing signals like CSI, QDI constrain pacing), governance-coupled (bands narrow as Charter or Dead-Ledger policies apply)."
+          },
+          "governance": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Optional governance notes linking this metric to Dead-Ledger, consent tiers, or neurorights.",
+            "properties": {
+              "consentSensitive": {
+                "type": "boolean",
+                "description": "True if this metric is constrained by consent tiers and Dead-Ledger proofs (e.g., CDL and ARR caps at high GXI bands)."
+              },
+              "deadLedgerField": {
+                "type": "string",
+                "description": "Optional canonical field path under Dead-Ledger policies that narrows this metric, e.g., timingCaps.CSI.max or exposureCaps.CDL.max."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
