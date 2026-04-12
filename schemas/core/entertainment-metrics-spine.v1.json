@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EntertainmentMetricsSpine.v1",
+  "description": "Populated canonical entertainment metrics spine for the Horror$Place VM-constellation. Defines all five entertainment metrics — UEC, EMD, STCI, CDL, ARR — with per-tier band limits, per-objectKind default target bands, runtime experience bands, invariant couplings, and cross-metric narrowing rules. All metric values are normalized in [0,1]. CHAT_DIRECTOR, skeleton generators, and AI agents load this file at discovery time alongside invariants-spine.v1.json to validate, constrain, and score metric targets across all authoring requests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spineVersion",
+    "generatedAt",
+    "charterConstants",
+    "metrics",
+    "crossMetricRules",
+    "objectKindDefaults"
+  ],
+  "properties": {
+    "spineVersion":   { "type": "string" },
+    "generatedAt":    { "type": "string", "format": "date-time" },
+    "notes":          { "type": "string" },
+    "charterConstants": {
+      "type": "object",
+      "description": "Sovereign charter-level constants that override tier bands and cannot be waived below standard tier.",
+      "additionalProperties": false,
+      "required": ["ARR_charterMinimum", "CDL_cognitiveCeilingStandard", "UEC_overloadThreshold"],
+      "properties": {
+        "ARR_charterMinimum": {
+          "type": "number",
+          "description": "Minimum Ambiguity Retention Rate enforced by charter for standard and mature tiers. Artifacts declaring ARR.target.min below this value are rejected."
+        },
+        "CDL_cognitiveCeilingStandard": {
+          "type": "number",
+          "description": "Maximum Cognitive Dissonance Load permitted in standard-tier artifacts before cognitive overload risk is flagged."
+        },
+        "UEC_overloadThreshold": {
+          "type": "number",
+          "description": "UEC value above which CDL ceiling must be capped to prevent feedback overload loops."
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/definitions/MetricDefinition" }
+    },
+    "crossMetricRules": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/CrossMetricRule" }
+    },
+    "objectKindDefaults": {
+      "type": "object",
+      "description": "Default target band sets per objectKind, used by CHAT_DIRECTOR skeleton generators.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Map of metric code to target band for this objectKind.",
+        "additionalProperties": { "$ref": "#/definitions/MetricTargetBand" }
+      }
+    }
+  },
+  "definitions": {
+    "MetricBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["floor", "ceiling"],
+      "properties": {
+        "floor":   { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ceiling": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "target": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "number" },
+          "description": "Preferred working range within this tier band."
+        },
+        "note": { "type": "string" }
+      }
+    },
+    "MetricTargetBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max":  { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "note": { "type": "string" }
+      }
+    },
+    "RuntimeExperienceBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "min", "max"],
+      "properties": {
+        "label": { "type": "string" },
+        "min":   { "type": "number" },
+        "max":   { "type": "number" },
+        "note":  { "type": "string" }
+      }
+    },
+    "InvariantCoupling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariantCode", "couplingDescription"],
+      "properties": {
+        "invariantCode":        { "type": "string" },
+        "couplingDescription":  { "type": "string" }
+      }
+    },
+    "MetricDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "fullName", "description", "domain", "tierBands", "runtimeBands", "invariantCouplings"],
+      "properties": {
+        "code":        { "type": "string", "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"] },
+        "fullName":    { "type": "string" },
+        "description": { "type": "string" },
+        "domain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max", "scale"],
+          "properties": {
+            "min":   { "type": "number" },
+            "max":   { "type": "number" },
+            "scale": { "type": "string" }
+          }
+        },
+        "charterFloor":   { "type": "number", "description": "Charter-level minimum, if applicable." },
+        "charterCeiling": { "type": "number", "description": "Charter-level maximum, if applicable." },
+        "tierBands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["standard", "mature", "research"],
+          "properties": {
+            "standard": { "$ref": "#/definitions/MetricBand" },
+            "mature":   { "$ref": "#/definitions/MetricBand" },
+            "research": { "$ref": "#/definitions/MetricBand" }
+          }
+        },
+        "runtimeBands": {
+          "type": "array",
+          "description": "Named experience bands used by BCI, audio, and telemetry systems to classify current metric values.",
+          "items": { "$ref": "#/definitions/RuntimeExperienceBand" }
+        },
+        "invariantCouplings": {
+          "type": "array",
+          "description": "Invariants that directly influence this metric's effective bands or floor.",
+          "items": { "$ref": "#/definitions/InvariantCoupling" }
+        }
+      }
+    },
+    "CrossMetricRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "description", "condition", "effect", "severity"],
+      "properties": {
+        "ruleId":      { "type": "string" },
+        "description": { "type": "string" },
+        "condition":   { "type": "string" },
+        "effect":      { "type": "string" },
+        "severity":    { "type": "string", "enum": ["error", "warning", "info"] }
+      }
+    }
+  },
+  "spineVersion": "1.0.0",
+  "generatedAt": "2026-04-11T00:00:00Z",
+  "notes": "All metric values are in [0,1]. Charter constants take precedence over tier band floors and ceilings. Cross-metric rules reference runtime metric values, not authoring declarations. Invariant references use spine-scale values from invariants-spine.v1.json.",
+  "charterConstants": {
+    "ARR_charterMinimum": 0.55,
+    "CDL_cognitiveCeilingStandard": 0.75,
+    "UEC_overloadThreshold": 0.80
+  },
+  "metrics": [
+    {
+      "code": "UEC",
+      "fullName": "Uncanny Exposure Coefficient",
+      "description": "Measures the degree to which players are exposed to uncanny, dissonant, or reality-violating stimuli. High UEC correlates with feelings of wrongness and unease rather than direct fear. Values approaching 1.0 risk triggering the overload gate that caps CDL.",
+      "domain": { "min": 0.0, "max": 1.0, "scale": "0-1" },
+      "tierBands": {
+        "standard": { "floor": 0.35, "ceiling": 0.82, "target": [0.50, 0.75] },
+        "mature":   { "floor": 0.25, "ceiling": 0.90, "target": [0.45, 0.82] },
+        "research": { "floor": 0.0,  "ceiling": 1.0,  "target": [0.40, 0.90] }
+      },
+      "runtimeBands": [
+        { "label": "low",       "min": 0.00, "max": 0.35, "note": "Player feels grounded; horror implication is weak." },
+        { "label": "engaged",   "min": 0.35, "max": 0.55, "note": "Mild unease; optimal for sustained traversal." },
+        { "label": "heightened","min": 0.55, "max": 0.75, "note": "Strong uncanny atmosphere; target band for most encounters." },
+        { "label": "stressed",  "min": 0.75, "max": 0.82, "note": "Approaching overload; CDL monitoring required." },
+        { "label": "overloaded","min": 0.82, "max": 1.0,  "note": "CDL ceiling must be capped to 0.75; recovery recommended." }
+      ],
+      "invariantCouplings": [
+        { "invariantCode": "CIC", "couplingDescription": "High CIC (>= 7) widens UEC target ceiling by 0.05." },
+        { "invariantCode": "AOS", "couplingDescription": "High AOS (>= 7) raises UEC floor by 0.05 to ensure epistemic horror registers." },
+        { "invariantCode": "FCF", "couplingDescription": "High FCF (>= 7) sustains UEC in the heightened band without additional event triggers." }
+      ]
+    },
+    {
+      "code": "EMD",
+      "fullName": "Engagement Momentum Delta",
+      "description": "Tracks the momentum and accumulative drift in player engagement. Positive EMD indicates building horror tension; flat EMD (near 0) suggests stagnation; very high EMD may indicate unsustainable escalation. EMD is evaluated over rolling windows, not instantaneously.",
+      "domain": { "min": 0.0, "max": 1.0, "scale": "0-1" },
+      "tierBands": {
+        "standard": { "floor": 0.25, "ceiling": 0.80, "target": [0.38, 0.68] },
+        "mature":   { "floor": 0.20, "ceiling": 0.88, "target": [0.35, 0.75] },
+        "research": { "floor": 0.0,  "ceiling": 1.0,  "target": [0.30, 0.85] }
+      },
+      "runtimeBands": [
+        { "label": "stagnant",  "min": 0.00, "max": 0.25, "note": "Engagement is flat or declining; pacing intervention needed." },
+        { "label": "building",  "min": 0.25, "max": 0.50, "note": "Gradual engagement build; normal traversal state." },
+        { "label": "sustained", "min": 0.50, "max": 0.72, "note": "Target band for active encounters." },
+        { "label": "peak",      "min": 0.72, "max": 1.0,  "note": "High momentum; schedule recovery to avoid burnout." }
+      ],
+      "invariantCouplings": [
+        { "invariantCode": "CIC", "couplingDescription": "CIC >= 7 raises EMD target ceiling by 0.05 for historically dense regions." },
+        { "invariantCode": "RRM", "couplingDescription": "High RRM sustains EMD by providing recurrent engagement anchors." },
+        { "invariantCode": "DET", "couplingDescription": "DET accumulation above tier ceiling reduces EMD as player fatigue sets in." }
+      ]
+    },
+    {
+      "code": "STCI",
+      "fullName": "Suspense-Terror Contrast Index",
+      "description": "Measures the contrast between safe and horror-intense states in a player's experience. High STCI indicates the system maintains clear distinctions between calm and threatened moments, creating effective suspense architecture. Low STCI indicates monotonous intensity without relief.",
+      "domain": { "min": 0.0, "max": 1.0, "scale": "0-1" },
+      "tierBands": {
+        "standard": { "floor": 0.32, "ceiling": 0.85, "target": [0.45, 0.75] },
+        "mature":   { "floor": 0.25, "ceiling": 0.92, "target": [0.42, 0.82] },
+        "research": { "floor": 0.0,  "ceiling": 1.0,  "target": [0.38, 0.90] }
+      },
+      "runtimeBands": [
+        { "label": "flat",     "min": 0.00, "max": 0.32, "note": "Insufficient contrast; horror loses meaning." },
+        { "label": "moderate", "min": 0.32, "max": 0.55, "note": "Some contrast; traversal and mild encounters." },
+        { "label": "high",     "min": 0.55, "max": 0.78, "note": "Strong contrast; effective suspense architecture." },
+        { "label": "extreme",  "min": 0.78, "max": 1.0,  "note": "Very high contrast; use for peak moments only." }
+      ],
+      "invariantCouplings": [
+        { "invariantCode": "LSG", "couplingDescription": "LSG >= 8 in liminal tileClass raises STCI target minimum by 0.10 at threshold moments." },
+        { "invariantCode": "DET", "couplingDescription": "High DET compresses STCI contrast as sustained exposure reduces perceived safe-state contrast." },
+        { "invariantCode": "SPR", "couplingDescription": "High SPR enables higher STCI peaks during spectral event sequences." }
+      ]
+    },
+    {
+      "code": "CDL",
+      "fullName": "Cognitive Dissonance Load",
+      "description": "Measures the cognitive dissonance and interpretive confusion in a player's current state. Moderate CDL is desirable for horror ambiguity; CDL above the charter ceiling risks cognitive overload and disengagement; CDL below 0.25 suggests insufficient complexity and narrative flatness.",
+      "domain": { "min": 0.0, "max": 1.0, "scale": "0-1" },
+      "charterCeiling": 0.75,
+      "tierBands": {
+        "standard": {
+          "floor": 0.25,
+          "ceiling": 0.72,
+          "target": [0.35, 0.65],
+          "note": "CDL > 0.72 in standard tier risks charter ceiling violation when UEC overload gate is triggered."
+        },
+        "mature":   { "floor": 0.22, "ceiling": 0.78, "target": [0.32, 0.68] },
+        "research": { "floor": 0.0,  "ceiling": 0.90, "target": [0.28, 0.75] }
+      },
+      "runtimeBands": [
+        { "label": "resolved",    "min": 0.00, "max": 0.25, "note": "Too much resolution; horror mystery collapses." },
+        { "label": "uncanny",     "min": 0.25, "max": 0.50, "note": "Target band for sustained traversal and exploration." },
+        { "label": "dissonant",   "min": 0.50, "max": 0.70, "note": "Strong ambiguity; optimal for investigative and confrontation phases." },
+        { "label": "overloaded",  "min": 0.70, "max": 1.0,  "note": "Cognitive overload risk; must enforce UEC CDL-cap rule." }
+      ],
+      "invariantCouplings": [
+        { "invariantCode": "DET", "couplingDescription": "DET.spineValue >= 8.0 raises CDL floor to at least 0.40." },
+        { "invariantCode": "AOS", "couplingDescription": "High AOS (>= 7) raises CDL floor by 0.05, as archival obscurity inherently increases dissonance." },
+        { "invariantCode": "FCF", "couplingDescription": "High FCF (>= 6) raises CDL floor by 0.05, as folkloric convergence multiplies interpretive possibilities." }
+      ]
+    },
+    {
+      "code": "ARR",
+      "fullName": "Ambiguity Retention Rate",
+      "description": "Measures the fraction of narrative and experiential mysteries that remain unresolved at any point in a session. High ARR means most questions persist unanswered, maintaining horror tension. The charter minimum of 0.55 is sovereign and cannot be waived for standard or mature tier artifacts. Research tier may declare ARR below charter minimum with explicit Dead-Ledger policy exemption.",
+      "domain": { "min": 0.0, "max": 1.0, "scale": "0-1" },
+      "charterFloor": 0.55,
+      "tierBands": {
+        "standard": {
+          "floor": 0.55,
+          "ceiling": 0.92,
+          "target": [0.60, 0.82],
+          "note": "Charter minimum 0.55 is sovereign. ARR below this value is a hard CI error."
+        },
+        "mature":   { "floor": 0.55, "ceiling": 0.95, "target": [0.58, 0.88] },
+        "research": {
+          "floor": 0.35,
+          "ceiling": 1.0,
+          "target": [0.50, 0.90],
+          "note": "Research tier may use ARR below 0.55 with Dead-Ledger policy exemption."
+        }
+      },
+      "runtimeBands": [
+        { "label": "resolved",    "min": 0.00, "max": 0.40, "note": "Most mysteries answered; horror loses tension. Charter violation below 0.55 for standard." },
+        { "label": "partial",     "min": 0.40, "max": 0.60, "note": "Some resolution; approaching charter minimum." },
+        { "label": "sustained",   "min": 0.60, "max": 0.80, "note": "Target band for most encounter types." },
+        { "label": "high",        "min": 0.80, "max": 1.0,  "note": "Very high ambiguity; appropriate for archive and mystery-focused regions." }
+      ],
+      "invariantCouplings": [
+        { "invariantCode": "AOS", "couplingDescription": "High AOS (>= 7) naturally sustains high ARR; engines should not force resolution events when AOS is high." },
+        { "invariantCode": "MDI", "couplingDescription": "High MDI (>= 7) supports high ARR as multiple myth layers prevent singular resolution." },
+        { "invariantCode": "SHCI", "couplingDescription": "High SHCI (>= 0.8) correlates with high ARR because tightly coupled spectral history resists explanation." }
+      ]
+    }
+  ],
+  "crossMetricRules": [
+    {
+      "ruleId": "CMR-001",
+      "description": "High DET raises CDL floor to ensure cognitive complexity keeps pace with exposure intensity. When DET.spineValue >= 8.0, CDL floor must be at least 0.40.",
+      "condition": "DET.spineValue >= 8.0",
+      "effect": "CDL.effectiveFloor = max(CDL.tierBand.floor, 0.40)",
+      "severity": "warning"
+    },
+    {
+      "ruleId": "CMR-002",
+      "description": "Charter ARR minimum is sovereign for standard and mature tiers. Artifacts declaring ARR target minimum below 0.55 for standard or mature tier are rejected by CI.",
+      "condition": "ARR.target.min < 0.55 AND tier IN (standard, mature)",
+      "effect": "reject: ARR.target.min must be >= charterConstants.ARR_charterMinimum",
+      "severity": "error"
+    },
+    {
+      "ruleId": "CMR-003",
+      "description": "High LSG in liminal tileClass boosts effective STCI target minimum by 0.10. This reflects that threshold moments generate additional suspense-terror contrast.",
+      "condition": "LSG.spineValue >= 8 AND tileClass = liminal",
+      "effect": "STCI.effectiveTarget.min += 0.10 (clamped to STCI.tierBand.ceiling)",
+      "severity": "info"
+    },
+    {
+      "ruleId": "CMR-004",
+      "description": "When UEC reaches the overload threshold, CDL ceiling is capped to prevent cognitive feedback loops. This is the primary safety gate against double-overload.",
+      "condition": "UEC.runtimeValue >= charterConstants.UEC_overloadThreshold",
+      "effect": "CDL.effectiveCeiling = min(CDL.tierBand.ceiling, charterConstants.CDL_cognitiveCeilingStandard)",
+      "severity": "error"
+    },
+    {
+      "ruleId": "CMR-005",
+      "description": "Historically dense regions sustain higher engagement momentum. CIC >= 7 raises EMD target ceiling by 0.05, acknowledging that catastrophe-grounded horror builds engagement naturally.",
+      "condition": "CIC.spineValue >= 7",
+      "effect": "EMD.effectiveTarget.max = min(EMD.tierBand.target[1] + 0.05, EMD.tierBand.ceiling)",
+      "severity": "info"
+    }
+  ],
+  "objectKindDefaults": {
+    "regionContractCard": {
+      "UEC":  { "min": 0.45, "max": 0.72 },
+      "EMD":  { "min": 0.35, "max": 0.65 },
+      "STCI": { "min": 0.40, "max": 0.72 },
+      "CDL":  { "min": 0.30, "max": 0.62 },
+      "ARR":  { "min": 0.55, "max": 0.82, "note": "ARR.min = charter floor." }
+    },
+    "eventContract": {
+      "UEC":  { "min": 0.55, "max": 0.82 },
+      "EMD":  { "min": 0.45, "max": 0.78 },
+      "STCI": { "min": 0.55, "max": 0.85 },
+      "CDL":  { "min": 0.35, "max": 0.70 },
+      "ARR":  { "min": 0.58, "max": 0.88 }
+    },
+    "seedContractCard": {
+      "UEC":  { "min": 0.50, "max": 0.78 },
+      "EMD":  { "min": 0.40, "max": 0.75 },
+      "STCI": { "min": 0.45, "max": 0.80 },
+      "CDL":  { "min": 0.32, "max": 0.68 },
+      "ARR":  { "min": 0.56, "max": 0.85 }
+    },
+    "personaContract": {
+      "UEC":  { "min": 0.45, "max": 0.78 },
+      "EMD":  { "min": 0.35, "max": 0.72 },
+      "STCI": { "min": 0.40, "max": 0.78 },
+      "CDL":  { "min": 0.30, "max": 0.68 },
+      "ARR":  { "min": 0.55, "max": 0.85 }
+    },
+    "moodContract": {
+      "UEC":  { "min": 0.38, "max": 0.75 },
+      "EMD":  { "min": 0.28, "max": 0.70 },
+      "STCI": { "min": 0.35, "max": 0.80 },
+      "CDL":  { "min": 0.26, "max": 0.65 },
+      "ARR":  { "min": 0.55, "max": 0.80 }
+    },
+    "styleContract": {
+      "UEC":  { "min": 0.30, "max": 0.70 },
+      "EMD":  { "min": 0.25, "max": 0.65 },
+      "STCI": { "min": 0.30, "max": 0.75 },
+      "CDL":  { "min": 0.22, "max": 0.60 },
+      "ARR":  { "min": 0.55, "max": 0.80 }
+    }
+  }
+}
