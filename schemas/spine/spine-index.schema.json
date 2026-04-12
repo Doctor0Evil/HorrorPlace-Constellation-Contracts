@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/spine/spine-index.schema.json",
+  "title": "HorrorPlace VM Constellation Spine Index",
+  "description": "Consolidated, machine-readable index formalizing the (objectKind, tier, repo) routing triple, invariant/metric bands, and schema bindings for contract families across the HorrorPlace VM-constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "generatedAt", "spineEntries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this spine index instance format (not individual contract families)."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp at which this spine index was generated."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable note about this spine index snapshot."
+    },
+    "spineEntries": {
+      "type": "array",
+      "description": "Registered contract families and their routing, invariant, metric, and schema bindings.",
+      "items": {
+        "$ref": "#/$defs/SpineEntry"
+      }
+    }
+  },
+  "$defs": {
+    "Tier": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3", "lab"],
+      "description": "Governance tier for the contract family."
+    },
+    "RepoName": {
+      "type": "string",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Constellation-Contracts",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network",
+        "HorrorPlace-RotCave"
+      ],
+      "description": "Canonical repository name within the HorrorPlace constellation."
+    },
+    "InvariantName": {
+      "type": "string",
+      "enum": [
+        "CIC",
+        "MDI",
+        "AOS",
+        "RRM",
+        "FCF",
+        "LSG",
+        "HVF",
+        "DET",
+        "SPR",
+        "SHCI",
+        "RWF"
+      ],
+      "description": "Canonical invariant identifier."
+    },
+    "MetricName": {
+      "type": "string",
+      "enum": [
+        "UEC",
+        "EMD",
+        "STCI",
+        "CDL",
+        "ARR"
+      ],
+      "description": "Canonical entertainment metric identifier."
+    },
+    "BandKind": {
+      "type": "string",
+      "enum": ["hard", "soft", "advisory"],
+      "description": "Strength of the invariant/metric band binding."
+    },
+    "ScalarBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Inclusive lower bound for the scalar band."
+        },
+        "max": {
+          "type": "number",
+          "description": "Inclusive upper bound for the scalar band."
+        }
+      }
+    },
+    "InvariantBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/InvariantName"
+        },
+        "kind": {
+          "$ref": "#/$defs/BandKind"
+        },
+        "scalarBand": {
+          "$ref": "#/$defs/ScalarBand",
+          "description": "Optional numeric band associated with this invariant for this contract family."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional invariant-specific note."
+        }
+      }
+    },
+    "MetricBand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/MetricName"
+        },
+        "kind": {
+          "$ref": "#/$defs/BandKind"
+        },
+        "scalarBand": {
+          "$ref": "#/$defs/ScalarBand",
+          "description": "Numeric band representing expected metric values for this contract family."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional metric-specific note."
+        }
+      }
+    },
+    "SchemaBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaRef", "version"],
+      "properties": {
+        "schemaRef": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical URI of the JSON Schema contract for artifacts of this family."
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of the schema contract for this family."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, this schema version is still accepted but should not be used for new artifacts."
+        }
+      }
+    },
+    "RuntimeBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moduleName"],
+      "properties": {
+        "moduleName": {
+          "type": "string",
+          "description": "Name of the runtime module responsible for enforcement (Lua, Rust, engine integration)."
+        },
+        "entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Named entrypoints (functions, RPCs) relevant for this contract family."
+        },
+        "deadLedgerProfile": {
+          "type": "string",
+          "description": "Optional profile name in HorrorPlace-Dead-Ledger-Network used for this contract family."
+        }
+      }
+    },
+    "RoutingTriple": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectKind", "tiers", "repo"],
+      "properties": {
+        "objectKind": {
+          "type": "string",
+          "description": "Canonical contract family identifier, e.g. moodContract, seedContractCard, bci-geometry-tileset."
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tier"
+          },
+          "minItems": 1,
+          "description": "Allowed tiers for this contract family."
+        },
+        "repo": {
+          "$ref": "#/$defs/RepoName"
+        }
+      }
+    },
+    "SpineEntry": {
+      "type": "object",
+      "title": "Spine Entry",
+      "description": "Formal registration of a contract family in the constellation.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "routing",
+        "schemas",
+        "invariants",
+        "metrics",
+        "runtime",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Opaque identifier for this spine entry (stable across versions of the same family)."
+        },
+        "routing": {
+          "$ref": "#/$defs/RoutingTriple"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SchemaBinding"
+          },
+          "minItems": 1,
+          "description": "Schema versions that define the structure of this contract family."
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InvariantBand"
+          },
+          "description": "Invariants that must be respected by this contract family."
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MetricBand"
+          },
+          "description": "Entertainment metrics and their expected bands for this contract family."
+        },
+        "runtime": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RuntimeBinding"
+          },
+          "description": "Runtime modules that enforce or consume this contract family."
+        },
+        "mathematicalConstraints": {
+          "type": "array",
+          "description": "Optional versioned mathematical constraint definitions for this contract family.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "version", "expression"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Short identifier for the constraint."
+              },
+              "version": {
+                "type": "string",
+                "description": "Semantic version of this particular constraint expression."
+              },
+              "expression": {
+                "type": "string",
+                "description": "Human-readable representation of the mathematical constraint (LaTeX or DSL)."
+              },
+              "note": {
+                "type": "string",
+                "description": "Optional commentary about the constraint."
+              }
+            }
+          }
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lifecycle", "introducedIn"],
+          "properties": {
+            "lifecycle": {
+              "type": "string",
+              "enum": ["active", "experimental", "deprecated", "retired"],
+              "description": "Lifecycle stage of this contract family."
+            },
+            "introducedIn": {
+              "type": "string",
+              "description": "Semantic version of the spine index where this family first appeared."
+            },
+            "replaces": {
+              "type": "string",
+              "description": "Optional identifier of a previous spine entry superseded by this one."
+            }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "Short human-readable summary of this contract family."
+            },
+            "examples": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional human-readable examples of valid artifacts of this family."
+            }
+          }
+        }
+      }
+    }
+  }
+}
