@@ -1,0 +1,268 @@
+{
+  "$schema": "https://horror.place/schemas/spine/spine-index.schema.json",
+  "version": "0.1.0",
+  "generatedAt": "2026-04-11T21:27:00Z",
+  "notes": "Bootstrap spine index instance, registering key Tier-1 and Tier-2 contract families for routing and AI authoring.",
+  "spineEntries": [
+    {
+      "id": "spine:moodContract:T1",
+      "routing": {
+        "objectKind": "moodContract",
+        "tiers": ["T1"],
+        "repo": "Horror.Place"
+      },
+      "schemas": [
+        {
+          "schemaRef": "https://horror.place/schemas/contracts/mood-contract-v1.json",
+          "version": "1.0.0",
+          "deprecated": false
+        }
+      ],
+      "invariants": [
+        {
+          "name": "AOS",
+          "kind": "hard"
+        },
+        {
+          "name": "SHCI",
+          "kind": "hard"
+        },
+        {
+          "name": "CIC",
+          "kind": "advisory"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "UEC",
+          "kind": "hard",
+          "scalarBand": {
+            "min": 0.55,
+            "max": 0.80
+          },
+          "note": "Tier-1 mood contracts should produce experiences in this UEC band."
+        },
+        {
+          "name": "EMD",
+          "kind": "soft"
+        },
+        {
+          "name": "ARR",
+          "kind": "hard",
+          "scalarBand": {
+            "min": 0.70,
+            "max": 1.00
+          }
+        }
+      ],
+      "runtime": [
+        {
+          "moduleName": "mood_contract_runtime",
+          "entrypoints": [
+            "apply_mood_contract",
+            "validate_mood_contract"
+          ],
+          "deadLedgerProfile": "dl-profile-mood-t1"
+        }
+      ],
+      "mathematicalConstraints": [
+        {
+          "id": "mood_uec_arr_tradeoff",
+          "version": "1.0.0",
+          "expression": "UEC >= 0.55 and ARR >= 0.70 implies SHCI in [0.40, 0.85]",
+          "note": "Illustrative constraint on acceptable SHCI range for Tier-1 moods."
+        }
+      ],
+      "status": {
+        "lifecycle": "active",
+        "introducedIn": "0.1.0"
+      },
+      "docs": {
+        "summary": "Tier-1 player-facing mood contracts anchored to AOS/SHCI invariants and UEC/ARR metrics."
+      }
+    },
+    {
+      "id": "spine:seedContractCard:T2",
+      "routing": {
+        "objectKind": "seedContractCard",
+        "tiers": ["T2"],
+        "repo": "HorrorPlace-Atrocity-Seeds"
+      },
+      "schemas": [
+        {
+          "schemaRef": "https://horror.place/schemas/pcg/seed-contract-card-v1.json",
+          "version": "1.0.0",
+          "deprecated": false
+        }
+      ],
+      "invariants": [
+        {
+          "name": "CIC",
+          "kind": "hard"
+        },
+        {
+          "name": "DET",
+          "kind": "hard"
+        },
+        {
+          "name": "RWF",
+          "kind": "hard"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "UEC",
+          "kind": "soft",
+          "scalarBand": {
+            "min": 0.45,
+            "max": 0.85
+          }
+        },
+        {
+          "name": "EMD",
+          "kind": "soft"
+        },
+        {
+          "name": "STCI",
+          "kind": "advisory"
+        }
+      ],
+      "runtime": [
+        {
+          "moduleName": "pcg_seed_runtime",
+          "entrypoints": [
+            "apply_seed_contract_card",
+            "validate_seed_contract_card"
+          ],
+          "deadLedgerProfile": "dl-profile-pcg-seed"
+        }
+      ],
+      "status": {
+        "lifecycle": "active",
+        "introducedIn": "0.1.0"
+      },
+      "docs": {
+        "summary": "Tier-2 procedural generation seed contracts, used by Atrocity-Seeds for region and event synthesis."
+      }
+    },
+    {
+      "id": "spine:bci-geometry-tileset:T1",
+      "routing": {
+        "objectKind": "bci-geometry-tileset",
+        "tiers": ["T1"],
+        "repo": "Horror.Place"
+      },
+      "schemas": [
+        {
+          "schemaRef": "https://horror.place/schemas/bci/bci-geometry-tileset-v1.json",
+          "version": "1.0.0",
+          "deprecated": false
+        }
+      ],
+      "invariants": [
+        {
+          "name": "CIC",
+          "kind": "hard"
+        },
+        {
+          "name": "AOS",
+          "kind": "hard"
+        },
+        {
+          "name": "SHCI",
+          "kind": "hard"
+        },
+        {
+          "name": "DET",
+          "kind": "hard"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "UEC",
+          "kind": "hard",
+          "scalarBand": {
+            "min": 0.55,
+            "max": 0.80
+          }
+        },
+        {
+          "name": "EMD",
+          "kind": "soft"
+        },
+        {
+          "name": "ARR",
+          "kind": "soft"
+        }
+      ],
+      "runtime": [
+        {
+          "moduleName": "bci_geometry_runtime",
+          "entrypoints": [
+            "apply_bci_geometry_tileset",
+            "validate_bci_geometry_tileset"
+          ],
+          "deadLedgerProfile": "dl-profile-bci-tileset"
+        }
+      ],
+      "mathematicalConstraints": [
+        {
+          "id": "bci_hysteresis_guard",
+          "version": "1.0.0",
+          "expression": "For any BCI band change, |stress_t - stress_(t-1)| <= 0.25 over 2 seconds",
+          "note": "Illustrative hysteresis constraint limiting rapid stress swings."
+        }
+      ],
+      "status": {
+        "lifecycle": "experimental",
+        "introducedIn": "0.1.0"
+      },
+      "docs": {
+        "summary": "Tier-1 BCI-aware geometry tilesets binding BTILE IDs to BCI bands and safety envelopes."
+      }
+    },
+    {
+      "id": "spine:reaperContractsRequest:T1",
+      "routing": {
+        "objectKind": "reaperContractsRequest",
+        "tiers": ["T1", "T2"],
+        "repo": "HorrorPlace-RotCave"
+      },
+      "schemas": [
+        {
+          "schemaRef": "https://horror.place/schemas/rotcave/reaper_contracts.schema.json",
+          "version": "1.0.0",
+          "deprecated": false
+        }
+      ],
+      "invariants": [
+        {
+          "name": "DET",
+          "kind": "hard"
+        },
+        {
+          "name": "RWF",
+          "kind": "hard"
+        }
+      ],
+      "metrics": [],
+      "runtime": [
+        {
+          "moduleName": "reaper_contracts_runtime",
+          "entrypoints": [
+            "route_request",
+            "evaluate_request_health"
+          ],
+          "deadLedgerProfile": "dl-profile-rotcave-orchestration"
+        }
+      ],
+      "status": {
+        "lifecycle": "active",
+        "introducedIn": "0.1.0"
+      },
+      "docs": {
+        "summary": "Internal Reaper-contracts request envelopes orchestrated by HorrorPlace-RotCave."
+      }
+    }
+  ]
+}
