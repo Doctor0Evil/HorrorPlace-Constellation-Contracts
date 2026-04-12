@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoutingSpineFragment.v1",
+  "description": "Fragment of the Horror$Place routing spine, mapping objectKinds and tiers to default repositories and path prefixes for AI and orchestrators.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spineVersion",
+    "generatedAt",
+    "objectKinds"
+  ],
+  "properties": {
+    "spineVersion": {
+      "type": "string",
+      "description": "Semantic version of this routing spine fragment."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this fragment was generated."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable notes about this fragment."
+    },
+    "objectKinds": {
+      "type": "array",
+      "description": "Routing entries for objectKinds and tiers.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "objectKind",
+          "tiers"
+        ],
+        "properties": {
+          "objectKind": {
+            "type": "string",
+            "description": "Logical kind of artifact, used as input to routing."
+          },
+          "tiers": {
+            "type": "array",
+            "description": "Per-tier routing rules for this objectKind.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "tier",
+                "defaultRepo",
+                "defaultPathPrefix"
+              ],
+              "properties": {
+                "tier": {
+                  "type": "integer",
+                  "enum": [1, 2, 3],
+                  "description": "Tier of the request or artifact."
+                },
+                "defaultRepo": {
+                  "type": "string",
+                  "description": "Default target repo for this objectKind at this tier."
+                },
+                "defaultPathPrefix": {
+                  "type": "string",
+                  "description": "Relative path prefix inside the target repository."
+                },
+                "allowOverride": {
+                  "type": "boolean",
+                  "description": "If true, manifests or policies may override this repo or path."
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional notes for this tier mapping."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
