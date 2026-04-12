@@ -2,7 +2,7 @@
   "$id": "https://horrorplace.org/schemas/core/invariants-spine.v1.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "HorrorPlace Invariants Spine v1",
-  "description": "Canonical invariant definitions, numeric ranges, and derived metric formulas for the HorrorPlace constellation.",
+  "description": "Canonical invariant definitions, numeric ranges, derived metric formulas, interaction rules, and safe default bands for the HorrorPlace constellation.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,10 +15,12 @@
   "properties": {
     "version": {
       "type": "string",
+      "description": "Semantic version of this invariant spine document, e.g., 1.0.0.",
       "pattern": "^1\\.0\\.0(-[a-z0-9]+)?$"
     },
     "invariants": {
       "type": "array",
+      "description": "Authoritative invariant rows, including historical, entertainment, derived, and reliability invariants.",
       "minItems": 1,
       "items": {
         "type": "object",
@@ -37,10 +39,12 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Stable identifier for this invariant row.",
             "pattern": "^INV-[0-9]{3}$"
           },
           "code": {
             "type": "string",
+            "description": "Short invariant or metric code carried on contracts and telemetry.",
             "enum": [
               "CIC",
               "MDI",
@@ -62,14 +66,17 @@
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Canonical human-readable name for this code."
           },
           "description": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "High-level description of what this invariant or metric measures and how it is interpreted."
           },
           "class": {
             "type": "string",
+            "description": "Classification used by CI and routing when narrowing bands.",
             "enum": [
               "HISTORICAL",
               "ENTERTAINMENT",
@@ -79,6 +86,7 @@
           },
           "range": {
             "type": "object",
+            "description": "Global domain for this invariant across all tiers, before overrides.",
             "additionalProperties": false,
             "required": [
               "min",
@@ -100,6 +108,7 @@
           },
           "tierOverrides": {
             "type": "array",
+            "description": "Per-tier bands that must sit inside the global range. Child envelopes must choose subsets of these bands.",
             "items": {
               "type": "object",
               "additionalProperties": false,
@@ -128,6 +137,7 @@
           },
           "drift": {
             "type": "object",
+            "description": "Schema-level guardrails on how much this invariant band may change across releases.",
             "additionalProperties": false,
             "required": [
               "allowed",
@@ -145,7 +155,7 @@
           },
           "spineMetricBindings": {
             "type": "array",
-            "description": "Bindings to telemetry / runtime metrics that this invariant constrains or derives from.",
+            "description": "Bindings to telemetry or runtime metrics that this invariant constrains or derives from.",
             "items": {
               "type": "object",
               "additionalProperties": false,
@@ -191,7 +201,7 @@
     },
     "derivedMetrics": {
       "type": "array",
-      "description": "Explicit formulas for derived metrics like SPR and SHCI. Engines and CHATDIRECTOR must treat these as authoritative.",
+      "description": "Explicit formulas for derived metrics like SPR and SHCI. Engines and CHAT_DIRECTOR must treat these as authoritative.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -252,6 +262,7 @@
               },
               "weights": {
                 "type": "object",
+                "description": "Map from input metric code to weight.",
                 "additionalProperties": {
                   "type": "number"
                 }
@@ -265,6 +276,7 @@
                   "min",
                   "max"
                 ],
+                "additionalProperties": false,
                 "properties": {
                   "min": {
                     "type": "number"
@@ -272,8 +284,7 @@
                   "max": {
                     "type": "number"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "piecewise": {
                 "type": "array",
