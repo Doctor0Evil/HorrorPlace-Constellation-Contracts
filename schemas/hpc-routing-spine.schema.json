@@ -1,8 +1,8 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://horror.place/constellation/schemas/hpc-routing-spine.schema.json",
-  "title": "HPC Routing Spine",
-  "description": "Canonical routing index mapping (objectKind, tier, repo) to schemas, paths, invariants, metrics, and constraint formulas.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://horror.place/schemas/hpc-routing-spine.schema.json",
+  "title": "HpcRoutingSpine",
+  "description": "Routing spine index that binds (objectKind, tier, repo) triples to schemas, invariants, metrics, math constraints, and CHAT_DIRECTOR phases.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,65 +14,103 @@
   "properties": {
     "routingSpineVersion": {
       "type": "string",
-      "description": "Semantic version for the routing spine document, e.g. 1.0.0."
+      "description": "Semantic version of the routing spine schema instance (e.g. 1.0.0).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
     },
     "updatedAt": {
       "type": "string",
-      "format": "date-time",
-      "description": "ISO-8601 timestamp when this routing spine was generated."
-    },
-    "objectKinds": {
-      "type": "array",
-      "description": "Routing entries for each supported object kind.",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/objectKindEntry"
-      }
-    },
-    "mathConstraints": {
-      "type": "array",
-      "description": "Versioned mathematical constraints and derived formulas referenced by routing entries.",
-      "items": {
-        "$ref": "#/$defs/mathConstraintEntry"
-      }
+      "description": "Last update time in ISO-8601 format.",
+      "format": "date-time"
     },
     "docHints": {
       "type": "object",
-      "description": "Optional documentation hints used to generate human-readable docs from this spine.",
+      "description": "Optional human-facing hints used to generate documentation.",
       "additionalProperties": false,
       "properties": {
         "overview": {
           "type": "string",
-          "description": "High-level description of this routing spine."
+          "description": "Short description of how to read and use the routing spine."
+        },
+        "objectKindNotes": {
+          "type": "object",
+          "description": "Per-objectKind doc hints keyed by objectKind name.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "summary": {
+                "type": "string",
+                "description": "High-level explanation of what this objectKind represents."
+              },
+              "usage": {
+                "type": "string",
+                "description": "Guidance for where and when this objectKind is typically authored."
+              }
+            }
+          }
         }
       }
+    },
+    "mathConstraints": {
+      "type": "array",
+      "description": "Catalog of named math constraints (formulas, inequalities, derived ranges) that can be referenced from routes.",
+      "items": {
+        "$ref": "#/definitions/mathConstraint"
+      },
+      "minItems": 0
+    },
+    "objectKinds": {
+      "type": "array",
+      "description": "Entries describing routing rules per objectKind.",
+      "items": {
+        "$ref": "#/definitions/objectKindEntry"
+      },
+      "minItems": 1
     }
   },
-  "$defs": {
+  "definitions": {
     "tier": {
       "type": "string",
+      "description": "Canonical tier identifier used across the constellation.",
       "enum": [
         "T1-core",
         "T2-vault",
         "T3-lab"
-      ],
-      "description": "VM-constellation repo tier."
+      ]
     },
-    "objectKindName": {
+    "phase": {
       "type": "string",
+      "description": "CHAT_DIRECTOR phase at which this objectKind is legal.",
       "enum": [
-        "moodContract",
-        "eventContract",
-        "regionContractCard",
-        "seedContractCard"
+        "Phase0Schema",
+        "Phase1Plan",
+        "Phase2Contracts",
+        "Phase3LuaPolicy",
+        "Phase4Adapter"
       ]
     },
     "repoName": {
       "type": "string",
-      "description": "Canonical repository name, e.g. Horror.Place or HorrorPlace-Atrocity-Seeds."
+      "description": "Canonical repository name within the HorrorPlace constellation.",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Constellation-Contracts",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network"
+      ]
     },
     "invariantCode": {
       "type": "string",
+      "description": "Invariant code, validated against the invariants spine in CI.",
       "enum": [
         "CIC",
         "MDI",
@@ -89,6 +127,7 @@
     },
     "metricCode": {
       "type": "string",
+      "description": "Entertainment metric code, validated against the entertainment metrics spine in CI.",
       "enum": [
         "UEC",
         "EMD",
@@ -97,144 +136,9 @@
         "ARR"
       ]
     },
-    "phaseName": {
-      "type": "string",
-      "enum": [
-        "Phase0Schema",
-        "Phase1Registry",
-        "Phase2ContractCard",
-        "Phase3SeedsAndEvents",
-        "Phase4Adapter"
-      ],
-      "description": "CHAT_DIRECTOR phase in which this objectKind is legal for the route."
-    },
-    "objectKindEntry": {
+    "mathConstraint": {
       "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "description",
-        "allowedTiers",
-        "routes"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/objectKindName"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of this object kind."
-        },
-        "allowedTiers": {
-          "type": "array",
-          "description": "Tiers where this objectKind may exist.",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/tier"
-          },
-          "uniqueItems": true
-        },
-        "routes": {
-          "type": "array",
-          "description": "Per-tier, per-repo routing entries for this object kind.",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/routeEntry"
-          }
-        }
-      }
-    },
-    "routeEntry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "tier",
-        "repo",
-        "schemaRef",
-        "aiAuthoringKind",
-        "defaultTargetPath",
-        "registryRef",
-        "invariants",
-        "metrics",
-        "constraints",
-        "phase",
-        "enforcesAdditionalPropertiesFalse"
-      ],
-      "properties": {
-        "tier": {
-          "$ref": "#/$defs/tier"
-        },
-        "repo": {
-          "$ref": "#/$defs/repoName"
-        },
-        "schemaRef": {
-          "type": "string",
-          "description": "Canonical JSON Schema URI or repo-relative path for this object kind."
-        },
-        "aiAuthoringKind": {
-          "type": "string",
-          "description": "Discriminator that must match AiAuthoringRequest.objectKind for this route."
-        },
-        "defaultTargetPath": {
-          "type": "string",
-          "description": "Repository-relative directory root where artifacts of this kind should be written.",
-          "pattern": "^[^\\n]+$"
-        },
-        "registryRef": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "path",
-            "schemaRef"
-          ],
-          "properties": {
-            "path": {
-              "type": "string",
-              "description": "Repository-relative path to the registry file that must reference this artifact."
-            },
-            "schemaRef": {
-              "type": "string",
-              "description": "JSON Schema URI or path for the registry entry type."
-            }
-          }
-        },
-        "invariants": {
-          "type": "array",
-          "description": "Invariant codes this object kind must declare bands for on this route.",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/invariantCode"
-          },
-          "uniqueItems": true
-        },
-        "metrics": {
-          "type": "array",
-          "description": "Entertainment metric codes this object kind is expected to influence on this route.",
-          "items": {
-            "$ref": "#/$defs/metricCode"
-          },
-          "uniqueItems": true
-        },
-        "constraints": {
-          "type": "array",
-          "description": "Constraint identifiers drawn from mathConstraints that must hold for this route.",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
-        },
-        "phase": {
-          "$ref": "#/$defs/phaseName"
-        },
-        "enforcesAdditionalPropertiesFalse": {
-          "type": "boolean",
-          "const": true,
-          "description": "Indicates that the canonical schema for this route sets additionalProperties to false."
-        }
-      }
-    },
-    "mathConstraintEntry": {
-      "type": "object",
+      "description": "Structural descriptor for a math constraint that can be applied to routes.",
       "additionalProperties": false,
       "required": [
         "id",
@@ -247,14 +151,17 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Constraint identifier, e.g. sprFromInvariants.v1."
+          "description": "Identifier for this constraint (e.g. sprFromInvariants.v1).",
+          "pattern": "^[a-z0-9_.-]+$"
         },
         "version": {
           "type": "string",
-          "description": "Semantic version for this constraint."
+          "description": "Semantic version for this constraint definition.",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
         },
         "kind": {
           "type": "string",
+          "description": "Constraint class.",
           "enum": [
             "formula",
             "inequality",
@@ -263,28 +170,171 @@
         },
         "inputs": {
           "type": "array",
-          "description": "Invariant and/or metric codes used as inputs to this constraint.",
-          "minItems": 1,
+          "description": "List of invariants/metrics this constraint reads.",
           "items": {
             "type": "string"
           },
+          "minItems": 1,
           "uniqueItems": true
         },
         "output": {
           "type": "string",
-          "description": "Invariant or metric code constrained by this entry."
+          "description": "Invariant or metric this constraint governs."
         },
         "expressionRef": {
           "type": "string",
-          "description": "Path or URI to a separate JSON or Markdown document that defines the mathematical expression."
+          "description": "Pointer to the constraint’s formal definition, e.g. docs/formulas/sprFromInvariants.v1.md or schemas/formulas/sprFromInvariants.v1.json."
         },
-        "appliesToObjectKinds": {
+        "spineRef": {
+          "type": "string",
+          "description": "Optional pointer into the schema spine formula catalog for cross-checking."
+        },
+        "appliesTo": {
           "type": "array",
-          "description": "Optional list of object kinds this constraint applies to. If empty or omitted, it may be used by any kind.",
+          "description": "Optional list of objectKinds or explicit route identifiers this constraint applies to.",
           "items": {
-            "$ref": "#/$defs/objectKindName"
+            "type": "string"
           },
+          "minItems": 0,
           "uniqueItems": true
+        }
+      }
+    },
+    "routeEntry": {
+      "type": "object",
+      "description": "Routing rule for a specific (tier, repo) combination.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tier",
+        "repo",
+        "schemaRef",
+        "aiAuthoringKind",
+        "defaultTargetPath",
+        "registryRef",
+        "invariants",
+        "metrics",
+        "constraints",
+        "phase",
+        "additionalPropertiesRequired"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Opaque identifier for this route entry, used by CI and tooling.",
+          "pattern": "^[a-z0-9_.-]+$"
+        },
+        "tier": {
+          "$ref": "#/definitions/tier"
+        },
+        "repo": {
+          "$ref": "#/definitions/repoName"
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Canonical schema URI/ID this object must conform to (e.g. schemas/contracts/event-contract-v1.json)."
+        },
+        "aiAuthoringKind": {
+          "type": "string",
+          "description": "Machine-readable discriminator for AiAuthoringRequest.objectKind.",
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "defaultTargetPath": {
+          "type": "string",
+          "description": "Repo-relative directory root for this kind/tier/repo (e.g. events/, regions/cards/).",
+          "pattern": "^[a-zA-Z0-9._\\-/]+$"
+        },
+        "registryRef": {
+          "type": "string",
+          "description": "Path and schema for the registry that must reference this object, e.g. registry/registry-events.ndjson."
+        },
+        "invariants": {
+          "type": "array",
+          "description": "Invariant codes this route requires as bands.",
+          "items": {
+            "$ref": "#/definitions/invariantCode"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "metrics": {
+          "type": "array",
+          "description": "Entertainment metrics this route expects as targets/bands.",
+          "items": {
+            "$ref": "#/definitions/metricCode"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "constraints": {
+          "type": "array",
+          "description": "List of mathConstraint ids that must hold for this route.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "phase": {
+          "$ref": "#/definitions/phase"
+        },
+        "additionalPropertiesRequired": {
+          "type": "boolean",
+          "description": "If true, the bound contract schema must set additionalProperties:false at the top level."
+        },
+        "docHints": {
+          "type": "object",
+          "description": "Optional human-facing notes for this route.",
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "Short description of this route’s purpose."
+            },
+            "usage": {
+              "type": "string",
+              "description": "Guidance for when this route should be selected."
+            }
+          }
+        }
+      }
+    },
+    "objectKindEntry": {
+      "type": "object",
+      "description": "Routing rules for a single objectKind across tiers and repos.",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "allowedTiers",
+        "routes"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Object kind name (e.g. moodContract, eventContract, regionContractCard, seedContractCard).",
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-facing description used in generated documentation."
+        },
+        "allowedTiers": {
+          "type": "array",
+          "description": "List of tiers where this objectKind is legal.",
+          "items": {
+            "$ref": "#/definitions/tier"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "routes": {
+          "type": "array",
+          "description": "Per-(tier, repo) routing rules. CI enforces uniqueness of (tier, repo) pairs within this array.",
+          "items": {
+            "$ref": "#/definitions/routeEntry"
+          },
+          "minItems": 1
         }
       }
     }
