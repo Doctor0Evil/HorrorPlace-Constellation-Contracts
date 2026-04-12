@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DiscoveryContract.v1",
+  "description": "Pre-generation discovery contract for Horror$Place VM-constellation. Declares which spine documents, manifests, registries, and graph indices were loaded before any authoring plan is proposed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "discoveryId",
+    "sessionId",
+    "agent",
+    "spineRefs",
+    "manifestRefs",
+    "registryRefs",
+    "graphRefs",
+    "runtimeCapabilities"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "description": "Semantic version of the discovery-contract schema."
+    },
+    "discoveryId": {
+      "type": "string",
+      "description": "Opaque identifier for this discovery envelope."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Authoring session identifier that this discovery applies to."
+    },
+    "agent": {
+      "type": "object",
+      "description": "Identity of the agent performing discovery.",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "model",
+        "agentId"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "agentId": {
+          "type": "string"
+        }
+      }
+    },
+    "spineRefs": {
+      "type": "array",
+      "description": "Spine documents loaded and trusted at discovery time.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "ref",
+          "hash"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "schema-spine-index",
+              "invariants-spine",
+              "metrics-spine",
+              "routing-spine",
+              "schema-spine-fragment",
+              "hpc-routing-spine"
+            ]
+          },
+          "ref": {
+            "type": "string",
+            "description": "Path, URI, or logical ID of the spine document."
+          },
+          "hash": {
+            "type": "string",
+            "description": "Content hash or version identifier for the spine document."
+          }
+        }
+      }
+    },
+    "manifestRefs": {
+      "type": "array",
+      "description": "Repo manifests consulted for routing and policy decisions.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repo",
+          "ref",
+          "hash"
+        ],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Repository name, for example HorrorPlace-Constellation-Contracts."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Path or URI for the manifest file."
+          },
+          "hash": {
+            "type": "string",
+            "description": "Content hash or version identifier for the manifest."
+          }
+        }
+      }
+    },
+    "registryRefs": {
+      "type": "array",
+      "description": "NDJSON registries and contract-card collections consulted.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "ref",
+          "hash"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Registry kind, for example regions, events, personas, styles, seeds."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Path or URI for the registry."
+          },
+          "hash": {
+            "type": "string",
+            "description": "Content hash or version identifier for the registry snapshot."
+          }
+        }
+      }
+    },
+    "graphRefs": {
+      "type": "array",
+      "description": "Constellation-graph indices or caches consulted.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ref",
+          "hash"
+        ],
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Path or URI for the graph index."
+          },
+          "hash": {
+            "type": "string",
+            "description": "Content hash or version identifier for the graph index."
+          }
+        }
+      }
+    },
+    "runtimeCapabilities": {
+      "type": "object",
+      "description": "Capabilities available to the agent at discovery time for this session.",
+      "additionalProperties": false,
+      "required": [
+        "allowedObjectKinds",
+        "allowedTiers",
+        "allowedRepos",
+        "maxFilesInBundle",
+        "maxBundlesPerSession"
+      ],
+      "properties": {
+        "allowedObjectKinds": {
+          "type": "array",
+          "description": "Object kinds that the routing spine and manifests allow for this session.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowedTiers": {
+          "type": "array",
+          "description": "Tiers that the agent is allowed to touch based on manifests and governance.",
+          "items": {
+            "type": "integer",
+            "enum": [1, 2, 3]
+          }
+        },
+        "allowedRepos": {
+          "type": "array",
+          "description": "Repositories that may host artifacts for this session.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxFilesInBundle": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Maximum files allowed in a single bundle as derived from manifests."
+        },
+        "maxBundlesPerSession": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum bundles allowed in this session as derived from manifests."
+        },
+        "requireDeadLedgerRef": {
+          "type": "boolean",
+          "description": "If true, authoring contracts must provide a valid Dead-Ledger policy reference."
+        },
+        "oneFilePerRequest": {
+          "type": "boolean",
+          "description": "If true, routing manifests require strictly one artifact per request for this session."
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Local validation results for discovery, as computed by CHAT_DIRECTOR or Rust helpers.",
+      "additionalProperties": false,
+      "required": [
+        "schemaValid",
+        "spineResolved",
+        "manifestsResolved",
+        "registriesResolved",
+        "graphResolved"
+      ],
+      "properties": {
+        "schemaValid": {
+          "type": "boolean",
+          "description": "True if this discovery envelope validated against discovery-contract.v1 schema."
+        },
+        "spineResolved": {
+          "type": "boolean",
+          "description": "True if all spineRefs were found on disk or configured paths."
+        },
+        "manifestsResolved": {
+          "type": "boolean",
+          "description": "True if all manifestRefs were found and parsed."
+        },
+        "registriesResolved": {
+          "type": "boolean",
+          "description": "True if all registryRefs were found and parsed."
+        },
+        "graphResolved": {
+          "type": "boolean",
+          "description": "True if all graphRefs were found and parsed."
+        },
+        "errorCodes": {
+          "type": "array",
+          "description": "Optional list of error codes when any resolution flag is false.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional free-form notes for operators and auditors."
+    }
+  }
+}
