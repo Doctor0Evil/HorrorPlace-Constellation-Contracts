@@ -1,0 +1,520 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AiSafeAuthoringContract.v1",
+  "description": "Session-level AI-safe authoring contract for Horror$Place VM-constellation. Declares planned artifacts, routing triples, safety envelopes, and file-sequence ordering before any generation occurs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "sessionId",
+    "agent",
+    "profile",
+    "discoveryRef",
+    "consent",
+    "safety",
+    "bundlePlan",
+    "telemetry"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "description": "Semantic version of the ai-safe-authoring-contract schema and enforcement logic."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Opaque identifier for this AI authoring session, stable across retries."
+    },
+    "agent": {
+      "type": "object",
+      "description": "Identity and platform details for the external AI or tool.",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "model",
+        "agentId"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "description": "External platform name, for example Perplexity, Qwen, Copilot, LocalLLM."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model identifier or family used to generate artifacts."
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Opaque agent identifier or key from the external platform."
+        },
+        "profileRef": {
+          "type": "string",
+          "description": "Optional URI or spineRef for the agent profile used in this session."
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "description": "Authoring profile and capability envelope applied to this session.",
+      "additionalProperties": false,
+      "required": [
+        "profileId",
+        "tier",
+        "maxFilesInBundle",
+        "maxBundlesPerSession"
+      ],
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "description": "Identifier for the authoring profile, bound to invariants and metrics caps."
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Maximum tier that this session is allowed to touch."
+        },
+        "maxFilesInBundle": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Upper bound on artifacts per bundle sequence in this session."
+        },
+        "maxBundlesPerSession": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of independent bundles this session may attempt."
+        },
+        "allowCrossRepoBundles": {
+          "type": "boolean",
+          "description": "If false, each bundle must target a single repository."
+        },
+        "allowTierEscalation": {
+          "type": "boolean",
+          "description": "If true, CHAT_DIRECTOR may request tier upgrades under governance, otherwise any attempt to exceed profile tier must fail."
+        }
+      }
+    },
+    "discoveryRef": {
+      "type": "object",
+      "description": "Reference to a validated discovery-contract.v1 that lists loaded spine documents, manifests, and registries.",
+      "additionalProperties": false,
+      "required": [
+        "discoveryId",
+        "schemaRef",
+        "spineRefs",
+        "manifestRefs",
+        "registryRefs"
+      ],
+      "properties": {
+        "discoveryId": {
+          "type": "string",
+          "description": "Identifier of the concrete discovery envelope this authoring contract depends on."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Schema URI for the discovery-contract.v1 object."
+        },
+        "spineRefs": {
+          "type": "array",
+          "description": "URIs or IDs for spine documents consulted before planning.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "manifestRefs": {
+          "type": "array",
+          "description": "URIs or IDs for repo manifests consulted before planning.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "registryRefs": {
+          "type": "array",
+          "description": "URIs or IDs for registries or graph indices consulted before planning.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "description": "Session-level consent and governance envelope.",
+      "additionalProperties": false,
+      "required": [
+        "consentTier",
+        "maxIntensityBand",
+        "deadLedgerSurfaces"
+      ],
+      "properties": {
+        "consentTier": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Highest consent tier allowed for this session, mirrored from user and governance state."
+        },
+        "maxIntensityBand": {
+          "type": "string",
+          "description": "Maximum allowed horror intensity band, for example low, medium, high, extreme."
+        },
+        "deadLedgerSurfaces": {
+          "type": "array",
+          "description": "Dead-Ledger surfaces on which artifacts and validation logs may be recorded.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowedUECBand": {
+          "type": "string",
+          "description": "Optional target band for UEC metric, such as 0.55-0.80."
+        },
+        "allowedARRBand": {
+          "type": "string",
+          "description": "Optional target band for ARR metric, such as >=0.70."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "description": "Additional safety and novelty constraints for the session.",
+      "additionalProperties": false,
+      "required": [
+        "allowResurrectionRuns",
+        "allowGraphExpansion",
+        "minNoveltyBand"
+      ],
+      "properties": {
+        "allowResurrectionRuns": {
+          "type": "boolean",
+          "description": "If false, session may not initiate resurrection validation runs."
+        },
+        "allowGraphExpansion": {
+          "type": "boolean",
+          "description": "If false, session may only modify existing graph nodes, not create new ones."
+        },
+        "minNoveltyBand": {
+          "type": "string",
+          "description": "Minimum novelty or diversity band for content, used to avoid low-novelty spam."
+        },
+        "maxBundleErrorRate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum tolerable predicted error rate for this bundle before CI should refuse generation."
+        }
+      }
+    },
+    "bundlePlan": {
+      "type": "object",
+      "description": "Planned artifact bundles and their file-sequence ordering for this session.",
+      "additionalProperties": false,
+      "required": [
+        "bundleId",
+        "phaseModel",
+        "artifacts"
+      ],
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "description": "Identifier for this planned bundle or sequence."
+        },
+        "phaseModel": {
+          "type": "string",
+          "enum": [
+            "schema-registry-implementation",
+            "card-registry-binding",
+            "single-phase"
+          ],
+          "description": "High-level pattern describing how phases should be interpreted."
+        },
+        "maxFilesInBundle": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Per-bundle upper bound on artifacts, must be less than or equal to profile.maxFilesInBundle."
+        },
+        "artifacts": {
+          "type": "array",
+          "description": "Planned artifacts with routing triples, invariants, metrics, and sequence ordering.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "artifactId",
+              "objectKind",
+              "tier",
+              "targetRepo",
+              "targetPath",
+              "schemaRef",
+              "chatDirectorPhase",
+              "sequence",
+              "graphPlan",
+              "invariantsTouched",
+              "metricsTouched"
+            ],
+            "properties": {
+              "artifactId": {
+                "type": "string",
+                "description": "Unique identifier for this planned artifact within the bundle."
+              },
+              "objectKind": {
+                "type": "string",
+                "description": "Spine-defined object kind, for example regionContractCard, seedContractCard, personaContract."
+              },
+              "tier": {
+                "type": "integer",
+                "enum": [1, 2, 3],
+                "description": "Tier for this artifact, must not exceed profile.tier."
+              },
+              "targetRepo": {
+                "type": "string",
+                "description": "Repository name chosen by routing spine for this artifact."
+              },
+              "targetPath": {
+                "type": "string",
+                "description": "Default relative path hint from routing spine, for example schemas/regions/ or registries/personas/."
+              },
+              "schemaRef": {
+                "type": "string",
+                "description": "Schema URI for the payload that will be generated by AI."
+              },
+              "chatDirectorPhase": {
+                "type": "string",
+                "description": "CHAT_DIRECTOR phase for this artifact, for example Discover, Plan, Skeleton, Fill, Validate, Apply."
+              },
+              "sequence": {
+                "type": "object",
+                "description": "File-sequence ordering and dependencies for this artifact within the bundle.",
+                "additionalProperties": false,
+                "required": [
+                  "phaseIndex"
+                ],
+                "properties": {
+                  "phaseIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Ordering index for this artifact relative to others in the bundle. Lower values must be generated and validated first."
+                  },
+                  "dependsOnArtifacts": {
+                    "type": "array",
+                    "description": "IDs of other planned artifacts that must exist before this one can be generated.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "Optional label describing the role of this artifact in the sequence, for example schema, registry, implementation."
+                  }
+                }
+              },
+              "graphPlan": {
+                "type": "object",
+                "description": "Constellation-graph planning details for nodes and edges touched by this artifact.",
+                "additionalProperties": false,
+                "required": [
+                  "graphIntent",
+                  "nodes",
+                  "edges"
+                ],
+                "properties": {
+                  "graphIntent": {
+                    "type": "string",
+                    "enum": [
+                      "create-nodes",
+                      "modify-nodes",
+                      "attach-edges",
+                      "no-graph-change"
+                    ],
+                    "description": "High-level intention of this artifact with respect to the constellation graph."
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "description": "Graph nodes that will be created or modified by this artifact.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "nodeId",
+                        "graphNodeKind"
+                      ],
+                      "properties": {
+                        "nodeId": {
+                          "type": "string",
+                          "description": "Graph node identifier, for example region ID or seed ID."
+                        },
+                        "graphNodeKind": {
+                          "type": "string",
+                          "description": "Kind of graph node, for example regionContractCard, eventContract, seedContractCard, personaContract, styleContract."
+                        },
+                        "regionAnchorId": {
+                          "type": "string",
+                          "description": "Optional region ID to which this node is anchored for invariants and metrics."
+                        }
+                      }
+                    }
+                  },
+                  "edges": {
+                    "type": "array",
+                    "description": "Edges that should connect graph nodes because of this artifact.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "fromNodeId",
+                        "toNodeId",
+                        "edgeKind"
+                      ],
+                      "properties": {
+                        "fromNodeId": {
+                          "type": "string",
+                          "description": "Source node identifier for this edge."
+                        },
+                        "toNodeId": {
+                          "type": "string",
+                          "description": "Target node identifier for this edge."
+                        },
+                        "edgeKind": {
+                          "type": "string",
+                          "description": "Type of relationship, for example region-seed, region-persona, seed-event, event-style."
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "invariantsTouched": {
+                "type": "array",
+                "description": "Invariants that this artifact intends to read or modify.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "code",
+                    "mode",
+                    "bandRef"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Invariant code, for example CIC, HVF, LSG, SHCI."
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "read",
+                        "modify"
+                      ],
+                      "description": "Whether this artifact only reads or also modifies the invariant."
+                    },
+                    "bandRef": {
+                      "type": "string",
+                      "description": "Reference to the allowed band or envelope for this invariant from the spine."
+                    }
+                  }
+                }
+              },
+              "metricsTouched": {
+                "type": "array",
+                "description": "Entertainment metrics that this artifact intends to influence.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "code",
+                    "targetBand"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Metric code, for example UEC, ARR, DET, LSG, HVF, EMD, STCI, CDL."
+                    },
+                    "targetBand": {
+                      "type": "string",
+                      "description": "Target metric band from the metrics spine for this objectKind and tier."
+                    }
+                  }
+                }
+              },
+              "noveltyTargets": {
+                "type": "object",
+                "description": "Optional novelty and diversity targets at the artifact level.",
+                "additionalProperties": false,
+                "properties": {
+                  "minNoveltyBand": {
+                    "type": "string",
+                    "description": "Minimum novelty band specific to this artifact."
+                  },
+                  "maxReuseFraction": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Maximum fraction of content allowed to reuse existing patterns or templates."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry and logging metadata for this authoring session.",
+      "additionalProperties": false,
+      "required": [
+        "telemetryId",
+        "ndjsonStream",
+        "sqliteShard",
+        "deadLedgerPolicyRef"
+      ],
+      "properties": {
+        "telemetryId": {
+          "type": "string",
+          "description": "Identifier used to link authoring telemetry and validation metrics."
+        },
+        "ndjsonStream": {
+          "type": "string",
+          "description": "Path or name of the NDJSON telemetry stream for chat-director-validation-metrics."
+        },
+        "sqliteShard": {
+          "type": "string",
+          "description": "Logical name or path for the SQLite shard that mirrors validation events."
+        },
+        "deadLedgerPolicyRef": {
+          "type": "string",
+          "description": "Reference to the Dead-Ledger policy object that governs promotion of artifacts from this session."
+        },
+        "expectedBands": {
+          "type": "object",
+          "description": "Expected code-pipeline spectral band ranges for this session, as hints to Reaper-contracts.",
+          "additionalProperties": false,
+          "properties": {
+            "expectedMinBand": {
+              "type": "string",
+              "enum": [
+                "Code-Quiet",
+                "Code-Turbulent",
+                "Code-Hazard",
+                "Code-Redline"
+              ],
+              "description": "Lower bound of expected code-band for this session, typically Code-Quiet or Code-Turbulent."
+            },
+            "expectedMaxBand": {
+              "type": "string",
+              "enum": [
+                "Code-Quiet",
+                "Code-Turbulent",
+                "Code-Hazard",
+                "Code-Redline"
+              ],
+              "description": "Upper bound of expected code-band; sessions planning high-risk changes may declare Code-Hazard ceilings."
+            }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional free-form notes for operators or auditors, not interpreted by CI."
+    }
+  }
+}
