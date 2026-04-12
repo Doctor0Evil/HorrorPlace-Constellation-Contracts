@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/hpc-routing-spine.schema.json",
+  "title": "HPC Routing Spine",
+  "description": "Canonical routing index mapping (objectKind, tier, repo) to schemas, paths, invariants, metrics, and constraint formulas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "routingSpineVersion",
+    "updatedAt",
+    "objectKinds",
+    "mathConstraints"
+  ],
+  "properties": {
+    "routingSpineVersion": {
+      "type": "string",
+      "description": "Semantic version for the routing spine document, e.g. 1.0.0."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this routing spine was generated."
+    },
+    "objectKinds": {
+      "type": "array",
+      "description": "Routing entries for each supported object kind.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/objectKindEntry"
+      }
+    },
+    "mathConstraints": {
+      "type": "array",
+      "description": "Versioned mathematical constraints and derived formulas referenced by routing entries.",
+      "items": {
+        "$ref": "#/$defs/mathConstraintEntry"
+      }
+    },
+    "docHints": {
+      "type": "object",
+      "description": "Optional documentation hints used to generate human-readable docs from this spine.",
+      "additionalProperties": false,
+      "properties": {
+        "overview": {
+          "type": "string",
+          "description": "High-level description of this routing spine."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "tier": {
+      "type": "string",
+      "enum": [
+        "T1-core",
+        "T2-vault",
+        "T3-lab"
+      ],
+      "description": "VM-constellation repo tier."
+    },
+    "objectKindName": {
+      "type": "string",
+      "enum": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard"
+      ]
+    },
+    "repoName": {
+      "type": "string",
+      "description": "Canonical repository name, e.g. Horror.Place or HorrorPlace-Atrocity-Seeds."
+    },
+    "invariantCode": {
+      "type": "string",
+      "enum": [
+        "CIC",
+        "MDI",
+        "AOS",
+        "RRM",
+        "FCF",
+        "SPR",
+        "RWF",
+        "DET",
+        "HVF",
+        "LSG",
+        "SHCI"
+      ]
+    },
+    "metricCode": {
+      "type": "string",
+      "enum": [
+        "UEC",
+        "EMD",
+        "STCI",
+        "CDL",
+        "ARR"
+      ]
+    },
+    "phaseName": {
+      "type": "string",
+      "enum": [
+        "Phase0Schema",
+        "Phase1Registry",
+        "Phase2ContractCard",
+        "Phase3SeedsAndEvents",
+        "Phase4Adapter"
+      ],
+      "description": "CHAT_DIRECTOR phase in which this objectKind is legal for the route."
+    },
+    "objectKindEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "allowedTiers",
+        "routes"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/objectKindName"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this object kind."
+        },
+        "allowedTiers": {
+          "type": "array",
+          "description": "Tiers where this objectKind may exist.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tier"
+          },
+          "uniqueItems": true
+        },
+        "routes": {
+          "type": "array",
+          "description": "Per-tier, per-repo routing entries for this object kind.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/routeEntry"
+          }
+        }
+      }
+    },
+    "routeEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tier",
+        "repo",
+        "schemaRef",
+        "aiAuthoringKind",
+        "defaultTargetPath",
+        "registryRef",
+        "invariants",
+        "metrics",
+        "constraints",
+        "phase",
+        "enforcesAdditionalPropertiesFalse"
+      ],
+      "properties": {
+        "tier": {
+          "$ref": "#/$defs/tier"
+        },
+        "repo": {
+          "$ref": "#/$defs/repoName"
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Canonical JSON Schema URI or repo-relative path for this object kind."
+        },
+        "aiAuthoringKind": {
+          "type": "string",
+          "description": "Discriminator that must match AiAuthoringRequest.objectKind for this route."
+        },
+        "defaultTargetPath": {
+          "type": "string",
+          "description": "Repository-relative directory root where artifacts of this kind should be written.",
+          "pattern": "^[^\\n]+$"
+        },
+        "registryRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "schemaRef"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Repository-relative path to the registry file that must reference this artifact."
+            },
+            "schemaRef": {
+              "type": "string",
+              "description": "JSON Schema URI or path for the registry entry type."
+            }
+          }
+        },
+        "invariants": {
+          "type": "array",
+          "description": "Invariant codes this object kind must declare bands for on this route.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/invariantCode"
+          },
+          "uniqueItems": true
+        },
+        "metrics": {
+          "type": "array",
+          "description": "Entertainment metric codes this object kind is expected to influence on this route.",
+          "items": {
+            "$ref": "#/$defs/metricCode"
+          },
+          "uniqueItems": true
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Constraint identifiers drawn from mathConstraints that must hold for this route.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "phase": {
+          "$ref": "#/$defs/phaseName"
+        },
+        "enforcesAdditionalPropertiesFalse": {
+          "type": "boolean",
+          "const": true,
+          "description": "Indicates that the canonical schema for this route sets additionalProperties to false."
+        }
+      }
+    },
+    "mathConstraintEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "kind",
+        "inputs",
+        "output",
+        "expressionRef"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Constraint identifier, e.g. sprFromInvariants.v1."
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version for this constraint."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "formula",
+            "inequality",
+            "derivedRange"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "description": "Invariant and/or metric codes used as inputs to this constraint.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "output": {
+          "type": "string",
+          "description": "Invariant or metric code constrained by this entry."
+        },
+        "expressionRef": {
+          "type": "string",
+          "description": "Path or URI to a separate JSON or Markdown document that defines the mathematical expression."
+        },
+        "appliesToObjectKinds": {
+          "type": "array",
+          "description": "Optional list of object kinds this constraint applies to. If empty or omitted, it may be used by any kind.",
+          "items": {
+            "$ref": "#/$defs/objectKindName"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
