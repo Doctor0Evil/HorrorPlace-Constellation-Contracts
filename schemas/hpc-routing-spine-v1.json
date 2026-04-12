@@ -1,25 +1,146 @@
 {
   "routingSpineVersion": "1.0.0",
-  "updatedAt": "2026-04-11T21:14:00Z",
+  "updatedAt": "2026-04-11T21:28:00Z",
+  "docHints": {
+    "overview": "Routing spine v1 covering moodContract, eventContract, regionContractCard, and seedContractCard for Tier-1 and Tier-2 repos.",
+    "objectKindNotes": {
+      "moodContract": {
+        "summary": "Design-level mood contracts that define invariant and metric bands for atmosphere, authored in Tier-1 and consumed in Tier-2 vaults.",
+        "usage": "Use for schema-first definition of moods with no raw horror content in Tier-1; Tier-2 routes consume these contracts when binding to regions, tiles, and events."
+      },
+      "eventContract": {
+        "summary": "Region-bound story events that couple invariants, metrics, and SHCI to regions and personas.",
+        "usage": "Use in Atrocity-Seeds to define hero events and gating logic driven by invariant and metric bands."
+      },
+      "regionContractCard": {
+        "summary": "Numeric design surface for hero regions; canonical home for region-level invariant and metric bands.",
+        "usage": "Author in Atrocity-Seeds to set CIC/DET/SHCI and UEC/ARR targets for region experiences."
+      },
+      "seedContractCard": {
+        "summary": "Procedural story seeds that glue regions, events, personas, and history together.",
+        "usage": "Use to define Outer/Threshold/Locus/Rupture/Fallout seeds with stage-aware UEC/ARR/CDL profiles."
+      }
+    }
+  },
+  "mathConstraints": [
+    {
+      "id": "sprFromInvariants.v1",
+      "version": "1.0.0",
+      "kind": "formula",
+      "inputs": [
+        "CIC",
+        "MDI",
+        "AOS",
+        "FCF"
+      ],
+      "output": "SPR",
+      "expressionRef": "schemas/formulas/sprFromInvariants.v1.json",
+      "spineRef": "schema-spine-index-v1.json#/formulas/sprFromInvariants.v1",
+      "appliesTo": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard"
+      ]
+    },
+    {
+      "id": "metricBandsByTier.mood.v1",
+      "version": "1.0.0",
+      "kind": "derivedRange",
+      "inputs": [
+        "UEC",
+        "ARR",
+        "CDL"
+      ],
+      "output": "UEC",
+      "expressionRef": "docs/formulas/metricBandsByTier.mood.v1.md",
+      "spineRef": "schema-spine-index-v1.json#/formulas/metricBandsByTier.mood.v1",
+      "appliesTo": [
+        "moodContract"
+      ]
+    },
+    {
+      "id": "shciCoupling.v1",
+      "version": "1.0.0",
+      "kind": "inequality",
+      "inputs": [
+        "CIC",
+        "HVF",
+        "LSG",
+        "SHCI"
+      ],
+      "output": "SHCI",
+      "expressionRef": "schemas/formulas/shciCoupling.v1.json",
+      "spineRef": "schema-spine-index-v1.json#/formulas/shciCoupling.v1",
+      "appliesTo": [
+        "eventContract",
+        "seedContractCard",
+        "regionContractCard"
+      ]
+    },
+    {
+      "id": "regionDetCapsByTier.v1",
+      "version": "1.0.0",
+      "kind": "derivedRange",
+      "inputs": [
+        "DET"
+      ],
+      "output": "DET",
+      "expressionRef": "schemas/formulas/regionDetCapsByTier.v1.json",
+      "spineRef": "schema-spine-index-v1.json#/formulas/regionDetCapsByTier.v1",
+      "appliesTo": [
+        "regionContractCard"
+      ]
+    },
+    {
+      "id": "metricBandsByTier.region.v1",
+      "version": "1.0.0",
+      "kind": "derivedRange",
+      "inputs": [
+        "UEC",
+        "ARR"
+      ],
+      "output": "UEC",
+      "expressionRef": "docs/formulas/metricBandsByTier.region.v1.md",
+      "spineRef": "schema-spine-index-v1.json#/formulas/metricBandsByTier.region.v1",
+      "appliesTo": [
+        "regionContractCard"
+      ]
+    },
+    {
+      "id": "sequenceStageMetrics.v1",
+      "version": "1.0.0",
+      "kind": "derivedRange",
+      "inputs": [
+        "UEC",
+        "ARR",
+        "CDL"
+      ],
+      "output": "UEC",
+      "expressionRef": "schemas/formulas/sequenceStageMetrics.v1.json",
+      "spineRef": "schema-spine-index-v1.json#/formulas/sequenceStageMetrics.v1",
+      "appliesTo": [
+        "seedContractCard"
+      ]
+    }
+  ],
   "objectKinds": [
     {
       "name": "moodContract",
-      "description": "Contract describing a systemic mood or atmosphere profile, mapped to invariants and entertainment metrics.",
+      "description": "Design-level mood contracts that define invariant and metric bands for atmosphere.",
       "allowedTiers": [
         "T1-core",
         "T2-vault"
       ],
       "routes": [
         {
+          "id": "moodContract.T1-core.Horror.Place",
           "tier": "T1-core",
           "repo": "Horror.Place",
           "schemaRef": "schemas/contracts/mood-contract-v1.json",
           "aiAuthoringKind": "moodContract",
           "defaultTargetPath": "schemas/moods/",
-          "registryRef": {
-            "path": "registry/registry-moods.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
+          "registryRef": "registry/registry-moods.ndjson",
           "invariants": [
             "CIC",
             "AOS",
@@ -37,21 +158,23 @@
           ],
           "constraints": [
             "sprFromInvariants.v1",
-            "moodMetricBandsByTier.v1"
+            "metricBandsByTier.mood.v1"
           ],
           "phase": "Phase0Schema",
-          "enforcesAdditionalPropertiesFalse": true
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Canonical design contract for moods in Tier-1.",
+            "usage": "AI authoring at Phase0Schema should route moodContract requests here when tier=T1-core."
+          }
         },
         {
+          "id": "moodContract.T2-vault.HorrorPlace-Codebase-of-Death",
           "tier": "T2-vault",
           "repo": "HorrorPlace-Codebase-of-Death",
           "schemaRef": "schemas/contracts/mood-contract-v1.json",
           "aiAuthoringKind": "moodContract",
           "defaultTargetPath": "contracts/moods/",
-          "registryRef": {
-            "path": "registry/registry-moods.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
+          "registryRef": "registry/registry-moods.ndjson",
           "invariants": [
             "CIC",
             "AOS",
@@ -69,68 +192,32 @@
           ],
           "constraints": [
             "sprFromInvariants.v1",
-            "moodMetricBandsByTier.v1"
+            "metricBandsByTier.mood.v1"
           ],
-          "phase": "Phase3SeedsAndEvents",
-          "enforcesAdditionalPropertiesFalse": true
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Vault consumers of mood contracts in implementation repos.",
+            "usage": "Use when binding moods to concrete content in Tier-2 vault contexts."
+          }
         }
       ]
     },
     {
       "name": "eventContract",
-      "description": "Contract describing a history-bound horror event tied to regions, seeds, and invariant bundles.",
+      "description": "Region-bound story events authored as contracts.",
       "allowedTiers": [
-        "T1-core",
         "T2-vault"
       ],
       "routes": [
         {
-          "tier": "T1-core",
-          "repo": "Horror.Place",
-          "schemaRef": "schemas/contracts/event-contract-v1.json",
-          "aiAuthoringKind": "eventContract",
-          "defaultTargetPath": "schemas/events/",
-          "registryRef": {
-            "path": "registry/registry-events.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
-          "invariants": [
-            "CIC",
-            "MDI",
-            "AOS",
-            "RRM",
-            "FCF",
-            "SPR",
-            "RWF",
-            "DET",
-            "HVF",
-            "LSG",
-            "SHCI"
-          ],
-          "metrics": [
-            "UEC",
-            "EMD",
-            "STCI",
-            "CDL",
-            "ARR"
-          ],
-          "constraints": [
-            "sprFromInvariants.v1",
-            "eventShciCoupling.v1"
-          ],
-          "phase": "Phase0Schema",
-          "enforcesAdditionalPropertiesFalse": true
-        },
-        {
+          "id": "eventContract.T2-vault.HorrorPlace-Atrocity-Seeds",
           "tier": "T2-vault",
           "repo": "HorrorPlace-Atrocity-Seeds",
           "schemaRef": "schemas/contracts/event-contract-v1.json",
           "aiAuthoringKind": "eventContract",
           "defaultTargetPath": "events/",
-          "registryRef": {
-            "path": "registry/registry-events.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
+          "registryRef": "registry/registry-events.ndjson",
           "invariants": [
             "CIC",
             "MDI",
@@ -153,30 +240,32 @@
           ],
           "constraints": [
             "sprFromInvariants.v1",
-            "eventShciCoupling.v1"
+            "shciCoupling.v1"
           ],
-          "phase": "Phase3SeedsAndEvents",
-          "enforcesAdditionalPropertiesFalse": true
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Default home for hero event contracts bound to regions and personas.",
+            "usage": "Phase2Contracts authoring for eventContract at T2-vault should resolve to Atrocity-Seeds with events/ as the target path."
+          }
         }
       ]
     },
     {
       "name": "regionContractCard",
-      "description": "High-level numeric envelope for a region, defining invariant bands and entertainment metric targets.",
+      "description": "Region-level contract cards acting as numeric design surfaces.",
       "allowedTiers": [
         "T2-vault"
       ],
       "routes": [
         {
+          "id": "regionContractCard.T2-vault.HorrorPlace-Atrocity-Seeds",
           "tier": "T2-vault",
           "repo": "HorrorPlace-Atrocity-Seeds",
           "schemaRef": "schemas/contracts/regionContractCard.schema.json",
           "aiAuthoringKind": "regionContractCard",
           "defaultTargetPath": "cards/regions/",
-          "registryRef": {
-            "path": "registry/registry-regions.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
+          "registryRef": "registry/registry-regions.ndjson",
           "invariants": [
             "CIC",
             "MDI",
@@ -200,30 +289,32 @@
           "constraints": [
             "sprFromInvariants.v1",
             "regionDetCapsByTier.v1",
-            "regionMetricBandsByTier.v1"
+            "metricBandsByTier.region.v1"
           ],
-          "phase": "Phase2ContractCard",
-          "enforcesAdditionalPropertiesFalse": true
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Canonical region card surface for hero regions.",
+            "usage": "Use for numeric region design in Atrocity-Seeds; CI enforces DET caps and UEC/ARR bands by tier."
+          }
         }
       ]
     },
     {
       "name": "seedContractCard",
-      "description": "Numeric and structural envelope for a procedural horror seed spanning multi-stage sequences within a region.",
+      "description": "Procedural seed cards tying regions, events, and personas together.",
       "allowedTiers": [
         "T2-vault"
       ],
       "routes": [
         {
+          "id": "seedContractCard.T2-vault.HorrorPlace-Atrocity-Seeds",
           "tier": "T2-vault",
           "repo": "HorrorPlace-Atrocity-Seeds",
           "schemaRef": "schemas/contracts/seedContractCard.schema.json",
           "aiAuthoringKind": "seedContractCard",
           "defaultTargetPath": "seeds/",
-          "registryRef": {
-            "path": "registry/registry-seeds.ndjson",
-            "schemaRef": "schemas/registry/registry-entry-v1.json"
-          },
+          "registryRef": "registry/registry-seeds.ndjson",
           "invariants": [
             "CIC",
             "MDI",
@@ -238,117 +329,22 @@
           "metrics": [
             "UEC",
             "EMD",
+            "STCI",
+            "CDL",
             "ARR"
           ],
           "constraints": [
-            "sprFromInvariants.v1",
-            "seedStageMetricProfile.v1",
-            "eventShciCoupling.v1"
+            "sequenceStageMetrics.v1",
+            "shciCoupling.v1",
+            "sprFromInvariants.v1"
           ],
-          "phase": "Phase2ContractCard",
-          "enforcesAdditionalPropertiesFalse": true
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Seed cards for Outer/Threshold/Locus/Rupture/Fallout progressions.",
+            "usage": "Use when authoring procedural seeds in Atrocity-Seeds; enforce stage-aware UEC/ARR/CDL profiles via sequenceStageMetrics.v1."
+          }
         }
-      ]
-    }
-  ],
-  "mathConstraints": [
-    {
-      "id": "sprFromInvariants.v1",
-      "version": "1.0.0",
-      "kind": "formula",
-      "inputs": [
-        "CIC",
-        "MDI",
-        "AOS",
-        "FCF",
-        "LSG"
-      ],
-      "output": "SPR",
-      "expressionRef": "schemas/formulas/sprFromInvariants.v1.json",
-      "appliesToObjectKinds": [
-        "moodContract",
-        "eventContract",
-        "regionContractCard",
-        "seedContractCard"
-      ]
-    },
-    {
-      "id": "moodMetricBandsByTier.v1",
-      "version": "1.0.0",
-      "kind": "derivedRange",
-      "inputs": [
-        "UEC",
-        "EMD",
-        "STCI",
-        "CDL",
-        "ARR"
-      ],
-      "output": "ARR",
-      "expressionRef": "schemas/formulas/moodMetricBandsByTier.v1.json",
-      "appliesToObjectKinds": [
-        "moodContract"
-      ]
-    },
-    {
-      "id": "eventShciCoupling.v1",
-      "version": "1.0.0",
-      "kind": "inequality",
-      "inputs": [
-        "SHCI",
-        "CIC",
-        "HVF",
-        "LSG"
-      ],
-      "output": "SHCI",
-      "expressionRef": "schemas/formulas/eventShciCoupling.v1.json",
-      "appliesToObjectKinds": [
-        "eventContract",
-        "seedContractCard"
-      ]
-    },
-    {
-      "id": "regionDetCapsByTier.v1",
-      "version": "1.0.0",
-      "kind": "derivedRange",
-      "inputs": [
-        "DET"
-      ],
-      "output": "DET",
-      "expressionRef": "schemas/formulas/regionDetCapsByTier.v1.json",
-      "appliesToObjectKinds": [
-        "regionContractCard"
-      ]
-    },
-    {
-      "id": "regionMetricBandsByTier.v1",
-      "version": "1.0.0",
-      "kind": "derivedRange",
-      "inputs": [
-        "UEC",
-        "EMD",
-        "STCI",
-        "CDL",
-        "ARR"
-      ],
-      "output": "ARR",
-      "expressionRef": "schemas/formulas/regionMetricBandsByTier.v1.json",
-      "appliesToObjectKinds": [
-        "regionContractCard"
-      ]
-    },
-    {
-      "id": "seedStageMetricProfile.v1",
-      "version": "1.0.0",
-      "kind": "derivedRange",
-      "inputs": [
-        "UEC",
-        "EMD",
-        "ARR"
-      ],
-      "output": "ARR",
-      "expressionRef": "schemas/formulas/seedStageMetricProfile.v1.json",
-      "appliesToObjectKinds": [
-        "seedContractCard"
       ]
     }
   ]
