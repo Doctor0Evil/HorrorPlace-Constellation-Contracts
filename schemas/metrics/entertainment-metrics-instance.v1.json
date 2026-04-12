@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/core/entertainment-metrics-instance.v1.json",
+  "title": "Entertainment Metrics Instance Schema v1.0.0",
+  "description": "Runtime entertainment metrics instance for a single HorrorPlace VM session or segment. Uses UEC, EMD, STCI, CDL, ARR and related metrics with cross-metric constraints derived from the entertainment metrics spine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+  "properties": {
+    "UEC": {
+      "title": "User Engagement Continuity",
+      "description": "Session-level measure of engagement stability. High UEC indicates sustained immersion; low UEC signals disengagement or confusion.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "examples": [45.2, 78.9, 92.1]
+    },
+    "EMD": {
+      "title": "Experience Modulation Delta",
+      "description": "Rate of change in player emotional valence. Positive = increasing tension/engagement; negative = release/boredom.",
+      "type": "number",
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "examples": [-0.3, 0.0, 0.65]
+    },
+    "STCI": {
+      "title": "Spectral Threat Confidence Interval",
+      "description": "Statistical confidence interval for perceived threat level from spectral entities. Wider intervals indicate uncertainty in threat modeling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper", "confidence"],
+      "properties": {
+        "lower": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Lower bound of threat confidence interval."
+        },
+        "upper": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Upper bound of threat confidence interval."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence level for the interval estimate."
+        }
+      }
+    },
+    "CDL": {
+      "title": "Cognitive Dissonance Level",
+      "description": "Measure of narrative or mechanical contradiction experienced by the player. High CDL can enhance horror but risks confusion.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 10.0,
+      "examples": [1.2, 4.5, 8.9]
+    },
+    "ARR": {
+      "title": "Adaptive Resonance Ratio",
+      "description": "Ratio of player adaptation to system adaptation. ARR≈1.0 indicates synchrony; ARR≈0.0 indicates mismatch.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "examples": [0.23, 0.67, 0.98]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "STCI": {
+            "required": ["lower", "upper"],
+            "properties": {
+              "lower": {
+                "type": "number"
+              },
+              "upper": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": ["STCI"]
+      },
+      "then": {
+        "properties": {
+          "STCI": {
+            "properties": {
+              "lower": {
+                "type": "number",
+                "maximum": {
+                  "$data": "1/upper"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "CDL": {
+            "type": "number",
+            "minimum": 7.0
+          }
+        },
+        "required": ["CDL"]
+      },
+      "then": {
+        "properties": {
+          "STCI": {
+            "properties": {
+              "upper": {
+                "type": "number",
+                "maximum": 0.7
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ARR": {
+            "type": "number",
+            "minimum": 0.8
+          }
+        },
+        "required": ["ARR"]
+      },
+      "then": {
+        "properties": {
+          "UEC": {
+            "type": "number",
+            "minimum": 60.0
+          }
+        }
+      }
+    }
+  ]
+}
