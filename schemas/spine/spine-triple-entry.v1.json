@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/spine/spine-triple-entry.v1.json",
+  "title": "Spine Triple Entry",
+  "description": "Canonical routing entry that binds an objectKind, tier, and repo to allowed phases, schemas, and invariant/metric constraint families.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "spineId": {
+      "type": "string",
+      "description": "Stable identifier for this spine triple entry (e.g., spine.moodContract.tier1.RotCave.v1)."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this spine entry (e.g., 1.0.0).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "objectKind": {
+      "type": "string",
+      "description": "Logical contract family or object kind for this entry.",
+      "enum": [
+        "moodContract",
+        "eventContract",
+        "regionContractCard",
+        "seedContractCard",
+        "personaContract",
+        "policyEnvelope",
+        "telemetryEnvelope"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "description": "Tier in the HorrorPlace constellation that this entry applies to.",
+      "enum": [
+        "tier1",
+        "tier2",
+        "tier3",
+        "vault",
+        "lab"
+      ]
+    },
+    "repo": {
+      "type": "string",
+      "description": "Canonical repository name where artifacts of this kind and tier must live (e.g., HorrorPlace-Constellation-Contracts)."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Authoring or orchestration phase in which this entry is valid.",
+      "enum": [
+        "design",
+        "schema-authoring",
+        "contract-authoring",
+        "pcg-authoring",
+        "telemetry-authoring",
+        "runtime-policy"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of this spine entry.",
+      "enum": [
+        "active",
+        "deprecated",
+        "experimental"
+      ]
+    },
+    "schemaRefs": {
+      "type": "array",
+      "description": "List of canonical schema $id values that objects of this kind must conform to.",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 1
+    },
+    "allowedFileExtensions": {
+      "type": "array",
+      "description": "Allowed file extensions for artifacts governed by this spine entry.",
+      "items": {
+        "type": "string",
+        "pattern": "^\\.[a-zA-Z0-9]+$"
+      }
+    },
+    "targetPathPatterns": {
+      "type": "array",
+      "description": "Canonical directory and filename patterns for artifacts (e.g., schemas/contract/*.json).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredInvariants": {
+      "type": "array",
+      "description": "Names of invariants that must be present in artifacts bound to this entry.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIC",
+          "MDI",
+          "AOS",
+          "RRM",
+          "FCF",
+          "SPR",
+          "RWF",
+          "DET",
+          "HVF",
+          "LSG",
+          "SHCI"
+        ]
+      }
+    },
+    "optionalInvariants": {
+      "type": "array",
+      "description": "Names of invariants that may be present but are not required.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIC",
+          "MDI",
+          "AOS",
+          "RRM",
+          "FCF",
+          "SPR",
+          "RWF",
+          "DET",
+          "HVF",
+          "LSG",
+          "SHCI"
+        ]
+      }
+    },
+    "requiredMetrics": {
+      "type": "array",
+      "description": "Names of metrics that must be present for telemetry or policy envelopes bound to this entry.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "UEC",
+          "EMD",
+          "STCI",
+          "CDL",
+          "ARR"
+        ]
+      }
+    },
+    "optionalMetrics": {
+      "type": "array",
+      "description": "Names of metrics that may be present but are not required.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "UEC",
+          "EMD",
+          "STCI",
+          "CDL",
+          "ARR"
+        ]
+      }
+    },
+    "constraintFamilies": {
+      "type": "array",
+      "description": "Constraint family identifiers that must be applied when authoring or validating artifacts for this entry.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "telemetryTags": {
+      "type": "array",
+      "description": "Optional tags describing how telemetry from this objectKind/tier/repo should be routed.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Human-readable notes about this spine entry, tier overrides, or routing quirks."
+    }
+  },
+  "required": [
+    "spineId",
+    "version",
+    "objectKind",
+    "tier",
+    "repo",
+    "phase",
+    "status",
+    "schemaRefs"
+  ]
+}
