@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horrorplace.constellation/schemas/spine/constraint-family.v1.json",
+  "title": "Constraint Family / Formula",
+  "description": "Versioned constraint families that describe invariant/metric interactions and tier-sensitive bands, referenced by spine triple entries.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "constraintId": {
+      "type": "string",
+      "description": "Stable identifier for this constraint family (e.g., CIC_AOS_DET_cap_v1)."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this constraint definition (e.g., 1.0.0).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "kind": {
+      "type": "string",
+      "description": "High-level category of constraint.",
+      "enum": [
+        "cap",
+        "floor",
+        "band",
+        "review-threshold",
+        "telemetry-derived",
+        "composite-score"
+      ]
+    },
+    "appliesTo": {
+      "type": "string",
+      "description": "Logical target: invariant, metric, pair, or composite.",
+      "enum": [
+        "invariant",
+        "metric",
+        "invariant-metric-pair",
+        "composite"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "description": "Names of invariants and/or metrics used as inputs to this constraint.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIC",
+          "MDI",
+          "AOS",
+          "RRM",
+          "FCF",
+          "SPR",
+          "RWF",
+          "DET",
+          "HVF",
+          "LSG",
+          "SHCI",
+          "UEC",
+          "EMD",
+          "STCI",
+          "CDL",
+          "ARR"
+        ]
+      },
+      "minItems": 1
+    },
+    "outputField": {
+      "type": "string",
+      "description": "Name of the invariant or metric primarily constrained (e.g., DET, ARR, CDL)."
+    },
+    "symbolicForm": {
+      "type": "string",
+      "description": "Human-readable symbolic description of the constraint (e.g., \"DET <= f(CIC, AOS)\" or \"ARR = min(UEC_norm, DET_norm) / max(UEC_norm, DET_norm)\")."
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Tiers for which this constraint is active.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "tier1",
+          "tier2",
+          "tier3",
+          "vault",
+          "lab"
+        ]
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Optional parameterization of the constraint (e.g., coefficients, thresholds, bands).",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "telemetryBinding": {
+      "type": "object",
+      "description": "Declares how telemetry should be emitted or interpreted for this constraint.",
+      "additionalProperties": false,
+      "properties": {
+        "envelopeSchemaRef": {
+          "type": "string",
+          "description": "Schema $id for the telemetry envelope that carries measurements related to this constraint.",
+          "format": "uri"
+        },
+        "fields": {
+          "type": "array",
+          "description": "Names of telemetry fields that carry evaluated values or violations.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "violationSeverityField": {
+          "type": "string",
+          "description": "Optional field that encodes severity of a constraint violation."
+        }
+      }
+    },
+    "reviewPolicy": {
+      "type": "object",
+      "description": "For review-threshold constraints, describes what should happen when the condition is triggered.",
+      "additionalProperties": false,
+      "properties": {
+        "triggerCondition": {
+          "type": "string",
+          "description": "Human-readable condition (e.g., \"CDL >= 7.0 AND STCI.upper >= 0.8\")."
+        },
+        "routeToRepos": {
+          "type": "array",
+          "description": "Repositories that must be notified or involved in review.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiresDeadLedgerRef": {
+          "type": "boolean",
+          "description": "Whether review records must be anchored in Dead-Ledger for this constraint."
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes, calibration status, or open research questions for this constraint family."
+    }
+  },
+  "required": [
+    "constraintId",
+    "version",
+    "kind",
+    "appliesTo",
+    "inputs",
+    "outputField"
+  ]
+}
