@@ -1,0 +1,429 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AiAuthoringSessionBundle.v1",
+  "description": "Schema for the normalized AiAuthoringRequest and AiAuthoringResponse envelopes used by CHAT_DIRECTOR for per-bundle execution in the Horror$Place VM-constellation. CHAT_DIRECTOR normalizes each bundle declared in ai-safe-authoring-contract.v1 into one or more concrete AiAuthoringRequests, submits them to the AI session, and then validates each AiAuthoringResponse against this schema before any artifact proceeds to apply. Every request maps to exactly one planned artifactId from the authoring contract; every response must echo that same artifactId. Bundle size is capped at three artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "bundleId",
+    "sessionId",
+    "phaseModel",
+    "maxFilesInBundle",
+    "requests"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "description": "Semantic version of the AiAuthoringSessionBundle schema."
+    },
+    "bundleId": {
+      "type": "string",
+      "description": "Stable identifier for this bundle execution, matching bundlePlan.bundleId in the parent ai-safe-authoring-contract.v1."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Parent authoring session identifier, matching sessionId in the parent ai-safe-authoring-contract.v1."
+    },
+    "phaseModel": {
+      "type": "string",
+      "enum": ["schema-registry-implementation", "card-registry-binding", "single-phase"],
+      "description": "High-level phase pattern for this bundle, inherited from the authoring contract."
+    },
+    "maxFilesInBundle": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "Upper bound on artifacts in this bundle. Must not exceed the value declared in the parent authoring contract profile."
+    },
+    "requests": {
+      "type": "array",
+      "description": "Ordered list of concrete AiAuthoringRequests for this bundle. CHAT_DIRECTOR populates this array; AI must not modify it.",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": { "$ref": "#/definitions/AiAuthoringRequest" }
+    },
+    "responses": {
+      "type": "array",
+      "description": "Responses from the AI session, one per request, in matching artifactId order. Populated by AI; validated by CHAT_DIRECTOR before apply.",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": { "$ref": "#/definitions/AiAuthoringResponse" }
+    },
+    "bundleStatus": {
+      "type": "string",
+      "enum": ["pending", "in-progress", "complete", "failed", "partial"],
+      "description": "Lifecycle status of this bundle, maintained by CHAT_DIRECTOR."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional operator notes; not interpreted by CI."
+    }
+  },
+  "definitions": {
+    "AiAuthoringRequest": {
+      "type": "object",
+      "description": "A single concrete file-generation request produced by CHAT_DIRECTOR for one planned artifact. The AI session must return a matching AiAuthoringResponse for each request.",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "objectKind",
+        "tier",
+        "targetRepo",
+        "targetPath",
+        "schemaRef",
+        "chatDirectorPhase",
+        "phaseIndex",
+        "dependsOnArtifacts",
+        "requestId",
+        "requestedAt"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "description": "Artifact identifier matching exactly one entry in the parent bundlePlan.artifacts array."
+        },
+        "objectKind": {
+          "type": "string",
+          "description": "Spine-defined object kind for this artifact, such as regionContractCard or seedContractCard."
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Repository tier for this artifact."
+        },
+        "targetRepo": {
+          "type": "string",
+          "description": "Target repository chosen by the routing spine for this artifact."
+        },
+        "targetPath": {
+          "type": "string",
+          "description": "Relative file path within the target repository."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "URI or logical identifier for the JSON Schema that will validate the generated payload."
+        },
+        "chatDirectorPhase": {
+          "type": "string",
+          "enum": ["Discover", "Plan", "Skeleton", "Fill", "Validate", "Apply"],
+          "description": "CHAT_DIRECTOR pipeline phase for this artifact."
+        },
+        "phaseIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Ordering index within the bundle. Lower phaseIndex artifacts must complete before higher ones begin."
+        },
+        "dependsOnArtifacts": {
+          "type": "array",
+          "description": "ArtifactIds that must be successfully validated before this request may be filled.",
+          "items": { "type": "string" }
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Unique identifier for this specific request instance, used to correlate response provenance."
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when CHAT_DIRECTOR created this request."
+        },
+        "skeleton": {
+          "type": "object",
+          "description": "Optional pre-filled JSON structure for the AI to complete. Fields marked DO_NOT_MODIFY must be preserved verbatim; fields marked AI_FILL must be replaced with valid values.",
+          "additionalProperties": true
+        },
+        "generationGuide": {
+          "$ref": "#/definitions/GenerationGuide"
+        },
+        "invariantBands": {
+          "type": "object",
+          "description": "Per-invariant band constraints from the spine, resolved for this artifact's objectKind and tier. Keys are invariant codes (CIC, MDI, AOS, etc.).",
+          "additionalProperties": { "$ref": "#/definitions/SpineResolvedBand" }
+        },
+        "metricBands": {
+          "type": "object",
+          "description": "Per-metric target bands from the entertainment-metrics spine, resolved for this artifact's objectKind and tier. Keys are metric codes (UEC, EMD, STCI, CDL, ARR).",
+          "additionalProperties": { "$ref": "#/definitions/SpineResolvedBand" }
+        },
+        "graphPlan": {
+          "$ref": "#/definitions/GraphPlanRef"
+        }
+      }
+    },
+    "AiAuthoringResponse": {
+      "type": "object",
+      "description": "The AI-generated response for one AiAuthoringRequest. CHAT_DIRECTOR validates that each response maps back to exactly one request via artifactId and requestId before proceeding to apply.",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "bundleId",
+        "sessionId",
+        "requestId",
+        "prismEnvelope",
+        "payload",
+        "generatedBy",
+        "provenance"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "description": "Must match the corresponding AiAuthoringRequest.artifactId exactly."
+        },
+        "bundleId": {
+          "type": "string",
+          "description": "Must match the parent bundle bundleId."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Must match the parent session sessionId."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Must match the AiAuthoringRequest.requestId that produced this response."
+        },
+        "prismEnvelope": {
+          "$ref": "#/definitions/PrismEnvelope"
+        },
+        "payload": {
+          "description": "The generated artifact content. For JSON or NDJSON artifacts this is an object or array; for text, Markdown, Rust, Lua, or YAML artifacts this is a string.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": true },
+            { "type": "array" },
+            { "type": "string" }
+          ]
+        },
+        "generatedBy": {
+          "$ref": "#/definitions/AgentIdentity"
+        },
+        "provenance": {
+          "$ref": "#/definitions/ResponseProvenance"
+        },
+        "softDiagnostics": {
+          "type": "array",
+          "description": "Optional non-fatal warnings the AI noticed during generation, such as invariant values near band edges or missing cross-references.",
+          "items": { "$ref": "#/definitions/SoftDiagnostic" }
+        }
+      }
+    },
+    "PrismEnvelope": {
+      "type": "object",
+      "description": "Metadata envelope that wraps every AI-generated artifact, providing routing, provenance, schema binding, and optional Dead-Ledger reference. CHAT_DIRECTOR validates all fields before the payload proceeds to apply.",
+      "additionalProperties": false,
+      "required": [
+        "envelopeVersion",
+        "artifactId",
+        "targetRepo",
+        "targetPath",
+        "schemaRef",
+        "tier",
+        "referencedIds",
+        "generatedBy",
+        "timestamp",
+        "requestId"
+      ],
+      "properties": {
+        "envelopeVersion": {
+          "type": "string",
+          "description": "Version of the PrismEnvelope format. Current: 1.0."
+        },
+        "artifactId": {
+          "type": "string",
+          "description": "Artifact identifier echoed from the request."
+        },
+        "targetRepo": {
+          "type": "string",
+          "description": "Repository where this artifact will be written. Must match the corresponding request."
+        },
+        "targetPath": {
+          "type": "string",
+          "description": "Relative file path within the target repository. Must match or be a refinement of the request targetPath."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Schema URI used to validate the payload. Must match the request schemaRef."
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Repository tier. Must not exceed the profile tier declared in the parent authoring contract."
+        },
+        "referencedIds": {
+          "type": "array",
+          "description": "All stable IDs (region IDs, event IDs, persona IDs, style IDs, invariant bundle IDs) referenced within the payload.",
+          "items": { "type": "string" }
+        },
+        "invariants": {
+          "type": "object",
+          "description": "Actual invariant values declared in the generated payload. CHAT_DIRECTOR verifies these fall within the invariantBands from the request.",
+          "additionalProperties": { "type": "number" }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Actual metric target values declared in the generated payload. CHAT_DIRECTOR verifies these fall within the metricBands from the request.",
+          "additionalProperties": { "type": "number" }
+        },
+        "deadLedgerRef": {
+          "type": "string",
+          "description": "Optional Dead-Ledger policy reference. Required when the artifact's DET or intensity band mandates attestation."
+        },
+        "generatedBy": {
+          "type": "string",
+          "description": "Agent identifier or platform name, echoed from AgentIdentity."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when this envelope was created by the AI."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Request identifier from the corresponding AiAuthoringRequest, for correlation."
+        }
+      }
+    },
+    "GenerationGuide": {
+      "type": "object",
+      "description": "Optional human- and AI-readable hints provided by CHAT_DIRECTOR to guide content generation for this artifact.",
+      "additionalProperties": false,
+      "properties": {
+        "archetype": {
+          "type": "string",
+          "description": "Suggested objectKind archetype label, such as region.marsh, region.war_front, or persona.archivist."
+        },
+        "exampleIds": {
+          "type": "array",
+          "description": "Example IDs from existing registries that this artifact should resemble structurally.",
+          "items": { "type": "string" }
+        },
+        "invariantBandSummary": {
+          "type": "string",
+          "description": "Human-readable summary of the binding invariant band constraints for this artifact."
+        },
+        "metricBandSummary": {
+          "type": "string",
+          "description": "Human-readable summary of the binding metric target bands for this artifact."
+        },
+        "commonPitfalls": {
+          "type": "array",
+          "description": "Known schema or invariant violations that AI should avoid for this objectKind.",
+          "items": { "type": "string" }
+        },
+        "skeletonHints": {
+          "type": "array",
+          "description": "Field-level generation hints, one per key that AI must fill.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "hint"],
+            "properties": {
+              "field": { "type": "string" },
+              "hint":  { "type": "string" },
+              "role":  { "type": "string", "enum": ["AI_FILL", "DO_NOT_MODIFY", "OPTIONAL"] }
+            }
+          }
+        },
+        "maxTokenBudget": {
+          "type": "integer",
+          "description": "Optional target maximum token count for the AI response payload, used to keep bundles within context limits."
+        }
+      }
+    },
+    "SpineResolvedBand": {
+      "type": "object",
+      "description": "A concrete band resolved from the invariants or metrics spine for a specific objectKind and tier.",
+      "additionalProperties": false,
+      "required": ["code", "min", "max"],
+      "properties": {
+        "code":         { "type": "string" },
+        "min":          { "type": "number" },
+        "max":          { "type": "number" },
+        "charterFloor": { "type": "number", "description": "Charter-level floor, if applicable." },
+        "note":         { "type": "string" }
+      }
+    },
+    "GraphPlanRef": {
+      "type": "object",
+      "description": "Snapshot of the graphPlan block from the parent authoring contract, passed through for AI reference during generation.",
+      "additionalProperties": false,
+      "required": ["graphIntent", "nodes", "edges"],
+      "properties": {
+        "graphIntent": {
+          "type": "string",
+          "enum": ["create-nodes", "modify-nodes", "attach-edges", "no-graph-change"]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["nodeId", "graphNodeKind"],
+            "properties": {
+              "nodeId":        { "type": "string" },
+              "graphNodeKind": { "type": "string" },
+              "regionAnchorId": { "type": "string" }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fromNodeId", "toNodeId", "edgeKind"],
+            "properties": {
+              "fromNodeId": { "type": "string" },
+              "toNodeId":   { "type": "string" },
+              "edgeKind":   { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "AgentIdentity": {
+      "type": "object",
+      "description": "Identity of the AI agent or platform that generated the response.",
+      "additionalProperties": false,
+      "required": ["platform", "model", "agentId"],
+      "properties": {
+        "platform":   { "type": "string" },
+        "model":      { "type": "string" },
+        "agentId":    { "type": "string" },
+        "profileRef": { "type": "string" }
+      }
+    },
+    "ResponseProvenance": {
+      "type": "object",
+      "description": "Provenance metadata the AI must populate to enable CHAT_DIRECTOR audit and CI tracing.",
+      "additionalProperties": false,
+      "required": ["schemaRef", "requestId", "timestamp"],
+      "properties": {
+        "schemaRef":          { "type": "string" },
+        "requestId":          { "type": "string" },
+        "timestamp":          { "type": "string", "format": "date-time" },
+        "generationDurationMs": {
+          "type": "integer",
+          "description": "Optional: elapsed time in milliseconds between request receipt and response emission."
+        },
+        "spineVersionsUsed": {
+          "type": "object",
+          "description": "Optional: versions of spine documents the AI consulted during generation.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "SoftDiagnostic": {
+      "type": "object",
+      "description": "A non-fatal warning or observation the AI includes alongside a valid response.",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code":      { "type": "string", "description": "Short error or warning code, such as INVARIANT_NEAR_CEILING or METRIC_AT_CHARTER_FLOOR." },
+        "field":     { "type": "string", "description": "Optional JSON Pointer to the field that triggered the diagnostic." },
+        "message":   { "type": "string" },
+        "severity":  { "type": "string", "enum": ["warning", "info"] }
+      }
+    }
+  }
+}
