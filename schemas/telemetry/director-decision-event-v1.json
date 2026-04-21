@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/director-decision-event-v1.json",
+  "title": "Director Decision Event v1",
+  "description": "Telemetry schema for H.Director.applySafetyDecision outcomes, capturing strategy verbs, persona context, comfort policy, and metric snapshots for offline analysis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "schemaRef",
+    "objectKind",
+    "timestamp",
+    "sessionId",
+    "runId",
+    "regionId",
+    "directorPersonaId",
+    "strategy",
+    "metricsSnapshot"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier for this director decision.",
+      "pattern": "^dd-[a-z0-9]{8,32}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "director-decision-event.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "directorDecisionEvent",
+      "description": "Object kind for telemetry routing."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the decision."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Session identifier bound to this decision."
+    },
+    "runId": {
+      "type": "string",
+      "description": "Run contract identifier for context."
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Region identifier where decision was made."
+    },
+    "tileId": {
+      "type": ["string", "null"],
+      "description": "Optional tile identifier for node-level decisions."
+    },
+    "nodeId": {
+      "type": ["string", "null"],
+      "description": "Optional node identifier for dungeon-style flows."
+    },
+    "directorPersonaId": {
+      "type": "string",
+      "description": "Active director persona contract ID.",
+      "pattern": "^dir-[a-z0-9\\-]{3,64}$"
+    },
+    "directorKind": {
+      "type": "string",
+      "description": "Cached director kind for quick slicing.",
+      "enum": ["coldOverseer", "ritualStatistician", "silentArchivistDirector"]
+    },
+    "comfortPolicyRef": {
+      "type": ["string", "null"],
+      "description": "Comfort policy ID used for DET/CDL clamping.",
+      "pattern": "^dcp-[a-z0-9\\-]{3,64}$"
+    },
+    "strategy": {
+      "type": "string",
+      "description": "Strategy verb returned by applySafetyDecision.",
+      "enum": ["allow", "soften", "imply", "refuse", "downshift"]
+    },
+    "styleHint": {
+      "type": ["string", "null"],
+      "description": "Optional tone hint for persona phrasing.",
+      "enum": ["clinical", "ritual", "ominous", "gentle", "offscreen"]
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable rationale for the strategy choice.",
+      "maxLength": 512
+    },
+    "safetyDecision": {
+      "type": "object",
+      "description": "Minimal, schema-constrained view of the input safety decision.",
+      "additionalProperties": false,
+      "required": ["decision"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["allow", "soften", "imply", "refuse"]
+        },
+        "boundaryBand": {
+          "type": ["string", "null"],
+          "enum": ["within-limits", "near-soft-cap", "at-hard-cap"]
+        },
+        "violationsCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of boundary violations detected (0 if none)."
+        }
+      }
+    },
+    "budgetSnapshotId": {
+      "type": ["string", "null"],
+      "description": "Optional reference to the budget snapshot used."
+    },
+    "metricsSnapshot": {
+      "type": "object",
+      "description": "Entertainment metrics at time of decision.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "deadLedgerDecisionToken": {
+      "type": ["string", "null"],
+      "description": "Optional Dead-Ledger token if this decision involved attested content.",
+      "pattern": "^dlt-[a-f0-9]{16,64}$"
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
