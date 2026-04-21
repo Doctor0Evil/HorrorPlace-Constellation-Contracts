@@ -1,0 +1,6 @@
+﻿Feature,Rust Function/API,Description,Impact on AI-Chat
+Object Kind Profiling,SpineIndex::describe_object_kind(),"Returns a detailed profile of an object kind, including required fields, invariants, and metrics.",Eliminates guessing about the shape of a contract.
+Safe Default Bands,SpineIndex::safe_defaults(),Computes guaranteed-valid numeric ranges for invariants and metrics based on the spine and tier.,Prevents out-of-bounds values and ensures numerical compliance from the start.
+Archetype Application,SkeletonGenerator::with_archetype(),"Applies a pre-defined archetype to a generated skeleton, setting initial values for key fields.","Provides a quick-start template for common patterns, accelerating generation."
+Annotation System,SkeletonGenerator::annotate_fields(),Tags each field in the skeleton with AiFill", "SafeDefault", or "DoNotModify instructions.,"Gives the AI a clear, unambiguous contract on what it is responsible for creating."
+Structural Validation,SkeletonGenerator::validate_against_spine(),Verifies the generated skeleton against the underlying schema and spine rules.,Ensures the scaffold itself is structurally sound before AI interaction.
