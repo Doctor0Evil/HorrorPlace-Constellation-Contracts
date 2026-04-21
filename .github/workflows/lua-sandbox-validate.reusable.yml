@@ -1,0 +1,188 @@
+name: lua-sandbox-validate.reusable
+
+on:
+  workflow_call:
+    inputs:
+      lua_glob:
+        description: 'Glob for Lua files to validate (relative to repo root)'
+        required: false
+        default: '**/*.lua'
+        type: string
+      policy_path:
+        description: 'Path to lua-sandbox-policy.v1.json within this checkout or a sibling checkout'
+        required: false
+        default: 'schemas/safety/lua-sandbox-policy.v1.json'
+        type: string
+
+jobs:
+  lua-sandbox-validate:
+    runs-on: ubuntu-latest
+
+    env:
+      LUA_GLOB: ${{ inputs.lua_glob }}
+      POLICY_PATH: ${{ inputs.policy_path }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: '5.4'
+
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+
+      - name: Install sandbox validator dependencies
+        run: |
+          set -euo pipefail
+          luarocks install lua-cjson
+          luarocks install luafilesystem
+          # If you package a shared validator as a rock, install it here.
+          # luarocks install horrorplace-lua-sandbox-validator
+
+      - name: Run Lua sandbox policy validation
+        run: |
+          set -euo pipefail
+
+          echo "::group::Locate lua-sandbox-policy"
+          if [ ! -f "${POLICY_PATH}" ]; then
+            echo "::error title=Lua sandbox policy not found::Expected policy at ${POLICY_PATH}"
+            exit 1
+          fi
+          echo "Using policy file: ${POLICY_PATH}"
+          echo "::endgroup::"
+
+          echo "::group::Find Lua files"
+          mapfile -t LUA_FILES < <(find . -type f -name '*.lua' | sed 's|^\./||')
+          if [ "${#LUA_FILES[@]}" -eq 0 ]; then
+            echo "No Lua files found under current checkout."
+            exit 0
+          fi
+          echo "Found ${#LUA_FILES[@]} Lua files."
+          echo "::endgroup::"
+
+          echo "::group::Filter Lua files by glob"
+          # Use Python to filter by the provided glob, to avoid shell portability issues.
+          python << 'PYEOF'
+import fnmatch, os, sys
+
+glob_pattern = os.environ.get("LUA_GLOB", "**/*.lua")
+files = [f.strip() for f in sys.stdin if f.strip()]
+selected = [f for f in files if fnmatch.fnmatch(f, glob_pattern)]
+for f in selected:
+    print(f)
+PYEOF \
+            | tee /tmp/lua-files-to-validate.txt
+
+          if [ ! -s /tmp/lua-files-to-validate.txt ]; then
+            echo "No Lua files matched glob '${LUA_GLOB}'."
+            exit 0
+          fi
+          echo "::endgroup::"
+
+          echo "::group::Run lua-sandbox-policy validator"
+          cat >/tmp/lua_sandbox_validate.lua <<'LUA'
+local lfs   = require("lfs")
+local cjson = require("cjson.safe")
+
+local policy_path = os.getenv("POLICY_PATH")
+if not policy_path then
+  io.stderr:write("POLICY_PATH not set\n")
+  os.exit(1)
+end
+
+local pf = assert(io.open(policy_path, "r"))
+local raw = assert(pf:read("*a"))
+pf:close()
+
+local policy, perr = cjson.decode(raw)
+if not policy then
+  io.stderr:write("Failed to decode policy JSON: " .. tostring(perr) .. "\n")
+  os.exit(1)
+end
+
+local function read_lua_paths(list_path)
+  local files = {}
+  local f = assert(io.open(list_path, "r"))
+  for line in f:lines() do
+    local trimmed = line:match("^%s*(.-)%s*$")
+    if trimmed ~= "" then
+      table.insert(files, trimmed)
+    end
+  end
+  f:close()
+  return files
+end
+
+local function file_exists(path)
+  local attr = lfs.attributes(path)
+  return attr and attr.mode == "file"
+end
+
+local function validate_file(path, policy)
+  -- This is intentionally minimal. You are expected to extend it
+  -- to enforce your sandbox rules (allowed globals, modules, APIs, etc.)
+  --
+  -- Current behavior:
+  --   * Reject files that reference dangerous functions if policy forbids them.
+  --
+  local f = assert(io.open(path, "r"))
+  local content = assert(f:read("*a"))
+  f:close()
+
+  local violations = {}
+
+  local forbidden = policy.forbidden_calls or {}
+  for _, name in ipairs(forbidden) do
+    local pattern = name:gsub("(%p)", "%%%1")
+    if content:match(pattern) then
+      table.insert(violations, "forbidden call: " .. name)
+    end
+  end
+
+  local forbidden_requires = policy.forbidden_requires or {}
+  for _, module_name in ipairs(forbidden_requires) do
+    local pattern = ('require%s*[%(%s]*[\'"]%s[\'"]'):format(
+      module_name:gsub("(%p)", "%%%1")
+    )
+    if content:match(pattern) then
+      table.insert(violations, "forbidden require: " .. module_name)
+    end
+  end
+
+  if #violations > 0 then
+    io.stderr:write("Lua sandbox violation in ", path, ":\n")
+    for _, v in ipairs(violations) do
+      io.stderr:write("  - ", v, "\n")
+    end
+    return false
+  end
+
+  return true
+end
+
+local list_path = "/tmp/lua-files-to-validate.txt"
+if not file_exists(list_path) then
+  io.stderr:write("Lua file list not found at " .. list_path .. "\n")
+  os.exit(1)
+end
+
+local files = read_lua_paths(list_path)
+local ok = true
+
+for _, path in ipairs(files) do
+  local this_ok = validate_file(path, policy)
+  if not this_ok then
+    ok = false
+  end
+end
+
+if not ok then
+  os.exit(1)
+end
+LUA
+
+          lua /tmp/lua_sandbox_validate.lua
+          echo "::endgroup::"
