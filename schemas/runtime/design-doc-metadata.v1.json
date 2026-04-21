@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/design-doc-metadata.v1.json",
+  "title": "Design Doc Metadata v1",
+  "description": "Standard front-matter schema for Markdown design docs, enabling AI-Chat and CI to enforce invariant/metric/module boundaries during authoring sessions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["docKind", "targetRepos", "invariantsUsed", "metricsUsed", "modulesTouched"],
+  "properties": {
+    "docKind": {
+      "type": "string",
+      "description": "Type of design document.",
+      "enum": ["dungeonDesign", "personaDesign", "runDesign", "telemetryDesign", "engineIntegration"]
+    },
+    "targetRepos": {
+      "type": "array",
+      "description": "List of repository IDs this doc targets.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Horror.Place",
+          "Horror.Place-Orchestrator",
+          "HorrorPlace-Constellation-Contracts",
+          "HorrorPlace-Codebase-of-Death",
+          "HorrorPlace-Black-Archivum",
+          "HorrorPlace-Spectral-Foundry",
+          "HorrorPlace-Atrocity-Seeds",
+          "HorrorPlace-Obscura-Nexus",
+          "HorrorPlace-Liminal-Continuum",
+          "HorrorPlace-Process-Gods-Research",
+          "HorrorPlace-Redacted-Chronicles",
+          "HorrorPlace-Neural-Resonance-Lab",
+          "HorrorPlace-Dead-Ledger-Network"
+        ]
+      }
+    },
+    "invariantsUsed": {
+      "type": "array",
+      "description": "Subset of canonical invariants this doc references.",
+      "items": {
+        "type": "string",
+        "enum": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "HVF_mag", "LSG", "SHCI"]
+      }
+    },
+    "metricsUsed": {
+      "type": "array",
+      "description": "Subset of canonical entertainment metrics this doc references.",
+      "items": {
+        "type": "string",
+        "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"]
+      }
+    },
+    "modulesTouched": {
+      "type": "array",
+      "description": "H.* modules this doc affects or references.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "H.Consent", "H.Budget", "H.Safety", "H.Director",
+          "H.Selector", "H.Node", "H.Run", "H.Metrics",
+          "H.ImageHelper", "H.Invariants", "H.Debug", "H.Telemetry"
+        ]
+      }
+    },
+    "intendedTiers": {
+      "type": "array",
+      "description": "Optional tiers this design targets.",
+      "items": { "type": "string", "enum": ["standard", "mature", "research"] }
+    },
+    "experienceModes": {
+      "type": "array",
+      "description": "Optional experience modes (for run/persona docs).",
+      "items": { "type": "string", "enum": ["MapDesignWizard", "DungeonFlowTuning", "ContractAuthor", "TelemetryReview"] }
+    }
+  }
+}
