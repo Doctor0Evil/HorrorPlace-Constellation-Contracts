@@ -10,8 +10,13 @@
     "id",
     "schemaRef",
     "objectKind",
+    "tier",
+    "descriptorId",
     "directorKind",
-    "tierBands",
+    "toneLabel",
+    "allowedTier",
+    "invariantBands",
+    "metricTargets",
     "comfortPolicyRef",
     "prismMeta"
   ],
@@ -39,6 +44,12 @@
       "type": "string",
       "description": "Authoring descriptor ID for this director persona (used by CHATDIRECTOR authoring tools).",
       "pattern": "^desc-[a-z0-9\\-]{3,32}$"
+    },
+
+    "tier": {
+      "type": "string",
+      "description": "Contract tier in the VM-Constellation.",
+      "enum": ["standard", "mature", "research"]
     },
 
     "directorKind": {
@@ -71,6 +82,12 @@
       ]
     },
 
+    "allowedTier": {
+      "type": "string",
+      "description": "Maximum content tier this persona is permitted to operate in.",
+      "enum": ["standard", "mature", "research"]
+    },
+
     "tags": {
       "type": "array",
       "description": "Optional free-form tags for authoring and routing hints.",
@@ -81,16 +98,69 @@
       }
     },
 
-    "tierBands": {
+    "invariantBands": {
       "type": "object",
-      "description": "Tier-specific invariant bands and metric targets this persona must obey. Keys align with VM-Constellation tiers.",
+      "description": "Invariant min/max bands this persona is allowed to operate within at this contract tier.",
       "additionalProperties": false,
-      "minProperties": 1,
+      "required": ["CIC", "AOS", "DET", "SHCI"],
       "properties": {
-        "Tier1Public": { "$ref": "#/$defs/tierProfile" },
-        "Tier2Internal": { "$ref": "#/$defs/tierProfile" },
-        "Tier3Vault": { "$ref": "#/$defs/tierProfile" },
-        "Tier4Underground": { "$ref": "#/$defs/tierProfile" }
+        "CIC": {
+          "$ref": "#/$defs/range01",
+          "description": "Catastrophic Imprint Coefficient band."
+        },
+        "AOS": {
+          "$ref": "#/$defs/range01",
+          "description": "Ambient Oscillation Score band."
+        },
+        "MDI": {
+          "$ref": "#/$defs/range01",
+          "description": "Mythic Density Index band."
+        },
+        "RRM": {
+          "$ref": "#/$defs/range01",
+          "description": "Ritual Residue Map band."
+        },
+        "LSG": {
+          "$ref": "#/$defs/range01",
+          "description": "Liminal Stress Gradient band."
+        },
+        "SHCI": {
+          "$ref": "#/$defs/range01",
+          "description": "Spectral-History Coupling Index band."
+        },
+        "DET": {
+          "$ref": "#/$defs/range0to10",
+          "description": "Dread Exposure Threshold per-event band for this persona."
+        }
+      }
+    },
+
+    "metricTargets": {
+      "type": "object",
+      "description": "Target entertainment metric bands that define the director's feel at this contract tier.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "$ref": "#/$defs/range01",
+          "description": "Uncertainty Engagement Coefficient band."
+        },
+        "EMD": {
+          "$ref": "#/$defs/range01",
+          "description": "Evidential Mystery Density band."
+        },
+        "STCI": {
+          "$ref": "#/$defs/range01",
+          "description": "Safe-Threat Contrast Index band."
+        },
+        "CDL": {
+          "$ref": "#/$defs/range01",
+          "description": "Cognitive Dissonance Load band."
+        },
+        "ARR": {
+          "$ref": "#/$defs/range01",
+          "description": "Ambiguous Resolution Ratio band."
+        }
       }
     },
 
@@ -124,11 +194,111 @@
     }
   },
 
+  "allOf": [
+    {
+      "description": "Tier-aware narrowing for DET and CDL in standard tier",
+      "if": {
+        "properties": {
+          "tier": { "const": "standard" }
+        }
+      },
+      "then": {
+        "properties": {
+          "invariantBands": {
+            "properties": {
+              "DET": {
+                "properties": {
+                  "min": { "maximum": 6.0 },
+                  "max": { "maximum": 6.0 }
+                }
+              }
+            }
+          },
+          "metricTargets": {
+            "properties": {
+              "CDL": {
+                "properties": {
+                  "min": { "minimum": 0.0 },
+                  "max": { "maximum": 0.7 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Tier-aware narrowing for DET and CDL in mature tier",
+      "if": {
+        "properties": {
+          "tier": { "const": "mature" }
+        }
+      },
+      "then": {
+        "properties": {
+          "invariantBands": {
+            "properties": {
+              "DET": {
+                "properties": {
+                  "min": { "maximum": 8.0 },
+                  "max": { "maximum": 8.0 }
+                }
+              }
+            }
+          },
+          "metricTargets": {
+            "properties": {
+              "CDL": {
+                "properties": {
+                  "min": { "minimum": 0.0 },
+                  "max": { "maximum": 0.85 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Research tier allows full DET range but still requires explicit bounds.",
+      "if": {
+        "properties": {
+          "tier": { "const": "research" }
+        }
+      },
+      "then": {
+        "properties": {
+          "invariantBands": {
+            "properties": {
+              "DET": {
+                "properties": {
+                  "min": { "maximum": 10.0 },
+                  "max": { "maximum": 10.0 }
+                }
+              }
+            }
+          },
+          "metricTargets": {
+            "properties": {
+              "CDL": {
+                "properties": {
+                  "min": { "minimum": 0.0 },
+                  "max": { "maximum": 1.0 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+
   "$defs": {
     "range01": {
       "type": "object",
-      "additionalProperties": false,
+      "description": "Generic 0–1 band with explicit min and max.",
       "required": ["min", "max"],
+      "additionalProperties": false,
       "properties": {
         "min": {
           "type": "number",
@@ -142,162 +312,22 @@
         }
       }
     },
-
-    "detRange": {
+    "range0to10": {
       "type": "object",
-      "additionalProperties": false,
+      "description": "Generic 0–10 band for DET-like scales.",
       "required": ["min", "max"],
+      "additionalProperties": false,
       "properties": {
         "min": {
           "type": "number",
-          "minimum": 0.0
+          "minimum": 0.0,
+          "maximum": 10.0
         },
         "max": {
           "type": "number",
-          "minimum": 0.0
+          "minimum": 0.0,
+          "maximum": 10.0
         }
-      },
-      "description": "DET uses an absolute scale defined in the invariants spine; validation of global bounds happens in invariant validators."
-    },
-
-    "invariantBands": {
-      "type": "object",
-      "description": "Invariant min/max bands this persona is allowed to operate within for a given tier.",
-      "additionalProperties": false,
-      "required": ["CIC", "AOS", "DET", "SHCI"],
-      "properties": {
-        "CIC": {
-          "type": "object",
-          "description": "Canonical Invariant Count band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "AOS": {
-          "type": "object",
-          "description": "Average Occupancy Score band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "MDI": {
-          "type": "object",
-          "description": "Mystery Density Index band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "RRM": {
-          "type": "object",
-          "description": "Ritual Resonance Modulation band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "LSG": {
-          "type": "object",
-          "description": "Liminal Space Gradient band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "SHCI": {
-          "type": "object",
-          "description": "Spectral-History Coupling Index band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "DET": {
-          "$ref": "#/$defs/detRange"
-        }
-      }
-    },
-
-    "metricTargets": {
-      "type": "object",
-      "description": "Target entertainment metric bands that define the director's feel for a given tier.",
-      "additionalProperties": false,
-      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
-      "properties": {
-        "UEC": {
-          "type": "object",
-          "description": "Uncertainty Engagement Coefficient band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "EMD": {
-          "type": "object",
-          "description": "Evidential Mystery Density band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "STCI": {
-          "type": "object",
-          "description": "Safe-Threat Contrast Index band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "CDL": {
-          "type": "object",
-          "description": "Cognitive Dissonance Load band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        },
-        "ARR": {
-          "type": "object",
-          "description": "Ambiguous Resolution Ratio band.",
-          "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
-          }
-        }
-      }
-    },
-
-    "tierProfile": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["invariantBands", "metricTargets"],
-      "properties": {
-        "invariantBands": { "$ref": "#/$defs/invariantBands" },
-        "metricTargets": { "$ref": "#/$defs/metricTargets" }
       }
     }
   }
