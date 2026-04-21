@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/runtime/run-contract.v1.json",
-  "title": "RunContract",
-  "description": "Runtime contract describing a single horror run binding region/seed, persona, style envelopes, budget, and safety surfaces.",
+  "title": "RunContract v1",
+  "description": "Runtime contract describing a single horror run, binding region/seed, persona, style envelopes, budget, safety, selector policy, metrics, and difficulty profiles.",
   "type": "object",
   "additionalProperties": false,
+
   "required": [
     "id",
     "schemaRef",
@@ -19,50 +20,57 @@
     "safetyEnvelope",
     "historySelectorEnvelope",
     "metricsEnvelope",
+    "difficultyProfile",
     "prismMeta"
   ],
+
   "properties": {
     "id": {
       "type": "string",
-      "description": "Stable identifier for this runContract instance."
+      "description": "Stable identifier for this runContract instance, registry-backed."
     },
+
     "schemaRef": {
       "type": "string",
-      "const": "runContract.v1",
-      "description": "Schema version identifier."
+      "const": "run-contract.v1",
+      "description": "Schema version identifier for validator binding."
     },
+
     "objectKind": {
       "type": "string",
       "const": "runContract",
-      "description": "Object kind for CHATDIRECTOR routing."
+      "description": "Object kind for CHATDIRECTOR routing and manifest validation."
     },
+
     "tier": {
       "type": "string",
       "enum": [
-        "Tier1Public",
-        "Tier2Internal",
-        "Tier3Vault",
-        "Tier4Underground"
+        "standard",
+        "mature",
+        "research"
       ],
-      "description": "Effective entitlement tier for this run."
+      "description": "Effective entitlement tier for this run, aligned with consent and routing tiers."
     },
+
     "phase": {
       "type": "integer",
       "enum": [2],
-      "description": "CHATDIRECTOR lifecycle phase; runContract is a Phase 2 Bundles artifact."
+      "description": "Lifecycle phase; runContract is a Phase 2 Bundles artifact."
     },
 
     "regionRef": {
       "type": "string",
       "description": "ID or registry ref of the primary regionContractCard for this run."
     },
+
     "seedRef": {
       "type": "string",
       "description": "ID or registry ref of the primary seedContractCard for this run."
     },
+
     "eventBundleRefs": {
       "type": "array",
-      "description": "Optional list of eventContract IDs associated with this run.",
+      "description": "Optional list of eventContract IDs associated with this run (chapters, key beats).",
       "items": {
         "type": "string"
       }
@@ -70,8 +78,9 @@
 
     "personaContractRef": {
       "type": "string",
-      "description": "ID or registry ref of the personaContract that governs AI voice and behavior."
+      "description": "ID or registry ref of the personaContract (or directorPersonaContract) that governs AI voice and behavior."
     },
+
     "personaRole": {
       "type": "string",
       "description": "Optional role hint for the persona (archivist, custodian, specter, etc.)."
@@ -88,31 +97,82 @@
       "properties": {
         "styleId": {
           "type": "string",
-          "description": "Primary style contract or mood style identifier."
+          "description": "Primary style contract or mood style identifier for this run."
         },
+
         "metricBands": {
           "type": "object",
           "description": "Target bands for UEC, EMD, STCI, CDL, ARR for this run.",
           "additionalProperties": false,
           "properties": {
-            "UEC": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-            "EMD": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-            "STCI": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-            "CDL": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-            "ARR": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+            "UEC": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Uncertainty Engagement Coefficient band [min, max]."
+            },
+            "EMD": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Evidential Mystery Density band [min, max]."
+            },
+            "STCI": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Safe-Threat Contrast Index band [min, max]."
+            },
+            "CDL": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Cognitive Dissonance Load band [min, max]."
+            },
+            "ARR": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Ambiguous Resolution Ratio band [min, max]."
+            }
           }
         },
+
         "safetyIntent": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Mini safety vector for this run that must agree with content boundary rules.",
+          "description": "Mini safety vector for this run that must agree with consent, content boundary, and horror-intensity-budget policy.",
           "properties": {
-            "maxCIC": { "type": "number" },
-            "maxDET": { "type": "number" },
-            "maxGXI": { "type": "number" },
-            "allowImpliedBodyHarm": { "type": "boolean" },
-            "allowExplicitGore": { "type": "boolean" },
-            "notes": { "type": "string" }
+            "maxCIC": {
+              "type": "number",
+              "description": "Maximum Catastrophic Imprint Coefficient targeted for this run."
+            },
+            "maxDET": {
+              "type": "number",
+              "description": "Maximum Dread Exposure Threshold targeted per-event within this run."
+            },
+            "maxGXI": {
+              "type": "number",
+              "description": "Maximum graphical explicitness index (GXI) allowed under consent and budget."
+            },
+            "allowImpliedBodyHarm": {
+              "type": "boolean",
+              "description": "Whether implied body harm is permitted within tier and consent caps."
+            },
+            "allowExplicitGore": {
+              "type": "boolean",
+              "description": "Whether explicit gore is permitted; typically false outside highest tiers."
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 2048,
+              "description": "Optional human-readable notes for safety and governance review."
+            }
           }
         }
       }
@@ -129,16 +189,18 @@
       "properties": {
         "policyRef": {
           "type": "string",
-          "description": "Reference to horror-intensity-budget-policy contract."
+          "description": "Reference to horror-intensity-budget-policy contract controlling modality ceilings."
         },
+
         "initialBudget": {
           "type": "number",
-          "description": "Scalar budget weight for this session derived from consent + history."
+          "description": "Scalar budget weight for this session derived from consent, history, and profile."
         },
+
         "perModality": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Per-modality budgets violence, gore, sexual, psychological.",
+          "description": "Per-modality budgets e.g., violence, gore, sexual, psychological.",
           "properties": {
             "violence": {
               "type": "object",
@@ -196,15 +258,15 @@
       "properties": {
         "chatSafetyRulesetId": {
           "type": "string",
-          "description": "ID of the content-boundary ruleset to apply."
+          "description": "ID of the chat-safety-invariants / content-boundary ruleset to apply."
         },
         "banterPolicyRef": {
           "type": "string",
-          "description": "Reference to input-banter-policy for this run."
+          "description": "Reference to input-banter-policy for classification and routing."
         },
         "consentStateRef": {
           "type": "string",
-          "description": "Reference to consent-state-machine / consent profile snapshot."
+          "description": "Reference to consent-state-machine / consent profile snapshot governing this run."
         }
       }
     },
@@ -219,11 +281,11 @@
       "properties": {
         "selectorPolicyRef": {
           "type": "string",
-          "description": "Reference to history-selector policy contract."
+          "description": "Reference to history-selector-rule / selector policy contract."
         },
         "patternGovernanceRef": {
           "type": "string",
-          "description": "Reference to history-selector-pattern-governance."
+          "description": "Reference to history-selector-pattern-governance policy."
         }
       }
     },
@@ -238,14 +300,14 @@
       "properties": {
         "invariantTargets": {
           "type": "object",
-          "description": "Per-run invariant targets keyed by abbreviation CIC, DET, etc.",
+          "description": "Per-run invariant targets keyed by abbreviation CIC, DET, AOS, SHCI, etc.",
           "additionalProperties": {
             "type": "number"
           }
         },
         "metricTargets": {
           "type": "object",
-          "description": "Per-run entertainment metric targets keyed by abbreviation UEC, ARR, etc.",
+          "description": "Per-run entertainment metric targets keyed by abbreviation UEC, EMD, STCI, CDL, ARR.",
           "additionalProperties": {
             "type": "number"
           }
@@ -253,17 +315,74 @@
       }
     },
 
+    "difficultyProfile": {
+      "type": "object",
+      "description": "Difficulty-specific bands for skills, world invariants, and metrics keyed by difficulty name (e.g., Novice, Standard, Expert).",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "skillBands": {
+            "type": "object",
+            "description": "Expected player or persona skill bands for this difficulty.",
+            "additionalProperties": false,
+            "properties": {
+              "analysisSkill": { "$ref": "#/$defs/range01" },
+              "intuitionSkill": { "$ref": "#/$defs/range01" },
+              "riskTolerance": { "$ref": "#/$defs/range01" }
+            }
+          },
+          "worldInvariants": {
+            "type": "object",
+            "description": "Run-level invariant bands for this difficulty.",
+            "additionalProperties": false,
+            "properties": {
+              "CIC": { "$ref": "#/$defs/range01" },
+              "AOS": { "$ref": "#/$defs/range01" },
+              "DET": { "$ref": "#/$defs/range10" },
+              "SHCI": { "$ref": "#/$defs/range01" }
+            }
+          },
+          "metricTargets": {
+            "type": "object",
+            "description": "Target UEC, EMD, STCI, CDL, ARR bands for this difficulty.",
+            "additionalProperties": false,
+            "properties": {
+              "UEC": { "$ref": "#/$defs/range01" },
+              "EMD": { "$ref": "#/$defs/range01" },
+              "STCI": { "$ref": "#/$defs/range01" },
+              "CDL": { "$ref": "#/$defs/range01" },
+              "ARR": { "$ref": "#/$defs/range01" }
+            }
+          }
+        },
+        "required": [
+          "skillBands",
+          "worldInvariants",
+          "metricTargets"
+        ]
+      }
+    },
+
     "imageHelper": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Optional configuration for image helper behavior and constraints.",
+      "description": "Optional configuration for image-helper behavior and constraints.",
       "properties": {
-        "enabled": { "type": "boolean" },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether image-helper is allowed for this run."
+        },
         "stylePacks": {
           "type": "array",
+          "description": "List of style-pack identifiers that image-helper may use.",
           "items": { "type": "string" }
         },
-        "maxImagesPerRun": { "type": "integer", "minimum": 0 },
+        "maxImagesPerRun": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of images that may be requested or displayed during the run."
+        },
         "safetyProfileRef": {
           "type": "string",
           "description": "Reference to an image-safety policy contract."
@@ -280,6 +399,45 @@
     "deadLedgerRef": {
       "type": "string",
       "description": "Optional Dead-Ledger attestation reference for this runContract."
+    }
+  },
+
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "description": "Inclusive [min, max] range within [0.0, 1.0].",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "range10": {
+      "type": "object",
+      "description": "Inclusive [min, max] range within [0.0, 10.0], suitable for DET bands.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
+      }
     }
   }
 }
