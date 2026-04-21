@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/selector/history-selector-pattern.v1.json",
+  "title": "History Selector Pattern v1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "selector/history-selector-pattern.v1"
+    },
+
+    "id": {
+      "type": "string",
+      "pattern": "^selector\\.historyPattern\\.[a-z0-9\\-]+\\.v1$"
+    },
+
+    "objectKind": {
+      "type": "string",
+      "const": "historySelectorPattern"
+    },
+
+    "version": {
+      "type": "string",
+      "const": "v1"
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agentProfileId": {
+          "type": "string"
+        },
+        "runtime": {
+          "type": "string",
+          "enum": [
+            "godot-horrorplace",
+            "unity-horrorplace",
+            "unreal-horrorplace"
+          ]
+        },
+        "sourceRepo": {
+          "type": "string",
+          "enum": [
+            "HorrorPlace-Constellation-Contracts",
+            "HorrorPlace-Atrocity-Seeds",
+            "HorrorPlace-Dead-Ledger-Network",
+            "Horror.Place",
+            "HorrorPlace-Codebase-of-Death",
+            "HorrorPlace-Neural-Resonance-Lab"
+          ]
+        },
+        "safetyProfile": {
+          "type": "string"
+        },
+        "extensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {}
+        }
+      },
+      "required": [
+        "runtime",
+        "sourceRepo"
+      ]
+    },
+
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "description": {
+      "type": "string"
+    },
+
+    "appliesTo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runKind": {
+          "type": "string",
+          "enum": [
+            "dungeonRun",
+            "regionRun",
+            "labRun"
+          ]
+        },
+        "mapStyle": {
+          "type": "string",
+          "enum": [
+            "WIREAUTOMAP",
+            "ISOCANVAS",
+            "FLATOVERLAY",
+            "COMPASS3D",
+            "NODEGRID"
+          ]
+        },
+        "tileClasses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "spawn",
+              "battlefront",
+              "liminal",
+              "hub",
+              "deadend"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "minCIC": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Pattern is eligible only if node CIC >= minCIC. If omitted, CIC is not used as an applicability gate."
+        },
+        "minAOS": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Pattern is eligible only if node AOS >= minAOS. If omitted, AOS is not used as an applicability gate."
+        },
+        "minSPR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Pattern is eligible only if node SPR >= minSPR. If omitted, SPR is not used as an applicability gate."
+        }
+      },
+      "required": [
+        "runKind"
+      ]
+    },
+
+    "selectorHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseScore": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Base score added for this pattern before rule weights; H.Node.score_next_from_history must use this instead of a hard-coded 1.0."
+        },
+        "ruleBindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ruleId": {
+                "type": "string",
+                "pattern": "^SEL\\-[A-Z0-9]{3}$"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": -2.0,
+                "maximum": 2.0,
+                "description": "Signed contribution of this rule into the pattern's score features. Validation must clamp the final score into a known range."
+              }
+            },
+            "required": [
+              "ruleId",
+              "weight"
+            ]
+          }
+        },
+        "liminalTagPreferences": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional preference weights for liminal tags. If omitted, scoring must behave as if this were an empty object.",
+          "properties": {
+            "preferred": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "avoid": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "preferredWeight": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 2.0,
+              "default": 0.5
+            },
+            "avoidWeight": {
+              "type": "number",
+              "minimum": -2.0,
+              "maximum": 0.0,
+              "default": -0.5
+            }
+          }
+        }
+      },
+      "required": [
+        "baseScore"
+      ]
+    },
+
+    "entertainmentTargets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "EMD": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "STCI": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "CDL": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "ARR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  },
+
+  "required": [
+    "schemaRef",
+    "id",
+    "objectKind",
+    "version",
+    "prismMeta",
+    "name",
+    "appliesTo",
+    "selectorHints"
+  ]
+}
