@@ -1,0 +1,40 @@
+{
+  "fileKinds": [
+    "schema-json",
+    "contract-json",
+    "registry-ndjson",
+    "runtime-lua",
+    "doc-markdown"
+  ],
+  "namingPatterns": [
+    {
+      "fileKind": "schema-json",
+      "objectKind": "dungeonRunContract",
+      "pattern": "schemas/runtime/dungeon-run-contract.v1.json",
+      "extension": ".json"
+    },
+    {
+      "fileKind": "contract-json",
+      "objectKind": "dungeonRunContract",
+      "pattern": "contracts/dungeon/dungeon-run.{objectId}.v1.json",
+      "extension": ".json"
+    },
+    {
+      "fileKind": "runtime-lua",
+      "objectKind": "horrorRuntimeModule",
+      "pattern": "hpc-core/src/{moduleName}.lua",
+      "extension": ".lua"
+    },
+    {
+      "fileKind": "doc-markdown",
+      "objectKind": "specDocument",
+      "pattern": "docs/{topic}/{slug}.v1.md",
+      "extension": ".md"
+    }
+  ],
+  "authoringConstraints": {
+    "requireExplicitTarget": true,
+    "forbidAdHocRename": true,
+    "requireStableFileId": true
+  }
+}
