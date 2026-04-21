@@ -1,0 +1,112 @@
+{
+  "id": "hsp-dungeon-liminal-hooks.v1",
+  "schemaRef": "history-selector-pattern.v1",
+  "objectKind": "historySelectorPattern",
+  "version": "v1.0.0",
+
+  "description": "Selector pattern for dungeon runs that prefers liminal nodes and history-coupled mechanic hooks when drilling into the next node.",
+
+  "appliesTo": {
+    "regionKind": "dungeon",
+    "runStyle": "guided_walkthrough",
+    "minCIC": 0.35,
+    "minAOS": 0.40,
+    "minSPR": 0.50
+  },
+
+  "nodeFilters": {
+    "allowedRoles": [
+      "connector",
+      "liminal",
+      "hub",
+      "high_risk",
+      "secret"
+    ],
+    "forbiddenRoles": [
+      "spawn",
+      "boss_arena"
+    ],
+    "requiredTagsAny": [
+      "has_history_envelope"
+    ]
+  },
+
+  "mechanicHookPreferences": {
+    "preferredHooks": [
+      "sanity_tick",
+      "audio_glitch",
+      "light_drop",
+      "memory_overlay"
+    ],
+    "discouragedHooks": [
+      "straight_combat",
+      "loot_cache_only"
+    ],
+    "weights": {
+      "preferredBonus": 1.0,
+      "discouragedPenalty": -0.75,
+      "perMatchingHook": 0.25,
+      "perDiscouragedHook": -0.25
+    }
+  },
+
+  "liminalTagPreferences": {
+    "preferredTagsAny": [
+      "liminal:threshold",
+      "liminal:stairwell",
+      "liminal:service_corridor",
+      "liminal:maintenance_hatch"
+    ],
+    "forbiddenTagsAny": [
+      "comfort:long_rest",
+      "comfort:safe_hub_only"
+    ],
+    "weights": {
+      "liminalBonus": 1.25,
+      "forbiddenPenalty": -1.0
+    }
+  },
+
+  "historyCoupling": {
+    "minSHCI": 0.60,
+    "preferredBand": [0.70, 0.90],
+    "weights": {
+      "insideBandBonus": 0.75,
+      "outsideBandPenalty": -0.50
+    }
+  },
+
+  "entertainmentTargets": {
+    "UEC": {
+      "band": [0.65, 0.85]
+    },
+    "EMD": {
+      "band": [0.60, 0.80]
+    },
+    "STCI": {
+      "band": [0.50, 0.75]
+    },
+    "CDL": {
+      "max": 0.70
+    },
+    "ARR": {
+      "min": 0.70
+    }
+  },
+
+  "selectorHints": {
+    "ruleBindings": {
+      "SEL-R005": "budgetfit",
+      "SEL-R006": "patternmatch",
+      "SEL-R007": "diversitybonus",
+      "SEL-R008": "regionalaffinity"
+    },
+    "priority": "prefer_liminal_then_mechanic_hooks_then_history_coupling"
+  },
+
+  "prismMeta": {
+    "author": "system",
+    "governanceRef": "mod7-history-selector",
+    "deadLedgerRef": null
+  }
+}
