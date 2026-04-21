@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/runtime/director-persona-contract.v1.json",
   "title": "Director Persona Contract v1",
-  "description": "Tier-aware director persona contract defining invariant bands, entertainment metric targets, and comfort policy for AI-directed horror sessions.",
+  "description": "Tier-aware director persona contract defining invariant bands, entertainment metric targets, comfort policy, and runtime wiring hints for AI-directed horror sessions.",
   "type": "object",
   "additionalProperties": false,
 
@@ -10,21 +10,17 @@
     "id",
     "schemaRef",
     "objectKind",
-    "tier",
-    "descriptorId",
     "directorKind",
-    "toneLabel",
-    "allowedTier",
-    "invariantBands",
-    "metricTargets",
-    "comfortPolicyRef"
+    "tierBands",
+    "comfortPolicyRef",
+    "prismMeta"
   ],
 
   "properties": {
     "id": {
       "type": "string",
       "description": "Stable director persona identifier, registry-backed.",
-      "pattern": "dir-[a-z0-9\\-]{3,64}"
+      "pattern": "^dir-[a-z0-9\\-]{3,64}$"
     },
 
     "schemaRef": {
@@ -39,39 +35,40 @@
       "const": "directorPersonaContract"
     },
 
-    "tier": {
-      "type": "string",
-      "description": "Contract tier in the VM-Constellation.",
-      "enum": ["standard", "mature", "research"]
-    },
-
     "descriptorId": {
       "type": "string",
-      "description": "Authoring descriptor ID for this director persona.",
-      "pattern": "desc-[a-z0-9\\-]{3,32}"
+      "description": "Authoring descriptor ID for this director persona (used by CHATDIRECTOR authoring tools).",
+      "pattern": "^desc-[a-z0-9\\-]{3,32}$"
     },
 
     "directorKind": {
       "type": "string",
-      "description": "Logical director persona kind.",
+      "description": "Logical director persona kind exposed to AI-Chat and routing.",
       "enum": [
         "coldOverseer",
         "ritualStatistician",
-        "silentArchivistDirector"
+        "silentArchivistDirector",
+        "custom"
       ]
     },
 
     "toneLabel": {
       "type": "string",
-      "description": "Short label for AI-Chat style selection.",
+      "description": "Short label for AI-Chat style selection; human-facing but stable.",
       "minLength": 1,
       "maxLength": 64
     },
 
-    "allowedTier": {
+    "toneStyle": {
       "type": "string",
-      "description": "Maximum content tier this persona is permitted to operate in.",
-      "enum": ["standard", "mature", "research"]
+      "description": "Optional tone enum for localization and template routing.",
+      "enum": [
+        "clinical",
+        "ritual",
+        "archivist",
+        "whisper",
+        "neutral"
+      ]
     },
 
     "tags": {
@@ -84,15 +81,94 @@
       }
     },
 
+    "tierBands": {
+      "type": "object",
+      "description": "Tier-specific invariant bands and metric targets this persona must obey. Keys align with VM-Constellation tiers.",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "Tier1Public": { "$ref": "#/$defs/tierProfile" },
+        "Tier2Internal": { "$ref": "#/$defs/tierProfile" },
+        "Tier3Vault": { "$ref": "#/$defs/tierProfile" },
+        "Tier4Underground": { "$ref": "#/$defs/tierProfile" }
+      }
+    },
+
+    "comfortPolicyRef": {
+      "type": "string",
+      "description": "Reference to a director comfort policy defining max DET per session, cooldown ratios, and CDL span.",
+      "pattern": "^dcp-[a-z0-9\\-]{3,64}$"
+    },
+
+    "styleHintPolicyRef": {
+      "type": "string",
+      "description": "Optional reference to a director-style-hint policy constraining styleHint codes returned by H.Director.applySafetyDecision."
+    },
+
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this director persona.",
+      "pattern": "^DLN\\.[a-zA-Z0-9_.-]+$"
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable notes for designers and auditors.",
+      "maxLength": 2048
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta metadata block for provenance and promotion wiring.",
+      "additionalProperties": true
+    }
+  },
+
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "detRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0
+        }
+      },
+      "description": "DET uses an absolute scale defined in the invariants spine; validation of global bounds happens in invariant validators."
+    },
+
     "invariantBands": {
       "type": "object",
-      "description": "Invariant min/max bands this persona is allowed to operate within.",
+      "description": "Invariant min/max bands this persona is allowed to operate within for a given tier.",
       "additionalProperties": false,
       "required": ["CIC", "AOS", "DET", "SHCI"],
       "properties": {
         "CIC": {
           "type": "object",
-          "description": "Catastrophic Imprint Coefficient band.",
+          "description": "Canonical Invariant Count band.",
           "additionalProperties": false,
           "required": ["min", "max"],
           "properties": {
@@ -102,7 +178,7 @@
         },
         "AOS": {
           "type": "object",
-          "description": "Ambient Oscillation Score band.",
+          "description": "Average Occupancy Score band.",
           "additionalProperties": false,
           "required": ["min", "max"],
           "properties": {
@@ -110,14 +186,34 @@
             "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
           }
         },
-        "DET": {
+        "MDI": {
           "type": "object",
-          "description": "Dread Exposure Threshold per-event band for this persona.",
+          "description": "Mystery Density Index band.",
           "additionalProperties": false,
           "required": ["min", "max"],
           "properties": {
-            "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "RRM": {
+          "type": "object",
+          "description": "Ritual Resonance Modulation band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "LSG": {
+          "type": "object",
+          "description": "Liminal Space Gradient band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
           }
         },
         "SHCI": {
@@ -129,13 +225,16 @@
             "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
             "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
           }
+        },
+        "DET": {
+          "$ref": "#/$defs/detRange"
         }
       }
     },
 
     "metricTargets": {
       "type": "object",
-      "description": "Target entertainment metric bands that define the director's feel.",
+      "description": "Target entertainment metric bands that define the director's feel for a given tier.",
       "additionalProperties": false,
       "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
       "properties": {
@@ -192,40 +291,14 @@
       }
     },
 
-    "comfortPolicyRef": {
-      "type": "string",
-      "description": "Reference to a director comfort policy defining max DET per session, cooldown ratios, and CDL span.",
-      "pattern": "dcp-[a-z0-9\\-]{3,64}"
-    },
-
-    "notes": {
-      "type": "string",
-      "description": "Optional human-readable notes for designers and auditors.",
-      "maxLength": 2048
-    }
-  },
-
-  "allOf": [
-    {
-      "description": "Require DET band to respect tier ceilings at schema level where possible.",
-      "if": {
-        "properties": {
-          "tier": { "const": "standard" }
-        }
-      },
-      "then": {
-        "properties": {
-          "invariantBands": {
-            "properties": {
-              "DET": {
-                "properties": {
-                  "max": { "maximum": 6.0 }
-                }
-              }
-            }
-          }
-        }
+    "tierProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariantBands", "metricTargets"],
+      "properties": {
+        "invariantBands": { "$ref": "#/$defs/invariantBands" },
+        "metricTargets": { "$ref": "#/$defs/metricTargets" }
       }
     }
-  ]
+  }
 }
