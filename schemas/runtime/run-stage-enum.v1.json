@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/run-stage-enum.v1.json",
+  "title": "Run Stage Enumeration v1",
+  "description": "Canonical enumeration of run stages for Horror.Place sessions, used by run contracts, AI-chat templates, selector patterns, and telemetry.",
+  "type": "string",
+  "enum": [
+    "OuterThreshold",
+    "Locus",
+    "Rupture",
+    "Fallout"
+  ],
+  "description_details": {
+    "OuterThreshold": "Initial approach and orientation phase; low DET, high ARR, building uncertainty.",
+    "Locus": "Core engagement phase; rising CIC/AOS, metric targets tighten, liminal structures prominent.",
+    "Rupture": "Peak intensity phase; high DET/SHCI, safety boundaries tested, director strategies active.",
+    "Fallout": "Resolution and reflection phase; ARR high, CDL managed, metrics return toward baseline."
+  }
+}
