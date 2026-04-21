@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/invariant-tile-snapshot.v1.json",
+  "title": "InvariantTileSnapshot",
+  "description": "Runtime snapshot of invariants and metrics for a single region/dungeon tile or node.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "regionId",
+    "tileId",
+    "invariants"
+  ],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this snapshot instance, e.g., a UUID or composite key."
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "const": "invariant-tile-snapshot.v1",
+      "description": "Schema version identifier for invariant tile snapshots."
+    },
+
+    "objectKind": {
+      "type": "string",
+      "const": "invariantTileSnapshot",
+      "description": "Object kind tag for routing and validation."
+    },
+
+    "regionId": {
+      "type": "string",
+      "description": "Region or regionContractCard identifier that owns this tile."
+    },
+
+    "dungeonId": {
+      "type": "string",
+      "description": "Optional dungeonRunContract or dungeon identifier when this tile belongs to a dungeon map.",
+      "nullable": true
+    },
+
+    "tileId": {
+      "type": "string",
+      "description": "Engine-facing tile or node identifier, e.g., nodeId in a NODE_GRID topology."
+    },
+
+    "tileClass": {
+      "type": "string",
+      "description": "Tile class label used by the spine (spawn, boss, liminal, hub, deadend, saferoom, etc.)."
+    },
+
+    "topology": {
+      "type": "object",
+      "description": "Optional topology details for this tile/node, mirroring dungeon-node-contract topology semantics where applicable.",
+      "additionalProperties": false,
+      "properties": {
+        "topologyModel": {
+          "type": "string",
+          "description": "Traversal model for this node (e.g., NODE_GRID, CONTINUOUS_3D, ROOM_GRAPH)."
+        },
+        "connections": {
+          "type": "array",
+          "description": "Outgoing connections from this node. May be a projected subset of the full dungeon-node-contract topology.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["targetNodeId"],
+            "properties": {
+              "targetNodeId": {
+                "type": "string",
+                "description": "Node identifier this connection leads to."
+              },
+              "kind": {
+                "type": "string",
+                "description": "Optional semantic tag for the connection (standard, door, ladder, secret, etc.)."
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0.0,
+                "description": "Abstract traversal cost used for selector scoring and routing. Default semantics: 1.0 = baseline edge cost."
+              },
+              "distance": {
+                "type": "number",
+                "minimum": 0.0,
+                "description": "Optional physical distance or engine units between nodes, if exposed."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "invariants": {
+      "type": "object",
+      "description": "Canonical invariant snapshot for this tile, using spine-defined ranges.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "MDI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RRM": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "FCF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SPR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "RWF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": "number", "minimum": 0.0 },
+        "HVF": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "SHCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      },
+      "minProperties": 1
+    },
+
+    "metricSnapshot": {
+      "type": "object",
+      "description": "Optional entertainment metrics snapshot for this tile in the current session.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      },
+      "minProperties": 1
+    },
+
+    "traversalCost": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Optional pre-aggregated traversal cost for entering this tile, as seen by selectors. Default semantics: 1.0 = baseline cost; values >1.0 are more costly, values <1.0 are cheaper.",
+      "default": 1.0
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
