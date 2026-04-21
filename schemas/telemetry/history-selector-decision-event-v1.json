@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/history-selector-decision-event-v1.json",
+  "title": "History Selector Decision Event v1",
+  "description": "Telemetry schema for history-selector decisions, capturing session/run keys, selector context, node traversal, metric deltas, director persona, and budget/safety joins for full decision-tree reconstruction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "schemaRef",
+    "objectKind",
+    "timestamp",
+    "sessionId",
+    "runContractId",
+    "regionId",
+    "selectorPatternId",
+    "stage",
+    "metricsBefore",
+    "metricsAfter"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier for this selector decision.",
+      "pattern": "^hsel-[a-z0-9]{8,32}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "history-selector-decision-event.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "historySelectorDecisionEvent",
+      "description": "Object kind for telemetry routing."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the decision."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Session identifier bound to this decision."
+    },
+    "runContractId": {
+      "type": "string",
+      "description": "Run contract identifier for context."
+    },
+    "dungeonRunId": {
+      "type": ["string", "null"],
+      "description": "Optional dungeon-run identifier if applicable."
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Region identifier where decision was made."
+    },
+    "dungeonId": {
+      "type": ["string", "null"],
+      "description": "Optional dungeon identifier for node-graph runs."
+    },
+    "mapStyle": {
+      "type": ["string", "null"],
+      "description": "Map style enum (e.g., NODE_GRID, WIRE_AUTOMAP) if applicable.",
+      "enum": ["WIRE_AUTOMAP", "ISO_CANVAS", "FLAT_OVERLAY", "COMPASS_3D", "NODE_GRID"]
+    },
+    "stage": {
+      "type": "string",
+      "description": "Canonical run stage at time of decision.",
+      "enum": ["OuterThreshold", "Locus", "Rupture", "Fallout"]
+    },
+    "selectorPatternId": {
+      "type": "string",
+      "description": "ID of the history-selector pattern used.",
+      "pattern": "^hsp-[a-z0-9\\-]{3,64}$"
+    },
+    "selectorRuleSetId": {
+      "type": ["string", "null"],
+      "description": "Optional rule catalog ID for this decision."
+    },
+    "ruleCatalogSnapshot": {
+      "type": "array",
+      "description": "Snapshot of rules applied: id, phase, action, applied flag.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ruleId", "phase", "action", "applied"],
+        "properties": {
+          "ruleId": { "type": "string" },
+          "phase": { "type": "integer", "minimum": 0, "maximum": 9 },
+          "action": { "type": "string", "enum": ["allow", "filter", "score", "rank", "select", "reject"] },
+          "applied": { "type": "boolean" }
+        }
+      }
+    },
+    "currentNodeId": {
+      "type": ["string", "null"],
+      "description": "Node ID from which traversal originated (node-graph runs)."
+    },
+    "nextNodeId": {
+      "type": ["string", "null"],
+      "description": "Selected next node ID (node-graph runs)."
+    },
+    "nodeRole": {
+      "type": ["string", "null"],
+      "description": "Role of nextNodeId (spawn, hub, liminal, etc.).",
+      "enum": ["spawn", "hub", "liminal", "dead_end", "safe_room", "high_risk", "boss_arena", "connector", "secret"]
+    },
+    "choseLiminalTaggedNode": {
+      "type": ["boolean", "null"],
+      "description": "Whether selected node had liminal tags."
+    },
+    "liminalTags": {
+      "type": "array",
+      "description": "Liminal tags on selected node.",
+      "items": { "type": "string" }
+    },
+    "mechanicHooks": {
+      "type": "array",
+      "description": "Mechanic hooks on selected node.",
+      "items": { "type": "string" }
+    },
+    "nodeInvariants": {
+      "type": ["object", "null"],
+      "description": "Snapshot of invariants for selected node.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "AOS": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "DET": { "type": ["number", "null"], "minimum": 0.0, "maximum": 10.0 },
+        "SHCI": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "LSG": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricsBefore": {
+      "type": "object",
+      "description": "Entertainment metrics before decision.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricsAfter": {
+      "type": "object",
+      "description": "Entertainment metrics after decision.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "EMD": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "STCI": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "CDL": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 },
+        "ARR": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "metricDeltas": {
+      "type": "object",
+      "description": "Computed deltas (after - before) for each metric.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "type": ["number", "null"] },
+        "EMD": { "type": ["number", "null"] },
+        "STCI": { "type": ["number", "null"] },
+        "CDL": { "type": ["number", "null"] },
+        "ARR": { "type": ["number", "null"] }
+      }
+    },
+    "directorPersonaId": {
+      "type": ["string", "null"],
+      "description": "Active director persona contract ID.",
+      "pattern": "^dir-[a-z0-9\\-]{3,64}$"
+    },
+    "directorStrategy": {
+      "type": ["string", "null"],
+      "description": "Strategy verb from H.Director.applySafetyDecision.",
+      "enum": ["allow", "soften", "imply", "refuse", "downshift"]
+    },
+    "comfortPolicyId": {
+      "type": ["string", "null"],
+      "description": "Comfort policy ID used for DET/CDL clamping.",
+      "pattern": "^dcp-[a-z0-9\\-]{3,64}$"
+    },
+    "budgetEventId": {
+      "type": ["string", "null"],
+      "description": "Optional budget consumption event ID."
+    },
+    "safetyDecisionId": {
+      "type": ["string", "null"],
+      "description": "Optional safety decision event ID."
+    },
+    "resolutionStrategy": {
+      "type": ["string", "null"],
+      "description": "How decision was resolved if constrained.",
+      "enum": ["normal", "noEligiblePattern", "profileCap", "budgetCap", "consentCap", "fallback"]
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
