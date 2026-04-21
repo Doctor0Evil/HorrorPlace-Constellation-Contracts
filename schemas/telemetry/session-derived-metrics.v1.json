@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/session-derived-metrics.v1.json",
+  "title": "Session Derived Metrics v1",
+  "description": "Standardized derived metrics block for session route envelopes, enabling cross-experience comparison of comfort performance and pacing quality.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "maxDetOvershoot",
+    "avgUecDeviation",
+    "safetySoftens",
+    "safetyDownshifts",
+    "arrBandHitRate"
+  ],
+  "properties": {
+    "maxDetOvershoot": {
+      "type": "number",
+      "description": "Largest positive difference between observed DET and the tighter of consent/runContract DET maxima during the session.",
+      "minimum": 0.0,
+      "maximum": 10.0
+    },
+    "avgUecDeviation": {
+      "type": "number",
+      "description": "Average absolute deviation of UEC from its target band center across all steps.",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "safetySoftens": {
+      "type": "integer",
+      "description": "Count of H.Safety decisions that returned 'soften' strategy.",
+      "minimum": 0
+    },
+    "safetyDownshifts": {
+      "type": "integer",
+      "description": "Count of H.Director decisions that returned 'downshift' strategy.",
+      "minimum": 0
+    },
+    "arrBandHitRate": {
+      "type": "number",
+      "description": "Fraction of steps where ARR stayed inside its target band.",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "comfortOutcome": {
+      "type": "string",
+      "enum": ["withinBand", "tooIntense", "tooFlat"],
+      "description": "Aggregate comfort verdict computed from CDL, ARR, consent waves, and budget usage."
+    },
+    "cooldownWindowsHonored": {
+      "type": "integer",
+      "description": "Number of planned cooldown windows that were successfully executed.",
+      "minimum": 0
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
