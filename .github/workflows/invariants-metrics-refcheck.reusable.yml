@@ -1,0 +1,130 @@
+name: Invariant/Metric Reference Check (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: "Glob pattern for files to check (e.g., 'schemas/selector/**')"
+        required: true
+        type: string
+      canonical_invariants_path:
+        description: "Path to canonical invariants schema"
+        required: false
+        type: string
+        default: "schemas/invariants.v1.json"
+      canonical_metrics_path:
+        description: "Path to canonical entertainment metrics schema"
+        required: false
+        type: string
+        default: "schemas/telemetry/entertainment-metrics.v1.json"
+
+jobs:
+  validate-invariant-metric-refs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Run invariant/metric reference checker
+        run: |
+          python - << 'PYCODE'
+          import json
+          import sys
+          from pathlib import Path
+          import glob
+
+          def load_canonical_sets(inv_path, met_path):
+              with open(inv_path, "r", encoding="utf-8") as f:
+                  inv_schema = json.load(f)
+              with open(met_path, "r", encoding="utf-8") as f:
+                  met_schema = json.load(f)
+
+              # Extract allowed invariant keys from properties
+              inv_keys = set(inv_schema.get("properties", {}).keys())
+              # HVF is nested with mag
+              if "HVF" in inv_schema.get("properties", {}):
+                  inv_keys.add("HVF_mag")
+
+              met_keys = set(met_schema.get("properties", {}).keys())
+              return inv_keys, met_keys
+
+          def find_band_like_objects(obj, path=""):
+              """Recursively find objects that look like invariant/metric bands."""
+              results = []
+              if isinstance(obj, dict):
+                  # Check if this dict looks like a band: has min/max or is under known keys
+                  if "min" in obj and "max" in obj:
+                      results.append((path, obj))
+                  for key, val in obj.items():
+                      # Known band container keys
+                      if key in ("invariantBands", "metricTargets", "entertainmentTargets", "historyCoupling", "weights"):
+                          results.extend(find_band_like_objects(val, f"{path}.{key}"))
+                      else:
+                          results.extend(find_band_like_objects(val, f"{path}.{key}"))
+              elif isinstance(obj, list):
+                  for i, item in enumerate(obj):
+                      results.extend(find_band_like_objects(item, f"{path}[{i}]"))
+              return results
+
+          def check_file(filepath, inv_keys, met_keys):
+              with open(filepath, "r", encoding="utf-8") as f:
+                  data = json.load(f)
+
+              errors = []
+              bands = find_band_like_objects(data)
+              for band_path, band_obj in bands:
+                  for key in band_obj.keys():
+                      if key in ("min", "max"): continue
+                      if key not in inv_keys and key not in met_keys:
+                          errors.append(f"{filepath}{band_path}: unknown key '{key}' (not in canonical invariants/metrics)")
+              return errors
+
+          # Load canonical sets
+          inv_path = Path("${{ inputs.canonical_invariants_path }}")
+          met_path = Path("${{ inputs.canonical_metrics_path }}")
+          if not inv_path.exists():
+              print(f"ERROR: Canonical invariants schema not found: {inv_path}")
+              sys.exit(1)
+          if not met_path.exists():
+              print(f"ERROR: Canonical metrics schema not found: {met_path}")
+              sys.exit(1)
+
+          inv_keys, met_keys = load_canonical_sets(inv_path, met_path)
+          print(f"Loaded {len(inv_keys)} invariant keys and {len(met_keys)} metric keys")
+
+          # Find files to check
+          pattern = "${{ inputs.paths }}"
+          files = glob.glob(pattern, recursive=True)
+          if not files:
+              print(f"WARNING: No files matched pattern: {pattern}")
+              sys.exit(0)
+
+          all_errors = []
+          for fpath in files:
+              if not fpath.endswith(".json"): continue
+              try:
+                  errs = check_file(fpath, inv_keys, met_keys)
+                  all_errors.extend(errs)
+              except json.JSONDecodeError as e:
+                  all_errors.append(f"{fpath}: invalid JSON - {e}")
+              except Exception as e:
+                  all_errors.append(f"{fpath}: error processing - {e}")
+
+          if all_errors:
+              print("REFERENCE CHECK FAILURES:")
+              for err in all_errors:
+                  print(f"  - {err}")
+              sys.exit(1)
+          else:
+              print(f"OK: All {len(files)} files reference only canonical invariants/metrics")
+          PYCODE
