@@ -1,0 +1,5 @@
+Validation Layer,Responsible Module,Key Functionality,Typical AI Correction
+Envelope,validate/envelope.rs,"Validates the PrismEnvelope structure, including the sessionId and hash computation.","Ensure the payload is wrapped in a valid envelope and the hash is correct."
+Schema,validate/schema.rs,"Checks the payload's structure and field types against its JSON schema.","Fix missing fields, incorrect data types (e.g., string vs. number), or extra unexpected fields."
+Invariant/Metric,validate/invariants.rs,"Enforces numeric ranges for invariants and metrics, applying XMIT rules.","Adjust numeric values to fall within the safe bands provided by the spine."
+Manifest,validate/manifests.rs,"Verifies that the target repo and path are allowed for the objectKind and tier.","Choose a different objectKind, tier, or revise the target path to comply with manifest rules."
