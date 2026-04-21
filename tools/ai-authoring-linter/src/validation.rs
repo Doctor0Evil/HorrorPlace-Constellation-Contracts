@@ -182,7 +182,7 @@ impl<'a> LintContext<'a> {
             let value: Value = match serde_json::from_str(&file.content) {
                 Ok(v) => v,
                 Err(_) => {
-                    // Non‑contract JSON or freeform; ignore.
+                    // Non-contract JSON or freeform; ignore.
                     continue;
                 }
             };
@@ -324,6 +324,7 @@ fn validate_target_path_against_pattern(
         )));
     }
 
+    // Simple pattern: no placeholder, treat as fixed path.
     if !pattern.pattern.contains('{') {
         if pattern.pattern != target_path {
             return Err(LintError::FileType(format!(
@@ -334,6 +335,7 @@ fn validate_target_path_against_pattern(
         return Ok(());
     }
 
+    // Placeholder pattern: enforce prefix match before the first '{'.
     let prefix = pattern
         .pattern
         .split('{')
@@ -348,4 +350,217 @@ fn validate_target_path_against_pattern(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::envelope::{AuthoringEnvelope, EnvelopeFile};
+    use crate::file_invariants::{AuthoringConstraints, FileTypeInvariants, NamingPattern};
+    use crate::session::{AuthoringSession, AuthoringTarget, InvariantConstraints};
+    use serde_json::json;
+
+    fn make_basic_invariants() -> FileTypeInvariants {
+        FileTypeInvariants {
+            file_kinds: vec!["contract.json".to_string()],
+            naming_patterns: vec![NamingPattern {
+                file_kind: "contract.json".to_string(),
+                object_kind: "surpriseMechanicContract".to_string(),
+                pattern: "contracts/surprise/".to_string(),
+                extension: ".json".to_string(),
+            }],
+            authoring_constraints: AuthoringConstraints {
+                require_explicit_target: true,
+                forbid_ad_hoc_rename: true,
+                require_stable_file_id: true,
+            },
+        }
+    }
+
+    fn make_basic_session_with_constraints() -> AuthoringSession {
+        AuthoringSession {
+            id: "session-1".to_string(),
+            schema_ref: "ai-authoring-session-contract.v1".to_string(),
+            object_kind: "aiAuthoringSessionContract".to_string(),
+            tier: "Tier1Public".to_string(),
+            agent_profile_id: "agent.test.v1".to_string(),
+            target_repo: "HorrorPlace-Constellation-Contracts".to_string(),
+            target_branch: "test-branch".to_string(),
+            policy_profile_id: None,
+            file_type_invariants_ref: "file-type-invariants.core.v1".to_string(),
+            allowed_operations: vec!["create".to_string(), "update".to_string()],
+            allowed_file_kinds: vec!["contract.json".to_string()],
+            max_files_per_session: 10,
+            max_lines_per_file: Some(2000),
+            targets: vec![AuthoringTarget {
+                file_kind: "contract.json".to_string(),
+                object_kind: "surpriseMechanicContract".to_string(),
+                pattern_key: "contracts.surpriseMechanic".to_string(),
+                target_path: "contracts/surprise/test-mechanic.v1.json".to_string(),
+                operation: "create".to_string(),
+                requires_existing_file: Some(false),
+                require_stable_file_id: Some(true),
+            }],
+            intensity_constraints: None,
+            invariant_constraints: Some(InvariantConstraints {
+                max_det: Some(6.0),
+                max_cdl: Some(0.7),
+                min_arr: Some(0.4),
+            }),
+            session_notes: None,
+        }
+    }
+
+    fn make_envelope_with_file(content: serde_json::Value) -> AuthoringEnvelope {
+        AuthoringEnvelope {
+            id: "envelope-1".to_string(),
+            schema_ref: "ai-authoring-envelope.v1".to_string(),
+            object_kind: "aiAuthoringEnvelope".to_string(),
+            created_at: "2026-04-20T10:54:00Z".to_string(),
+            session: make_basic_session_with_constraints(),
+            files: vec![EnvelopeFile {
+                file_id: "file-1".to_string(),
+                file_kind: "contract.json".to_string(),
+                object_kind: "surpriseMechanicContract".to_string(),
+                target_path: "contracts/surprise/test-mechanic.v1.json".to_string(),
+                operation: "create".to_string(),
+                previous_sha256: None,
+                content_sha256: None,
+                content: content.to_string(),
+                lines_added: Some(50),
+                lines_removed: Some(0),
+            }],
+            referenced_ids: None,
+            dead_ledger_ref: None,
+        }
+    }
+
+    #[test]
+    fn metrics_within_session_constraints_pass() {
+        let contract = json!({
+            "detCaps": { "min": 0.0, "max": 5.0 },
+            "metricTargets": {
+                "CDL": { "min": 0.2, "max": 0.6 },
+                "ARR": { "min": 0.45, "max": 0.9 }
+            },
+            "intensityBand": "moderate"
+        });
+
+        let envelope = make_envelope_with_file(contract);
+        let invariants = make_basic_invariants();
+
+        let ctx = LintContext {
+            envelope: &envelope,
+            session: &envelope.session,
+            invariants: &invariants,
+        };
+
+        envelope.basic_validate().unwrap();
+        ctx.validate_all().unwrap();
+    }
+
+    #[test]
+    fn det_above_session_cap_fails() {
+        let contract = json!({
+            "detCaps": { "min": 0.0, "max": 8.0 },
+            "metricTargets": {
+                "CDL": { "min": 0.2, "max": 0.6 },
+                "ARR": { "min": 0.45, "max": 0.9 }
+            },
+            "intensityBand": "moderate"
+        });
+
+        let envelope = make_envelope_with_file(contract);
+        let invariants = make_basic_invariants();
+
+        let ctx = LintContext {
+            envelope: &envelope,
+            session: &envelope.session,
+            invariants: &invariants,
+        };
+
+        envelope.basic_validate().unwrap();
+        let err = ctx.validate_all().unwrap_err();
+
+        match err {
+            LintError::Files(msg) => {
+                assert!(
+                    msg.contains("detCaps.max"),
+                    "expected DET violation, got: {}",
+                    msg
+                );
+            }
+            other => panic!("expected Files error, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn arr_below_session_floor_fails() {
+        let contract = json!({
+            "detCaps": { "min": 0.0, "max": 4.0 },
+            "metricTargets": {
+                "CDL": { "min": 0.2, "max": 0.6 },
+                "ARR": { "min": 0.3, "max": 0.8 }
+            },
+            "intensityBand": "moderate"
+        });
+
+        let envelope = make_envelope_with_file(contract);
+        let invariants = make_basic_invariants();
+
+        let ctx = LintContext {
+            envelope: &envelope,
+            session: &envelope.session,
+            invariants: &invariants,
+        };
+
+        envelope.basic_validate().unwrap();
+        let err = ctx.validate_all().unwrap_err();
+
+        match err {
+            LintError::Files(msg) => {
+                assert!(
+                    msg.contains("metricTargets.ARR.min"),
+                    "expected ARR violation, got: {}",
+                    msg
+                );
+            }
+            other => panic!("expected Files error, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn mild_intensity_too_high_det_fails() {
+        let contract = json!({
+            "detCaps": { "min": 0.0, "max": 5.0 },
+            "metricTargets": {
+                "CDL": { "min": 0.2, "max": 0.6 },
+                "ARR": { "min": 0.45, "max": 0.9 }
+            },
+            "intensityBand": "mild"
+        });
+
+        let envelope = make_envelope_with_file(contract);
+        let invariants = make_basic_invariants();
+
+        let ctx = LintContext {
+            envelope: &envelope,
+            session: &envelope.session,
+            invariants: &invariants,
+        };
+
+        envelope.basic_validate().unwrap();
+        let err = ctx.validate_all().unwrap_err();
+
+        match err {
+            LintError::Files(msg) => {
+                assert!(
+                    msg.contains("intensityBand 'mild'"),
+                    "expected mild-intensity DET violation, got: {}",
+                    msg
+                );
+            }
+            other => panic!("expected Files error, got {:?}", other),
+        }
+    }
 }
