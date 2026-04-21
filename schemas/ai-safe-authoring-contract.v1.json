@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/ai-safe-authoring-contract.v1.json",
+  "title": "AI Safe Authoring Contract v1",
+  "description": "Contract governing AI-chat authoring sessions across the Horror$Place VM-constellation. Ensures all generated artifacts declare target repo, path, schema, tier, and invariant/metric usage before CI validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sessionId",
+    "agentProfileId",
+    "aiChatProfileId",
+    "mode",
+    "artifacts"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "description": "Opaque session identifier for this authoring run.",
+      "pattern": "^sess-[a-z0-9]{8,32}$"
+    },
+    "agentProfileId": {
+      "type": "string",
+      "description": "ID of the AI agent profile performing authoring.",
+      "pattern": "^agent-[a-z0-9\\-]{3,64}$"
+    },
+    "aiChatProfileId": {
+      "type": "string",
+      "description": "ID of the AI-chat horror profile bounding this session's intensity.",
+      "pattern": "^acp-[a-z0-9\\-]{3,64}$"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Authoring mode controlling available templates and validation rules.",
+      "enum": [
+        "MapDesignWizard",
+        "DungeonFlowTuning",
+        "ContractAuthor",
+        "TelemetryReview",
+        "SkeletonFirst"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "List of artifacts this session is permitted to create or modify.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "objectKind",
+          "targetRepo",
+          "path",
+          "tier",
+          "schemaRef"
+        ],
+        "properties": {
+          "objectKind": {
+            "type": "string",
+            "description": "Kind of object being authored (matches constellation objectKinds).",
+            "enum": [
+              "dungeonNodeContract",
+              "dungeonRunContract",
+              "historySelectorPattern",
+              "directorPersonaContract",
+              "directorComfortPolicy",
+              "moodContract",
+              "eventContract",
+              "regionContract",
+              "styleContract",
+              "aiChatHorrorProfile",
+              "registryEntry"
+            ]
+          },
+          "targetRepo": {
+            "type": "string",
+            "description": "Target repository for this artifact (must match constellation index).",
+            "enum": [
+              "Horror.Place",
+              "Horror.Place-Orchestrator",
+              "HorrorPlace-Constellation-Contracts",
+              "HorrorPlace-Codebase-of-Death",
+              "HorrorPlace-Black-Archivum",
+              "HorrorPlace-Spectral-Foundry",
+              "HorrorPlace-Atrocity-Seeds",
+              "HorrorPlace-Obscura-Nexus",
+              "HorrorPlace-Liminal-Continuum",
+              "HorrorPlace-Process-Gods-Research",
+              "HorrorPlace-Redacted-Chronicles",
+              "HorrorPlace-Neural-Resonance-Lab",
+              "HorrorPlace-Dead-Ledger-Network"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path for the artifact; must be GitHub-compatible.",
+            "pattern": "^[A-Za-z0-9_.\\-\\/]+\\.(json|md|lua|cpp|rs|yml|py)$"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Entitlement tier for this artifact; must be compatible with targetRepo role.",
+            "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground"]
+          },
+          "schemaRef": {
+            "type": "string",
+            "description": "Canonical schema URI this artifact must validate against.",
+            "pattern": "^schema://Horror\\.Place/.*\\.v1\\.json$|^schema://HorrorPlace-Constellation-Contracts/.*\\.v1\\.json$"
+          },
+          "invariants_used": {
+            "type": "array",
+            "description": "Invariant fields this artifact reads or writes; must be subset of canonical spine.",
+            "items": {
+              "type": "string",
+              "enum": ["CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF", "DET", "HVF", "HVF_mag", "LSG", "SHCI"]
+            },
+            "default": []
+          },
+          "metrics_used": {
+            "type": "array",
+            "description": "Entertainment metric fields this artifact reads or writes; must be subset of canonical spine.",
+            "items": {
+              "type": "string",
+              "enum": ["UEC", "EMD", "STCI", "CDL", "ARR"]
+            },
+            "default": []
+          },
+          "referencedIds": {
+            "type": "array",
+            "description": "IDs of other artifacts this one links to (regions, events, bundles, proofs).",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "description": "Optional governance metadata for audit and entitlement checks.",
+      "additionalProperties": false,
+      "properties": {
+        "requiresDeadLedgerRef": {
+          "type": "boolean",
+          "description": "If true, artifacts with intensityband >= 8 must include deadledgerref.",
+          "default": false
+        },
+        "maxIntensityBand": {
+          "type": "integer",
+          "description": "Maximum intensity band (0-10) allowed for artifacts in this session.",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 10
+        },
+        "allowedTemplateIds": {
+          "type": "array",
+          "description": "Optional whitelist of ai-chat-template-contract IDs this session may use.",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    }
+  }
+}
