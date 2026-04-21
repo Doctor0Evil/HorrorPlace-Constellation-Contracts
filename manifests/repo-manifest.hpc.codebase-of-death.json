@@ -1,32 +1,82 @@
 {
-  "$id": "https://horror.place/manifests/repo-manifest.hpc.codebase-of-death.json",
+  "$id": "https://horror.place/manifests/repo-manifest.hpc.codebase-of-death.v1.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+  "schemaRef": "repo-manifest.v1",
   "kind": "repoManifest",
-  "repoId": "hpc.codebase-of-death",
+
+  "repoId": "HorrorPlace-Codebase-of-Death",
   "displayName": "Horror.Place Codebase of Death",
-  "description": "Engine, scripting, and logic constellation for Horror.Place, hosting behavior contracts and technical policies.",
+  "description": "Core engine vault for Rust/Lua implementations of Horror.Place runtime APIs, including H.* orchestration modules, engine adapters, and behavior wiring.",
+
   "tiers": [
     "standard",
     "mature"
   ],
   "defaultTier": "standard",
+
+  "tier": "T2_private",
+
   "registryRoots": {
     "behaviors": "registry/behaviors.ndjson",
     "policies": "registry/engine-policies.ndjson",
     "styles": "registry/styles.ndjson"
   },
+
   "aiAuthoring": {
     "requestsDir": ".ai/requests",
     "responsesDir": ".ai/responses",
     "allowedObjectKinds": [
       "behaviorContractCard",
       "policyContractCard",
-      "styleContractCard"
-    ]
+      "styleContractCard",
+      "historySelectorPattern",
+      "historySelectorRule",
+      "dungeonNodeContract",
+      "eventContract",
+      "regionContract"
+    ],
+    "perRepoArtifactCaps": {
+      "HorrorPlace-Codebase-of-Death": 3
+    }
   },
+
   "spine": {
     "schemaIndexPath": "schemas/core/schema-spine-index-v1.json",
     "invariantsSpinePath": "schemas/core/invariants-spine.v1.json",
     "metricsSpinePath": "schemas/core/entertainment-metrics-spine.v1.json"
+  },
+
+  "allowedHNamespaces": [
+    "H.Consent",
+    "H.Budget",
+    "H.Safety",
+    "H.Selector",
+    "H.Node",
+    "H.Run",
+    "H.Metrics",
+    "H.Invariants",
+    "H.PersonaInventory",
+    "H.Debug",
+    "H.Telemetry"
+  ],
+
+  "ciPolicies": {
+    "maxArtifactsPerRequest": 3,
+    "requireDeadLedgerRef": false,
+    "enforceInvariantNarrowing": true,
+    "enforceAllowedHNamespaces": true
+  },
+
+  "telemetry": {
+    "historySelectorDecisionSchema": "schemas/telemetry/history-selector-decision-event-v1.json",
+    "budgetConsumptionSchema": "schemas/telemetry/budget-consumption-event-v1.json",
+    "sessionMetricsSchema": "schemas/telemetry/session-metrics-envelope-v1.json"
+  },
+
+  "prismMeta": {
+    "maintainer": "HorrorPlace Engine Team",
+    "contact": "engine@horrorplace.io",
+    "createdAt": "2026-04-20T21:30:00Z"
   }
 }
