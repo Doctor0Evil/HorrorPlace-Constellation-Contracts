@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/campaign-det-budget-policy.v1.json",
+  "title": "Campaign DET Budget Policy v1",
+  "description": "Policy for managing cumulative DET exposure across multiple runs in a campaign, with per-session caps and adaptive selector behavior.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId",
+    "schemaRef",
+    "objectKind",
+    "campaignDetBudget",
+    "perSessionCap",
+    "adaptationRules"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "description": "Stable identifier for this campaign budget policy.",
+      "pattern": "^cdbp-[a-z0-9\\-]{3,64}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "campaign-det-budget-policy.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "campaignDetBudgetPolicy",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "campaignDetBudget": {
+      "type": "number",
+      "description": "Total DET units available for the entire campaign.",
+      "minimum": 0.0,
+      "maximum": 100.0
+    },
+    "perSessionCap": {
+      "type": "object",
+      "description": "Maximum DET allowed per individual session.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+      }
+    },
+    "adaptationRules": {
+      "type": "object",
+      "description": "Rules for how selectors/directors adapt when budget is low.",
+      "additionalProperties": false,
+      "properties": {
+        "lowBudgetThreshold": {
+          "type": "number",
+          "description": "Fraction of budget remaining that triggers adaptation (0.0–1.0).",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.3
+        },
+        "preferredMetricShift": {
+          "type": "object",
+          "description": "Metrics to emphasize when DET budget is low.",
+          "additionalProperties": false,
+          "properties": {
+            "ARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "EMD": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "UEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "cooldownMultiplier": {
+          "type": "number",
+          "description": "Factor to multiply requiredCooldownRatio when budget is low.",
+          "minimum": 1.0,
+          "maximum": 3.0,
+          "default": 1.5
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
