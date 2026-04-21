@@ -1,7 +1,0 @@
-﻿Step,Function / Action,Input,Output / Result,Rationale
-1,AI Intent,"""Create a new event for a public dungeon.""",AiAuthoringRequest with object_kind=eventContract", "tier=Tier1Public,The AI formulates an initial request based on user intent.
-2,Path Planning,director.plan_paths(request),Candidate "(repo, path, tier)" tuples,The CHAT_DIRECTOR uses the manifest index to suggest valid paths based on the request.
-3,Detailed Route Explanation,"manifest_index.explain_route(eventContract, Tier1Public)",RouteExplanation object,"The system provides a detailed breakdown of the chosen path, including policies and hints."
-4,Policy Check,"manifest_index.validate_target(eventContract, Horror.Place, Tier1Public)",Ok(()),Confirms that the event contract is indeed allowed in the public repository.
-5,Skeleton Generation,skeleton_generator.for_event(request),AnnotatedSkeleton with path pre-filled,Generates a valid JSON skeleton with the correct path and annotations for the AI to fill.
-6,Final Validation,"validator.validate_manifests(response, route_explanation)",Vec<Diagnostic>,Ensures the final generated file still conforms to all manifest policies.
