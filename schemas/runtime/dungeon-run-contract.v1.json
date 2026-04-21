@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "https://horror.place/schemas/runtime/dungeon-run-contract.v1.json",
+  "title": "DungeonRunContract",
+  "description": "Runtime contract describing a single dungeon map/level run, binding region, dungeon graph, invariant envelopes, and entertainment targets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "phase",
+    "regionRef",
+    "dungeonId",
+    "mapStyle",
+    "tileClasses",
+    "invariantBands",
+    "metricTargets",
+    "sessionLock",
+    "prismMeta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this dungeon run contract instance."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "dungeon-run-contract.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "dungeonRunContract",
+      "description": "Object kind for CHATDIRECTOR and Manifest routing."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground"],
+      "description": "Effective entitlement tier for this dungeon."
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [72],
+      "description": "CHATDIRECTOR lifecycle phase; dungeonRunContract is a Phase 2 Bundles artifact."
+    },
+    "regionRef": {
+      "type": "string",
+      "description": "Registry ref of the primary regionContractCard hosting this dungeon."
+    },
+    "dungeonId": {
+      "type": "string",
+      "description": "Dungeon identifier, e.g. mansion_1f_lobby_DC."
+    },
+    "mapStyle": {
+      "type": "string",
+      "enum": [
+        "WIRE_AUTOMAP",
+        "ISO_CANVAS",
+        "FLAT_OVERLAY",
+        "COMPASS_3D",
+        "NODE_GRID"
+      ],
+      "description": "Primary map style for this dungeon."
+    },
+    "styleProfileId": {
+      "type": "string",
+      "description": "Optional style contract ID to bind visual/audio style (e.g. MACHINECANYONBIOMECHBCI)."
+    },
+    "sessionLock": {
+      "type": "boolean",
+      "description": "If true, AI-chat sessions bound to this contract must remain inside this dungeon until completion/termination."
+    },
+    "tileClasses": {
+      "type": "object",
+      "description": "Declared tile/node classes for this dungeon.",
+      "additionalProperties": false,
+      "properties": {
+        "spawn": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "boss": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "liminal": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "hub": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dead_end": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "safe_room": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "invariantBands": {
+      "type": "object",
+      "description": "Invariant bands per tileClass, similar to moodContract.targets.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "CIC": { "$ref": "#/$defs/range01" },
+          "MDI": { "$ref": "#/$defs/range01" },
+          "AOS": { "$ref": "#/$defs/range01" },
+          "RRM": { "$ref": "#/$defs/range01" },
+          "FCF": { "$ref": "#/$defs/range01" },
+          "SPR": { "$ref": "#/$defs/range01" },
+          "RWF": { "$ref": "#/$defs/range01" },
+          "DET": { "$ref": "#/$defs/range01" },
+          "HVF": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mag": { "$ref": "#/$defs/range01" }
+            }
+          },
+          "LSG": { "$ref": "#/$defs/range01" },
+          "SHCI": { "$ref": "#/$defs/range01" }
+        }
+      }
+    },
+    "metricTargets": {
+      "type": "object",
+      "description": "Per-dungeon entertainment metric target bands.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/$defs/range01" },
+        "EMD": { "$ref": "#/$defs/range01" },
+        "STCI": { "$ref": "#/$defs/range01" },
+        "CDL": { "$ref": "#/$defs/range01" },
+        "ARR": { "$ref": "#/$defs/range01" }
+      }
+    },
+    "nodeHints": {
+      "type": "object",
+      "description": "Optional node-level hints used by Dungeon planners/engines.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tileClass": { "type": "string" },
+          "preferredEvents": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "metricBias": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          }
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta metadata block.",
+      "additionalProperties": true
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this dungeon run contract."
+    }
+  },
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    }
+  }
+}
