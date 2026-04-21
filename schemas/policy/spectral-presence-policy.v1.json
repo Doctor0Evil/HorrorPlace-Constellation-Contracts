@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/spectral-presence-policy.v1.json",
+  "title": "Spectral Presence Policy v1",
+  "description": "Policy mapping SHCI/SPR bands to spectral presence codes (glitch/echo/apparition) for AI-Chat template selection and engine behavior.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId",
+    "schemaRef",
+    "objectKind",
+    "presenceBands"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "description": "Stable identifier for this spectral presence policy.",
+      "pattern": "^spp-[a-z0-9\\-]{3,64}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "spectral-presence-policy.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "spectralPresencePolicy",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "presenceBands": {
+      "type": "object",
+      "description": "Mapping of SHCI/SPR ranges to presence codes.",
+      "additionalProperties": false,
+      "required": ["glitch", "echo", "apparition"],
+      "properties": {
+        "glitch": {
+          "type": "object",
+          "description": "Low-mid SHCI, low SPR: intermittent, non-responsive manifestations.",
+          "additionalProperties": false,
+          "required": ["shciMin", "shciMax", "sprMax"],
+          "properties": {
+            "shciMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "shciMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "sprMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "echo": {
+          "type": "object",
+          "description": "Mid-high SHCI, moderate SPR: partial, non-interactive replays.",
+          "additionalProperties": false,
+          "required": ["shciMin", "shciMax", "sprMin", "sprMax"],
+          "properties": {
+            "shciMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "shciMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "sprMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "sprMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "apparition": {
+          "type": "object",
+          "description": "High SHCI and high SPR: fully present, responsive entity.",
+          "additionalProperties": false,
+          "required": ["shciMin", "sprMin"],
+          "properties": {
+            "shciMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "sprMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
