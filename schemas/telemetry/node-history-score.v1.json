@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/telemetry/node-history-score.v1.json",
+  "title": "NodeHistoryScoreEvent",
+  "description": "Telemetry event capturing history-driven scoring for candidate dungeon nodes.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schemaRef",
+    "objectKind",
+    "version",
+    "sessionId",
+    "runId",
+    "regionRef",
+    "dungeonId",
+    "nodeId",
+    "patternId",
+    "baseScore",
+    "finalScore",
+    "timestamp"
+  ],
+
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "node-history-score.v1",
+      "description": "Schema version identifier."
+    },
+
+    "objectKind": {
+      "type": "string",
+      "const": "NodeHistoryScoreEvent",
+      "description": "Object kind for telemetry routing."
+    },
+
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Monotonic event version for this telemetry family."
+    },
+
+    "sessionId": {
+      "type": "string",
+      "description": "CHATDIRECTOR session identifier."
+    },
+
+    "runId": {
+      "type": "string",
+      "description": "RunContract identifier associated with this scoring decision."
+    },
+
+    "regionRef": {
+      "type": "string",
+      "description": "Region contract reference for the current run."
+    },
+
+    "dungeonId": {
+      "type": "string",
+      "description": "Dungeon identifier within the region."
+    },
+
+    "nodeId": {
+      "type": "string",
+      "description": "Candidate node identifier being scored."
+    },
+
+    "patternId": {
+      "type": "string",
+      "description": "History-selector or pattern identifier that provided weights and legend bands."
+    },
+
+    "baseScore": {
+      "type": "number",
+      "description": "Initial base score before any bonuses or penalties."
+    },
+
+    "liminalBonus": {
+      "type": "number",
+      "description": "Configured liminal bonus weight applied when node is liminal or matches preferred liminal tags."
+    },
+
+    "preferredBonus": {
+      "type": "number",
+      "description": "Bonus applied when node has any preferred hooks or liminal tags."
+    },
+
+    "discouragedPenalty": {
+      "type": "number",
+      "description": "Penalty applied when node has any discouraged hooks."
+    },
+
+    "perMatchingHook": {
+      "type": "number",
+      "description": "Increment per preferred mechanic hook on the node."
+    },
+
+    "perDiscouragedHook": {
+      "type": "number",
+      "description": "Penalty per discouraged mechanic hook on the node."
+    },
+
+    "forbiddenPenalty": {
+      "type": "number",
+      "description": "Penalty applied when node carries any forbidden tags."
+    },
+
+    "historyScale": {
+      "type": "number",
+      "description": "Scalar weight applied to the historyCoupling value."
+    },
+
+    "nPreferredHooks": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of node mechanic hooks that match preferredHooks in the pattern."
+    },
+
+    "nDiscouragedHooks": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of node mechanic hooks that match discouragedHooks in the pattern."
+    },
+
+    "isLiminalRole": {
+      "type": "boolean",
+      "description": "True if node.role is considered liminal (liminal or threshold)."
+    },
+
+    "hasPreferredLiminalTag": {
+      "type": "boolean",
+      "description": "True if node.liminalTags intersects pattern.preferredLiminalTags."
+    },
+
+    "hasForbiddenTag": {
+      "type": "boolean",
+      "description": "True if node.liminalTags intersects pattern.forbiddenTags."
+    },
+
+    "historyCoupling": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Computed spectral-history coupling in [0,1] for this node against legend bands."
+    },
+
+    "finalScore": {
+      "type": "number",
+      "description": "Final combined score used to rank this node."
+    },
+
+    "timestamp": {
+      "type": "integer",
+      "description": "Unix timestamp (seconds since epoch) when this score was computed."
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard metadata block (author, createdAt, etc.).",
+      "additionalProperties": true
+    }
+  }
+}
