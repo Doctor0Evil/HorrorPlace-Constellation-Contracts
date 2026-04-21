@@ -1,0 +1,35 @@
+name: AI Authoring Envelope Lint
+
+on:
+  pull_request:
+    paths:
+      - "contracts/authoring/**"
+      - "schemas/authoring/**"
+      - "tools/ai-authoring-linter/**"
+
+jobs:
+  lint-envelopes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build linter
+        run: |
+          cd tools/ai-authoring-linter
+          cargo build --release
+
+      - name: Run linter on envelopes
+        run: |
+          ENVELOPER="tools/ai-authoring-linter/target/release/ai-authoring-linter"
+          find contracts/authoring -name "ai-authoring-envelope.*.json" -print0 | while IFS= read -r -d '' f; do
+            echo "Linting $f"
+            "$ENVELOPER" --envelope "$f"
+          done
