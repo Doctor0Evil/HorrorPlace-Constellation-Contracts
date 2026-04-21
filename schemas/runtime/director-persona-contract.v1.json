@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/director-persona-contract.v1.json",
+  "title": "Director Persona Contract v1",
+  "description": "Tier-aware director persona contract defining invariant bands, entertainment metric targets, and comfort policy for AI-directed horror sessions.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "descriptorId",
+    "directorKind",
+    "toneLabel",
+    "allowedTier",
+    "invariantBands",
+    "metricTargets",
+    "comfortPolicyRef"
+  ],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable director persona identifier, registry-backed.",
+      "pattern": "dir-[a-z0-9\\-]{3,64}"
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "description": "Schema version identifier for validator binding.",
+      "const": "director-persona-contract.v1"
+    },
+
+    "objectKind": {
+      "type": "string",
+      "description": "Object kind for CHATDIRECTOR routing and manifest validation.",
+      "const": "directorPersonaContract"
+    },
+
+    "tier": {
+      "type": "string",
+      "description": "Contract tier in the VM-Constellation.",
+      "enum": ["standard", "mature", "research"]
+    },
+
+    "descriptorId": {
+      "type": "string",
+      "description": "Authoring descriptor ID for this director persona.",
+      "pattern": "desc-[a-z0-9\\-]{3,32}"
+    },
+
+    "directorKind": {
+      "type": "string",
+      "description": "Logical director persona kind.",
+      "enum": [
+        "coldOverseer",
+        "ritualStatistician",
+        "silentArchivistDirector"
+      ]
+    },
+
+    "toneLabel": {
+      "type": "string",
+      "description": "Short label for AI-Chat style selection.",
+      "minLength": 1,
+      "maxLength": 64
+    },
+
+    "allowedTier": {
+      "type": "string",
+      "description": "Maximum content tier this persona is permitted to operate in.",
+      "enum": ["standard", "mature", "research"]
+    },
+
+    "tags": {
+      "type": "array",
+      "description": "Optional free-form tags for authoring and routing hints.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+      }
+    },
+
+    "invariantBands": {
+      "type": "object",
+      "description": "Invariant min/max bands this persona is allowed to operate within.",
+      "additionalProperties": false,
+      "required": ["CIC", "AOS", "DET", "SHCI"],
+      "properties": {
+        "CIC": {
+          "type": "object",
+          "description": "Catastrophic Imprint Coefficient band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "AOS": {
+          "type": "object",
+          "description": "Ambient Oscillation Score band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "DET": {
+          "type": "object",
+          "description": "Dread Exposure Threshold per-event band for this persona.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+          }
+        },
+        "SHCI": {
+          "type": "object",
+          "description": "Spectral-History Coupling Index band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+
+    "metricTargets": {
+      "type": "object",
+      "description": "Target entertainment metric bands that define the director's feel.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": {
+          "type": "object",
+          "description": "Uncertainty Engagement Coefficient band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "EMD": {
+          "type": "object",
+          "description": "Evidential Mystery Density band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "STCI": {
+          "type": "object",
+          "description": "Safe-Threat Contrast Index band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "CDL": {
+          "type": "object",
+          "description": "Cognitive Dissonance Load band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "ARR": {
+          "type": "object",
+          "description": "Ambiguous Resolution Ratio band.",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        }
+      }
+    },
+
+    "comfortPolicyRef": {
+      "type": "string",
+      "description": "Reference to a director comfort policy defining max DET per session, cooldown ratios, and CDL span.",
+      "pattern": "dcp-[a-z0-9\\-]{3,64}"
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable notes for designers and auditors.",
+      "maxLength": 2048
+    }
+  },
+
+  "allOf": [
+    {
+      "description": "Require DET band to respect tier ceilings at schema level where possible.",
+      "if": {
+        "properties": {
+          "tier": { "const": "standard" }
+        }
+      },
+      "then": {
+        "properties": {
+          "invariantBands": {
+            "properties": {
+              "DET": {
+                "properties": {
+                  "max": { "maximum": 6.0 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
