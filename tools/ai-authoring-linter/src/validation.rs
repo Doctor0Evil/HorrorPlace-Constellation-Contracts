@@ -2,8 +2,18 @@ use thiserror::Error;
 
 use crate::envelope::{AuthoringEnvelope, EnvelopeFile};
 use crate::file_invariants::{FileTypeInvariants, NamingPattern};
-use crate::session::{AuthoringSession, AuthoringTarget};
+use crate::session::{AuthoringSession, AuthoringTarget, InvariantConstraints};
 use regex::Regex;
+use serde_json::Value;
+
+pub struct MetricEnvelope {
+    pub det: Option<f64>,
+    pub cdl_min: Option<f64>,
+    pub cdl_max: Option<f64>,
+    pub arr_min: Option<f64>,
+    pub arr_max: Option<f64>,
+    pub intensity_band: Option<String>,
+}
 
 #[derive(Debug, Error)]
 pub enum LintError {
@@ -40,14 +50,16 @@ pub struct LintContext<'a> {
 
 impl<'a> LintContext<'a> {
     pub fn validate_all(&self) -> Result<(), LintError> {
-        // Session basic checks
         self.session
             .basic_validate()
             .map_err(LintError::Session)?;
 
+        self.envelope.basic_validate()?;
+
         self.validate_file_counts()?;
         self.validate_files_against_session()?;
         self.validate_files_against_invariants()?;
+        self.validate_entertainment_metrics()?;
 
         Ok(())
     }
@@ -151,6 +163,143 @@ impl<'a> LintContext<'a> {
 
         Ok(())
     }
+
+    fn validate_entertainment_metrics(&self) -> Result<(), LintError> {
+        let inv = match &self.session.invariant_constraints {
+            Some(c) => c,
+            None => {
+                // No caps declared for this session; skip metric checks.
+                return Ok(());
+            }
+        };
+
+        for file in &self.envelope.files {
+            // Heuristic: only inspect JSON contracts.
+            if !file.target_path.ends_with(".json") {
+                continue;
+            }
+
+            let value: Value = match serde_json::from_str(&file.content) {
+                Ok(v) => v,
+                Err(_) => {
+                    // Non‑contract JSON or freeform; ignore.
+                    continue;
+                }
+            };
+
+            let metrics = extract_metric_envelope(&value);
+
+            if let (Some(max_det), Some(mech_det)) = (inv.max_det, metrics.det) {
+                if mech_det > max_det {
+                    return Err(LintError::Files(format!(
+                        "file {}: detCaps.max ({}) exceeds session.invariantConstraints.maxDET ({})",
+                        file.target_path, mech_det, max_det
+                    )));
+                }
+            }
+
+            if let (Some(max_cdl), Some(cdl_max)) = (inv.max_cdl, metrics.cdl_max) {
+                if cdl_max > max_cdl {
+                    return Err(LintError::Files(format!(
+                        "file {}: metricTargets.CDL.max ({}) exceeds session.invariantConstraints.maxCDL ({})",
+                        file.target_path, cdl_max, max_cdl
+                    )));
+                }
+            }
+
+            if let (Some(min_arr), Some(arr_min)) = (inv.min_arr, metrics.arr_min) {
+                if arr_min < min_arr {
+                    return Err(LintError::Files(format!(
+                        "file {}: metricTargets.ARR.min ({}) is below session.invariantConstraints.minARR ({})",
+                        file.target_path, arr_min, min_arr
+                    )));
+                }
+            }
+
+            if let Some(ref band) = metrics.intensity_band {
+                self.check_intensity_band(band, &metrics, inv, file)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn check_intensity_band(
+        &self,
+        band: &str,
+        metrics: &MetricEnvelope,
+        inv: &InvariantConstraints,
+        file: &EnvelopeFile,
+    ) -> Result<(), LintError> {
+        match band {
+            "mild" => {
+                if let (Some(max_det), Some(det)) = (inv.max_det, metrics.det) {
+                    if det > max_det * 0.5 {
+                        return Err(LintError::Files(format!(
+                            "file {}: intensityBand 'mild' but detCaps.max ({}) > 0.5 * session.maxDET ({})",
+                            file.target_path, det, max_det
+                        )));
+                    }
+                }
+
+                if let (Some(session_arr_min), Some(arr_min)) = (inv.min_arr, metrics.arr_min) {
+                    if arr_min < session_arr_min {
+                        return Err(LintError::Files(format!(
+                            "file {}: intensityBand 'mild' but metricTargets.ARR.min ({}) < session.minARR ({})",
+                            file.target_path, arr_min, session_arr_min
+                        )));
+                    }
+                }
+            }
+            "severe" | "adult" => {
+                // Hook for future stricter policies; for now, rely on numeric caps.
+            }
+            _ => {}
+        }
+
+        Ok(())
+    }
+}
+
+fn extract_metric_envelope(doc: &Value) -> MetricEnvelope {
+    let det_caps = doc.get("detCaps");
+    let det = det_caps
+        .and_then(|d| d.get("max"))
+        .and_then(|v| v.as_f64());
+
+    let metric_targets = doc.get("metricTargets");
+
+    let (cdl_min, cdl_max) = metric_targets
+        .and_then(|mt| mt.get("CDL"))
+        .and_then(|cdl| {
+            let min = cdl.get("min").and_then(|v| v.as_f64());
+            let max = cdl.get("max").and_then(|v| v.as_f64());
+            Some((min, max))
+        })
+        .unwrap_or((None, None));
+
+    let (arr_min, arr_max) = metric_targets
+        .and_then(|mt| mt.get("ARR"))
+        .and_then(|arr| {
+            let min = arr.get("min").and_then(|v| v.as_f64());
+            let max = arr.get("max").and_then(|v| v.as_f64());
+            Some((min, max))
+        })
+        .unwrap_or((None, None));
+
+    let intensity_band = doc
+        .get("intensityBand")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    MetricEnvelope {
+        det,
+        cdl_min,
+        cdl_max,
+        arr_min,
+        arr_max,
+        intensity_band,
+    }
 }
 
 fn find_matching_target<'a>(
@@ -175,7 +324,7 @@ fn validate_target_path_against_pattern(
         )));
     }
 
-    if !pattern.pattern.contains("{") {
+    if !pattern.pattern.contains('{') {
         if pattern.pattern != target_path {
             return Err(LintError::FileType(format!(
                 "targetPath '{}' does not match fixed pattern '{}'",
