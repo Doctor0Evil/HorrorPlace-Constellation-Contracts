@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/repo-manifest-schema.v1.json",
+  "title": "Repo Manifest Schema v1",
+  "description": "Schema for repository manifests that declare allowed H.* namespaces, object kinds, tiers, and CI policies for the Horror$Place VM-constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repoId",
+    "schemaRef",
+    "tier",
+    "allowedHNamespaces",
+    "allowedObjectKinds"
+  ],
+  "properties": {
+    "repoId": {
+      "type": "string",
+      "description": "Logical repository identifier matching the constellation index.",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Constellation-Contracts",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network"
+      ]
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "repo-manifest.v1",
+      "description": "Schema version identifier."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["T1_public", "T2_private", "T3_private"],
+      "description": "Repository tier classification."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 512,
+      "description": "Human-readable description of this repository's role."
+    },
+    "allowedHNamespaces": {
+      "type": "array",
+      "description": "List of H.* namespace identifiers that Lua code in this repo may import/call.",
+      "items": {
+        "type": "string",
+        "pattern": "^H\\.[A-Z][a-zA-Z]+$",
+        "enum": [
+          "H.Consent",
+          "H.Budget",
+          "H.Safety",
+          "H.Director",
+          "H.Selector",
+          "H.Node",
+          "H.Run",
+          "H.Metrics",
+          "H.Invariants",
+          "H.ImageHelper",
+          "H.Audio",
+          "H.PersonaInventory",
+          "H.Debug",
+          "H.Telemetry"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "allowedObjectKinds": {
+      "type": "array",
+      "description": "List of objectKind values that may be created/modified in this repo.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "directorPersonaContract",
+          "directorComfortPolicy",
+          "dungeonRunContract",
+          "dungeonNodeContract",
+          "historySelectorPattern",
+          "historySelectorRule",
+          "eventContract",
+          "regionContract",
+          "styleContract",
+          "moodContract",
+          "aiChatHorrorProfile",
+          "aiAuthoringRequest",
+          "aiAuthoringResponse",
+          "zkpProofEnvelope",
+          "verifierEntry"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "ciPolicies": {
+      "type": "object",
+      "description": "CI/CD policy overrides specific to this repository.",
+      "additionalProperties": false,
+      "properties": {
+        "maxArtifactsPerRequest": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3,
+          "description": "Override for the global artifact cap per authoring request."
+        },
+        "requireDeadLedgerRef": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether all new artifacts must include a deadledgerref."
+        },
+        "enforceInvariantNarrowing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether child contracts must narrow parent invariant bands."
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
