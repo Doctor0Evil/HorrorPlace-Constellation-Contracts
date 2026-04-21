@@ -1,0 +1,58 @@
+name: experience-contract-validate
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        required: false
+        type: string
+        default: "schemas/runtime/experience-contract*.json"
+
+jobs:
+  validate-experience-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install validator dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Validate JSON Schema syntax
+        run: |
+          python tools/validate_jsonschema_syntax.py \
+            --paths "${{ inputs.paths }}"
+
+      - name: Run spine range and narrowing checks
+        run: |
+          python tools/experience_contract_spine_check.py \
+            --contracts-glob "schemas/runtime/experience-contract*.json" \
+            --invariants-schema "schemas/invariants.v1.json" \
+            --metrics-schema "schemas/telemetry/entertainment-metrics.v1.json"
+
+      - name: Validate ethics guardrail compatibility
+        run: |
+          python tools/experience_contract_guardrails_check.py \
+            --contracts-glob "schemas/runtime/experience-contract*.json" \
+            --guardrails-schema "schemas/policy/metrics-ethics-guardrails.v1.json"
+
+      - name: Validate consent and budget caps
+        run: |
+          python tools/experience_contract_caps_check.py \
+            --contracts-glob "schemas/runtime/experience-contract*.json" \
+            --consent-schema "schemas/consent/consent-state-machine-v1.json" \
+            --budget-schema "schemas/budget/horror-intensity-budget-policy.v1.json"
+
+      - name: Validate timing envelopes (CSI and related indices)
+        run: |
+          python tools/experience_contract_timing_check.py \
+            --contracts-glob "schemas/runtime/experience-contract*.json" \
+            --timing-spine-schema "schemas/timing/systemic-timing-spine.v1.json"
