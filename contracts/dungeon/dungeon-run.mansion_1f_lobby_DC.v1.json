@@ -1,0 +1,112 @@
+{
+  "id": "dungeon-run.mansion_1f_lobby_DC.v1",
+  "schemaRef": "dungeon-run-contract.v1",
+  "objectKind": "dungeonRunContract",
+  "tier": "Tier1Public",
+  "phase": 72,
+  "regionRef": "region.spencer-mansion.v1",
+  "dungeonId": "mansion_1f_lobby_DC",
+  "mapStyle": "NODE_GRID",
+  "styleProfileId": "CINEMATICSTEAMPUNKSPECTRALCHROME", 
+  "sessionLock": true,
+  "tileClasses": {
+    "spawn": ["entry_door_north"],
+    "boss": [],
+    "liminal": ["west_corridor_threshold", "east_corridor_threshold", "staircase_midpoint"],
+    "hub": ["lobby_central"],
+    "dead_end": ["side_alcove_west", "side_alcove_east"],
+    "safe_room": ["save_door_side_room"]
+  },
+  "invariantBands": {
+    "spawn": {
+      "CIC": { "min": 0.40, "max": 0.65 },
+      "MDI": { "min": 0.30, "max": 0.60 },
+      "AOS": { "min": 0.40, "max": 0.75 },
+      "RRM": { "min": 0.20, "max": 0.50 },
+      "FCF": { "min": 0.35, "max": 0.70 },
+      "SPR": { "min": 0.40, "max": 0.75 },
+      "RWF": { "min": 0.70, "max": 1.00 },
+      "DET": { "min": 0.40, "max": 0.70 },
+      "HVF": { "mag": { "min": 0.30, "max": 0.60 } },
+      "LSG": { "min": 0.60, "max": 0.90 },
+      "SHCI": { "min": 0.50, "max": 0.80 }
+    },
+    "hub": {
+      "CIC": { "min": 0.55, "max": 0.85 },
+      "MDI": { "min": 0.45, "max": 0.80 },
+      "AOS": { "min": 0.50, "max": 0.85 },
+      "RRM": { "min": 0.25, "max": 0.65 },
+      "FCF": { "min": 0.40, "max": 0.80 },
+      "SPR": { "min": 0.50, "max": 0.90 },
+      "RWF": { "min": 0.70, "max": 1.00 },
+      "DET": { "min": 0.50, "max": 0.85 },
+      "HVF": { "mag": { "min": 0.40, "max": 0.80 } },
+      "LSG": { "min": 0.55, "max": 0.90 },
+      "SHCI": { "min": 0.55, "max": 0.90 }
+    },
+    "liminal": {
+      "CIC": { "min": 0.50, "max": 0.80 },
+      "MDI": { "min": 0.50, "max": 0.95 },
+      "AOS": { "min": 0.60, "max": 1.00 },
+      "RRM": { "min": 0.30, "max": 0.80 },
+      "FCF": { "min": 0.45, "max": 0.85 },
+      "SPR": { "min": 0.55, "max": 0.95 },
+      "RWF": { "min": 0.60, "max": 1.00 },
+      "DET": { "min": 0.55, "max": 0.90 },
+      "HVF": { "mag": { "min": 0.45, "max": 0.90 } },
+      "LSG": { "min": 0.75, "max": 1.00 },
+      "SHCI": { "min": 0.60, "max": 0.95 }
+    },
+    "dead_end": {
+      "CIC": { "min": 0.45, "max": 0.75 },
+      "MDI": { "min": 0.40, "max": 0.85 },
+      "AOS": { "min": 0.50, "max": 0.90 },
+      "RRM": { "min": 0.25, "max": 0.70 },
+      "FCF": { "min": 0.35, "max": 0.80 },
+      "SPR": { "min": 0.45, "max": 0.85 },
+      "RWF": { "min": 0.60, "max": 1.00 },
+      "DET": { "min": 0.45, "max": 0.85 },
+      "HVF": { "mag": { "min": 0.35, "max": 0.80 } },
+      "LSG": { "min": 0.55, "max": 0.90 },
+      "SHCI": { "min": 0.50, "max": 0.90 }
+    },
+    "safe_room": {
+      "CIC": { "min": 0.30, "max": 0.55 },
+      "MDI": { "min": 0.30, "max": 0.65 },
+      "AOS": { "min": 0.25, "max": 0.55 },
+      "RRM": { "min": 0.10, "max": 0.40 },
+      "FCF": { "min": 0.30, "max": 0.70 },
+      "SPR": { "min": 0.30, "max": 0.60 },
+      "RWF": { "min": 0.70, "max": 1.00 },
+      "DET": { "min": 0.10, "max": 0.45 },
+      "HVF": { "mag": { "min": 0.10, "max": 0.40 } },
+      "LSG": { "min": 0.40, "max": 0.70 },
+      "SHCI": { "min": 0.40, "max": 0.75 }
+    }
+  },
+  "metricTargets": {
+    "UEC": { "min": 0.55, "max": 0.80 },
+    "EMD": { "min": 0.50, "max": 0.80 },
+    "STCI": { "min": 0.45, "max": 0.75 },
+    "CDL": { "min": 0.50, "max": 0.80 },
+    "ARR": { "min": 0.70, "max": 1.00 }
+  },
+  "nodeHints": {
+    "lobby_central": {
+      "tileClass": "hub",
+      "preferredEvents": ["zombie_grapple_floor", "ambient_chandelier_sway"],
+      "metricBias": { "UEC": 0.05, "EMD": 0.05 }
+    },
+    "west_corridor_threshold": {
+      "tileClass": "liminal",
+      "preferredEvents": ["camera_angle_shift", "distant_footsteps"],
+      "metricBias": { "UEC": 0.10, "CDL": 0.05 }
+    }
+  },
+  "prismMeta": {
+    "author": "HorrorPlace-Compiler",
+    "createdAt": "2026-04-20T21:30:00Z",
+    "notes": "Initial skeleton for RE1-style mansion lobby dungeon run."
+  },
+  "deadLedgerRef": ""
+}
