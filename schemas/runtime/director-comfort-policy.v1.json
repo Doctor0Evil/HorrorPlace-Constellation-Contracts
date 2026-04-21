@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/director-comfort-policy.v1.json",
+  "title": "DirectorComfortPolicy",
+  "description": "Policy describing how a director persona manages horror intensity, comfort, and safety strategies.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "phase",
+    "directorKind",
+    "appliesToTiers",
+    "maxDetPerSession",
+    "maxDetPerBeat",
+    "cooldownRatio",
+    "cdlComfortBand",
+    "arrComfortBand",
+    "strategyThresholds",
+    "prismMeta",
+    "deadLedgerRef"
+  ],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this comfort policy instance."
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "const": "director-comfort-policy.v1",
+      "description": "Schema version identifier."
+    },
+
+    "objectKind": {
+      "type": "string",
+      "const": "directorComfortPolicy",
+      "description": "Object kind for routing and governance."
+    },
+
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground"],
+      "description": "Repository tier where this policy lives."
+    },
+
+    "phase": {
+      "type": "integer",
+      "enum": [2],
+      "description": "Lifecycle phase; Director comfort policies are Phase 2 bundle artifacts."
+    },
+
+    "directorKind": {
+      "type": "string",
+      "description": "Director persona kind this policy applies to (e.g., coldOverseer, ritualStatistician)."
+    },
+
+    "appliesToTiers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground"]
+      },
+      "minItems": 1,
+      "description": "Tiers in which this policy may be applied at runtime."
+    },
+
+    "maxDetPerSession": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Maximum cumulative DET (Dread Exposure Threshold) allowed across a single session for this director."
+    },
+
+    "maxDetPerBeat": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Maximum incremental DET allowed for any single beat or turn."
+    },
+
+    "cooldownRatio": {
+      "type": "object",
+      "description": "Required ratio of cooldown beats to intense beats.",
+      "additionalProperties": false,
+      "required": ["minCooldownBeats", "perIntenseBeat"],
+      "properties": {
+        "minCooldownBeats": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum number of cooldown beats required."
+        },
+        "perIntenseBeat": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of intense beats this ratio applies to."
+        }
+      }
+    },
+
+    "cdlComfortBand": {
+      "description": "Preferred comfort band for CDL (Cognitive Dissonance Load) over a session.",
+      "allOf": [{ "$ref": "#/$defs/range01" }]
+    },
+
+    "arrComfortBand": {
+      "description": "Preferred comfort band for ARR (Ambiguous Resolution Ratio) over a session.",
+      "allOf": [{ "$ref": "#/$defs/range01" }]
+    },
+
+    "strategyThresholds": {
+      "type": "object",
+      "description": "Thresholds at which the director must choose soften, imply, downshift, or refuse.",
+      "additionalProperties": false,
+
+      "required": [
+        "soften",
+        "imply",
+        "downshift",
+        "refuse"
+      ],
+
+      "properties": {
+        "soften": {
+          "type": "object",
+          "description": "Conditions that trigger a 'soften' strategy.",
+          "additionalProperties": false,
+          "properties": {
+            "detDeltaCeiling": {
+              "type": "number",
+              "minimum": 0.0,
+              "description": "Max allowed DET delta where soften can still be used."
+            },
+            "cdlUpper": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "CDL upper bound at which soften should start being preferred."
+            }
+          }
+        },
+
+        "imply": {
+          "type": "object",
+          "description": "Conditions for using implication-only output.",
+          "additionalProperties": false,
+          "properties": {
+            "nearDetSoftCap": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Fraction of maxDetPerSession considered 'near' the soft cap."
+            },
+            "explicitnessCeiling": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Maximum explicitness level allowed before imply is required."
+            }
+          }
+        },
+
+        "downshift": {
+          "type": "object",
+          "description": "Conditions that require a downshift to a less intense mode.",
+          "additionalProperties": false,
+          "properties": {
+            "detHardCapFraction": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Fraction of maxDetPerSession beyond which downshift is mandatory."
+            },
+            "cdlHardUpper": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "CDL upper bound beyond which downshift is mandatory."
+            }
+          }
+        },
+
+        "refuse": {
+          "type": "object",
+          "description": "Conditions that require outright refusal to depict content.",
+          "additionalProperties": false,
+          "properties": {
+            "hardBoundaryViolated": {
+              "type": "boolean",
+              "description": "If true, any boundary hard-stop requires refuse."
+            },
+            "detAbsoluteCap": {
+              "type": "number",
+              "minimum": 0.0,
+              "description": "Absolute DET value beyond which no further horror is allowed in this session."
+            }
+          }
+        }
+      }
+    },
+
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard metadata block for authorship, timestamps, and governance.",
+      "additionalProperties": true
+    },
+
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Reference to a Dead-Ledger attestation for this policy."
+    }
+  },
+
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
