@@ -1,0 +1,5 @@
+Component,Key Rust Functions,Primary Purpose,Interface(s)
+Capability Catalog,"ChatDirector::catalog","Provides a centralized, machine-readable map of all capabilities, rules, and policies in the constellation.","CLI (describe), Library API"
+Manifest Index,"ManifestIndex::explain_route; ManifestIndex::route","Dynamically determines the correct repository and path for an artifact based on its objectKind and tier.","Library API"
+Spine Index,"SpineIndex::describe_object_kind; SpineIndex::safe_defaults","Provides deep schema-level information, including field requirements, invariants, and safe default metric values.","Library API"
+Configuration & Environment,"Config::from_env; ChatDirector::environment_summary","Loads configuration, detects the constellation root, and summarizes the current execution environment.","Library API, CLI"
