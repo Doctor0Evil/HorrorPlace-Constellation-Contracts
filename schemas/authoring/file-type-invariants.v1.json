@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/authoring/file-type-invariants.v1.json",
+  "title": "File Type Invariants v1",
+  "description": "Canonical invariants for file kinds, naming patterns, and versioning used by AI-Chat and coding tools.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "fileKinds": {
+      "type": "array",
+      "description": "Declared file kinds that may exist in the VM-Constellation.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "schema-json",
+          "contract-json",
+          "registry-ndjson",
+          "runtime-lua",
+          "doc-markdown",
+          "ci-config",
+          "telemetry-schema",
+          "spec-markdown"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+
+    "namingPatterns": {
+      "type": "array",
+      "description": "Stable filename patterns keyed by fileKind and objectKind.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [ "fileKind", "objectKind", "pattern", "extension" ],
+        "properties": {
+          "fileKind": {
+            "type": "string",
+            "description": "One of the declared fileKinds."
+          },
+          "objectKind": {
+            "type": "string",
+            "description": "Canonical objectKind for this file (e.g., dungeonRunContract, directorPersonaContract).",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Filename pattern using a constrained token set, e.g. 'schemas/contracts/{objectId}.v1.json'.",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "extension": {
+            "type": "string",
+            "description": "Required file extension for this pattern.",
+            "enum": [ ".json", ".ndjson", ".lua", ".md", ".yml", ".yaml" ]
+          }
+        }
+      }
+    },
+
+    "authoringConstraints": {
+      "type": "object",
+      "description": "Constraints applied to AI authoring and coding tools when generating or modifying files.",
+      "additionalProperties": false,
+      "required": [ "requireExplicitTarget", "forbidAdHocRename", "requireStableFileId" ],
+      "properties": {
+        "requireExplicitTarget": {
+          "type": "boolean",
+          "description": "If true, all AI authoring sessions must declare fileKind and targetPath up-front."
+        },
+        "forbidAdHocRename": {
+          "type": "boolean",
+          "description": "If true, tools may not change filenames once created without an explicit supersedes record."
+        },
+        "requireStableFileId": {
+          "type": "boolean",
+          "description": "If true, each file must carry a stable fileId in its metadata that does not change across edits."
+        }
+      }
+    }
+  },
+
+  "required": [ "fileKinds", "namingPatterns", "authoringConstraints" ]
+}
