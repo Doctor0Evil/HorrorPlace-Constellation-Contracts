@@ -1,47 +1,89 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/runtime/experience-contract.v1.json",
-  "title": "Experience Contract v1",
-  "description": "Preset profile bundling metric bands, invariant envelopes, director persona, and difficulty for CHATDIRECTOR-advertised experience modes.",
+  "title": "ExperienceContract v1",
+  "description": "Contract describing a horror experience profile: target curves for invariants and entertainment metrics, tier and consent expectations, director persona defaults, and cooldown / ambiguity behavior. Experience contracts are envelopes that only narrow global and tier caps.",
   "type": "object",
   "additionalProperties": false,
+
   "required": [
     "id",
     "schemaRef",
     "objectKind",
     "tier",
+    "phase",
+    "experienceKind",
     "descriptor",
-    "metricTargets",
+    "aiChatHorrorProfileId",
+    "consentTierPolicy",
+    "styleEnvelope",
     "invariantEnvelope",
+    "metricEnvelope",
     "directorPersonaRef",
-    "difficultyDefaults"
+    "difficultyDefaults",
+    "cooldownEnvelope",
+    "ambiguityEnvelope",
+    "timingEnvelope",
+    "prismMeta"
   ],
+
   "properties": {
     "id": {
       "type": "string",
       "description": "Stable experience preset identifier.",
       "pattern": "^exp-[a-z0-9\\-]{3,64}$"
     },
+
     "schemaRef": {
       "type": "string",
       "const": "experience-contract.v1",
       "description": "Schema version identifier."
     },
+
     "objectKind": {
       "type": "string",
       "const": "experienceContract",
-      "description": "Object kind for CHATDIRECTOR routing."
+      "description": "Object kind for CHATDIRECTOR routing and CI validators."
     },
+
     "tier": {
       "type": "string",
-      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault"],
-      "description": "Entitlement tier for this experience preset."
+      "description": "Effective entitlement tier for this experience.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Mature",
+        "Tier3Research"
+      ]
     },
+
+    "phase": {
+      "type": "integer",
+      "description": "CHATDIRECTOR lifecycle phase where this object is valid (e.g., 2 = Bundles).",
+      "enum": [2]
+    },
+
+    "experienceKind": {
+      "type": "string",
+      "description": "High-level experience profile identifier used by H.Run and AI-Chat.",
+      "enum": [
+        "SlowBurnDread",
+        "MysteryOverTerror",
+        "ShortSharpScare",
+        "FolkloreInvestigation",
+        "MicrorunCasual",
+        "Custom"
+      ]
+    },
+
     "descriptor": {
       "type": "object",
       "description": "Human-readable metadata for UI presentation.",
       "additionalProperties": false,
-      "required": ["name", "shortDescription", "tags"],
+      "required": [
+        "name",
+        "shortDescription",
+        "tags"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -69,38 +111,206 @@
         }
       }
     },
-    "metricTargets": {
+
+    "aiChatHorrorProfileId": {
+      "type": "string",
+      "description": "AI-Chat horror profile identifier that this contract is compatible with."
+    },
+
+    "consentTierPolicy": {
       "type": "object",
-      "description": "Target entertainment metric bands for this experience.",
+      "description": "Consent and age-tier expectations for this experience.",
       "additionalProperties": false,
-      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "required": [
+        "minConsentTier",
+        "maxConsentTier",
+        "minAgeTier",
+        "maxAgeTier"
+      ],
       "properties": {
-        "UEC": { "$ref": "#/$defs/band" },
-        "EMD": { "$ref": "#/$defs/band" },
-        "STCI": { "$ref": "#/$defs/band" },
-        "CDL": { "$ref": "#/$defs/band" },
-        "ARR": { "$ref": "#/$defs/band" }
+        "minConsentTier": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "mature",
+            "research"
+          ]
+        },
+        "maxConsentTier": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "mature",
+            "research"
+          ]
+        },
+        "minAgeTier": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "16plus",
+            "18plus",
+            "research"
+          ]
+        },
+        "maxAgeTier": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "16plus",
+            "18plus",
+            "research"
+          ]
+        }
       }
     },
+
+    "styleEnvelope": {
+      "type": "object",
+      "description": "Declarative style and presentation settings for this experience.",
+      "additionalProperties": false,
+      "required": [
+        "styleId",
+        "allowedEvidenceKinds",
+        "forbiddenDepictionKinds",
+        "safetyIntent"
+      ],
+      "properties": {
+        "styleId": {
+          "type": "string",
+          "description": "Style or mood profile identifier (aligns with template/style registries)."
+        },
+        "allowedEvidenceKinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "sensoryImpression",
+              "archivalFragment",
+              "dialogueAllusion",
+              "environmentalDetail",
+              "symbolicImagery"
+            ]
+          },
+          "minItems": 0
+        },
+        "forbiddenDepictionKinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "explicitGore",
+              "sexualAct",
+              "sexualViolence",
+              "realWorldHate",
+              "selfHarmDetail"
+            ]
+          },
+          "minItems": 0
+        },
+        "safetyIntent": {
+          "type": "object",
+          "description": "Explicit safety intentions for this experience; must agree with content boundary rules.",
+          "additionalProperties": false,
+          "properties": {
+            "maxCIC": { "type": "number" },
+            "maxDET": { "type": "number" },
+            "maxGXI": { "type": "number" },
+            "allowImpliedBodyHarm": { "type": "boolean" },
+            "allowExplicitGore": { "type": "boolean" },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    },
+
     "invariantEnvelope": {
       "type": "object",
-      "description": "Typical invariant ranges this experience operates within.",
+      "description": "Target and allowed bands for invariants; must be subsets of global and tier caps.",
       "additionalProperties": false,
       "properties": {
         "CIC": { "$ref": "#/$defs/band" },
+        "MDI": { "$ref": "#/$defs/band" },
         "AOS": { "$ref": "#/$defs/band" },
+        "RRM": { "$ref": "#/$defs/band" },
+        "FCF": { "$ref": "#/$defs/band" },
+        "SPR": { "$ref": "#/$defs/band" },
+        "RWF": { "$ref": "#/$defs/band" },
         "DET": { "$ref": "#/$defs/detBand" },
+        "HVF": { "$ref": "#/$defs/band" },
+        "LSG": { "$ref": "#/$defs/band" },
         "SHCI": { "$ref": "#/$defs/band" }
       }
     },
+
+    "metricEnvelope": {
+      "type": "object",
+      "description": "Target bands and optional curve hints for entertainment metrics.",
+      "additionalProperties": false,
+      "required": [
+        "metricTargets"
+      ],
+      "properties": {
+        "metricTargets": {
+          "type": "object",
+          "description": "Per-experience metric bands keyed by metric abbreviation.",
+          "additionalProperties": false,
+          "required": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "properties": {
+            "UEC": { "$ref": "#/$defs/band" },
+            "EMD": { "$ref": "#/$defs/band" },
+            "STCI": { "$ref": "#/$defs/band" },
+            "CDL": { "$ref": "#/$defs/band" },
+            "ARR": { "$ref": "#/$defs/band" }
+          }
+        },
+
+        "curveHints": {
+          "type": "object",
+          "description": "Optional hints for intended per-stage curves over the run.",
+          "additionalProperties": false,
+          "properties": {
+            "stages": {
+              "type": "array",
+              "description": "Named stages such as Outer, Locus, Rupture, Fallout, Epilogue.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Outer",
+                  "Locus",
+                  "Rupture",
+                  "Fallout",
+                  "Epilogue"
+                ]
+              }
+            },
+            "perStageBands": {
+              "type": "object",
+              "description": "Optional per-stage metric bands; keys are metric abbreviations, values are band objects.",
+              "additionalProperties": {
+                "$ref": "#/$defs/band"
+              }
+            }
+          }
+        }
+      }
+    },
+
     "directorPersonaRef": {
       "type": "string",
-      "description": "Reference to a directorPersonaContract whose metricTargets sit inside this experience's bands.",
+      "description": "Reference to a directorPersonaContract whose invariantBands and metricTargets must sit inside this experience's envelopes.",
       "pattern": "^dir-[a-z0-9\\-]{3,64}$"
     },
+
     "difficultyDefaults": {
       "type": "object",
-      "description": "Default difficulty bands per mode (Novice/Standard/Expert).",
+      "description": "Default per-difficulty metric bands for this experience (e.g., Novice, Standard, Expert).",
       "additionalProperties": false,
       "properties": {
         "Novice": { "$ref": "#/$defs/difficultyBands" },
@@ -108,6 +318,7 @@
         "Expert": { "$ref": "#/$defs/difficultyBands" }
       }
     },
+
     "personaSkillModifiers": {
       "type": "object",
       "description": "Optional per-skill metric weights for persona adaptation.",
@@ -118,63 +329,192 @@
         "worldviewRigidity": { "$ref": "#/$defs/skillWeights" }
       }
     },
-    "cooldownPolicy": {
+
+    "cooldownEnvelope": {
       "type": "object",
-      "description": "Required cooldown windows for this experience.",
+      "description": "Cooldown and DET exposure constraints for this experience.",
       "additionalProperties": false,
+      "required": [
+        "maxDetPerSession",
+        "requiredCooldownRatio"
+      ],
       "properties": {
-        "minCooldownWindows": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 1
+        "maxDetPerSession": {
+          "type": "number",
+          "description": "Maximum DET exposure allowed in a session under this experience."
         },
-        "cooldownDetBand": { "$ref": "#/$defs/detBand" },
-        "cooldownCdlBand": { "$ref": "#/$defs/band" }
+        "requiredCooldownRatio": {
+          "type": "object",
+          "description": "Required ratio of low-DET beats or minutes to high-DET beats or minutes.",
+          "additionalProperties": false,
+          "required": [
+            "lowDetMinutesPerHighDetMinute"
+          ],
+          "properties": {
+            "lowDetMinutesPerHighDetMinute": {
+              "type": "number",
+              "minimum": 0.0
+            }
+          }
+        },
+        "sanctuaryPolicyId": {
+          "type": "string",
+          "description": "Optional reference to a sanctuary / low-DET segment policy."
+        }
       }
     },
+
+    "ambiguityEnvelope": {
+      "type": "object",
+      "description": "ARR and closure behavior for this experience.",
+      "additionalProperties": false,
+      "required": [
+        "arrBand",
+        "closurePolicy"
+      ],
+      "properties": {
+        "arrBand": {
+          "$ref": "#/$defs/band",
+          "description": "Allowed ARR band for this experience."
+        },
+        "closurePolicy": {
+          "type": "object",
+          "description": "Constraints on late-stage ambiguity and closure.",
+          "additionalProperties": false,
+          "properties": {
+            "requireArrDecreaseInFinalStage": {
+              "type": "boolean",
+              "description": "If true, ARR must decrease or remain flat in the final stage."
+            },
+            "maxArrAtEnd": {
+              "type": "number",
+              "description": "Maximum ARR allowed at the last beat."
+            },
+            "allowHighAmbiguityEnding": {
+              "type": "boolean",
+              "description": "If true, this experience explicitly allows a high-ARR ending."
+            }
+          }
+        }
+      }
+    },
+
+    "timingEnvelope": {
+      "type": "object",
+      "description": "Timing index caps (e.g., CSI) for this experience.",
+      "additionalProperties": false,
+      "required": [
+        "timingSignals"
+      ],
+      "properties": {
+        "timingSignals": {
+          "type": "object",
+          "description": "Bands for derived timing indices such as CSI.",
+          "additionalProperties": {
+            "$ref": "#/$defs/band"
+          },
+          "properties": {
+            "CSI": {
+              "$ref": "#/$defs/band",
+              "description": "Cooldown saturation index band for this experience."
+            }
+          }
+        },
+        "maxTimingSlopePerMinute": {
+          "type": "number",
+          "description": "Maximum allowed change in timing indices per minute."
+        }
+      }
+    },
+
     "prismMeta": {
       "type": "object",
       "description": "Standard prism metadata block.",
       "additionalProperties": true
     }
   },
+
   "$defs": {
     "band": {
       "type": "object",
-      "required": ["min", "max"],
+      "required": [
+        "min",
+        "max"
+      ],
       "additionalProperties": false,
       "properties": {
-        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
       }
     },
+
     "detBand": {
       "type": "object",
-      "required": ["min", "max"],
+      "required": [
+        "min",
+        "max"
+      ],
       "additionalProperties": false,
       "properties": {
-        "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
-        "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
       }
     },
+
     "difficultyBands": {
       "type": "object",
+      "description": "Per-difficulty metric bands; any missing metric falls back to metricEnvelope.metricTargets.",
       "additionalProperties": false,
       "properties": {
         "UEC": { "$ref": "#/$defs/band" },
         "EMD": { "$ref": "#/$defs/band" },
+        "STCI": { "$ref": "#/$defs/band" },
         "CDL": { "$ref": "#/$defs/band" },
         "ARR": { "$ref": "#/$defs/band" }
       }
     },
+
     "skillWeights": {
       "type": "object",
+      "description": "Per-metric weights for persona skill adaptation.",
       "additionalProperties": false,
       "properties": {
-        "UECWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
-        "EMDWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
-        "CDLWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
-        "ARRWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 }
+        "UECWeight": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0
+        },
+        "EMDWeight": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0
+        },
+        "CDLWeight": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0
+        },
+        "ARRWeight": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2.0
+        }
       }
     }
   }
