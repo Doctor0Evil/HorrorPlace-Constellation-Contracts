@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/lua-sandbox-policy.v1.json",
+  "title": "Lua Sandbox Policy v1",
+  "description": "Policy definition for Lua module imports and stdlib usage across Horror$Place constellation repos. Used by CI linters to enforce approved H.* namespaces and forbid unsafe globals.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "allowedRequires",
+    "forbiddenGlobals",
+    "forbiddenStdlib"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "description": "Stable identifier for this sandbox policy.",
+      "pattern": "^lua-sandbox-[a-z0-9\\-]{3,64}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "lua-sandbox-policy.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "luaSandboxPolicy",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault"],
+      "description": "Tier classification for policy applicability."
+    },
+    "allowedRequires": {
+      "type": "array",
+      "description": "List of module paths that may be required() in Lua files.",
+      "items": {
+        "type": "string",
+        "pattern": "^(H\\.[A-Z][a-zA-Z]+|engine\\.[a-z]+|policy\\.[A-Z][a-zA-Z]+)$"
+      },
+      "examples": [
+        "H.Consent",
+        "H.Budget",
+        "H.Safety",
+        "H.Director",
+        "H.Selector",
+        "H.Node",
+        "H.Run",
+        "H.Metrics",
+        "H.Invariants",
+        "H.Dungeon",
+        "H.ImageHelper",
+        "H.Audio",
+        "Policy.DeadLedger",
+        "engine.adapter"
+      ]
+    },
+    "forbiddenGlobals": {
+      "type": "array",
+      "description": "Global identifiers that must never be referenced in Lua code.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "io",
+          "os.execute",
+          "os.remove",
+          "os.rename",
+          "package.loadlib",
+          "debug",
+          "coroutine",
+          "jit"
+        ]
+      }
+    },
+    "forbiddenStdlib": {
+      "type": "array",
+      "description": "Standard library functions that are forbidden even if accessed via _G.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "load",
+          "loadstring",
+          "getfenv",
+          "setfenv",
+          "newproxy"
+        ]
+      }
+    },
+    "repoOverrides": {
+      "type": "object",
+      "description": "Optional per-repo adjustments to allowedRequires.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "addRequires": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "removeRequires": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "enforcementLevel": {
+      "type": "string",
+      "enum": ["warn", "error"],
+      "default": "error",
+      "description": "Whether violations should fail CI or just warn."
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  }
+}
