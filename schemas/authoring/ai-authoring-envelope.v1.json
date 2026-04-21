@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/authoring/ai-authoring-envelope.v1.json",
+  "title": "AI Authoring Envelope v1",
+  "description": "Envelope wrapping an AI authoring session contract plus concrete file diffs for CI and automated review.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this authoring envelope."
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "description": "Schema version identifier.",
+      "const": "ai-authoring-envelope.v1"
+    },
+
+    "objectKind": {
+      "type": "string",
+      "description": "Object kind for routing.",
+      "const": "aiAuthoringEnvelope"
+    },
+
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp for this envelope."
+    },
+
+    "session": {
+      "type": "object",
+      "description": "Inlined AI authoring session contract describing intent and allowed targets.",
+      "$ref": "https://horror.place/schemas/authoring/ai-authoring-session-contract.v1.json"
+    },
+
+    "files": {
+      "type": "array",
+      "description": "Concrete file diffs proposed in this envelope.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fileId",
+          "fileKind",
+          "objectKind",
+          "targetPath",
+          "operation",
+          "content"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "Logical identifier for this file within the constellation (stable across edits)."
+          },
+          "fileKind": {
+            "type": "string",
+            "description": "Declared file kind; must match one of the session.allowedFileKinds."
+          },
+          "objectKind": {
+            "type": "string",
+            "description": "Object kind hosted by this file (e.g., 'dungeonRunContract', 'surpriseMechanicContract')."
+          },
+          "targetPath": {
+            "type": "string",
+            "description": "Repo-relative path this diff applies to."
+          },
+          "operation": {
+            "type": "string",
+            "description": "File-level operation.",
+            "enum": [ "create", "update", "append" ]
+          },
+          "previousSha256": {
+            "type": "string",
+            "description": "Hex-encoded SHA-256 of the previous file content for updates; empty for creates.",
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          },
+          "contentSha256": {
+            "type": "string",
+            "description": "Hex-encoded SHA-256 of the proposed file content.",
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          },
+          "content": {
+            "type": "string",
+            "description": "Full proposed file body as UTF-8 text."
+          },
+          "linesAdded": {
+            "type": "integer",
+            "description": "Approximate number of lines added.",
+            "minimum": 0
+          },
+          "linesRemoved": {
+            "type": "integer",
+            "description": "Approximate number of lines removed.",
+            "minimum": 0
+          }
+        }
+      }
+    },
+
+    "referencedIds": {
+      "type": "array",
+      "description": "Optional list of contract IDs, region IDs, or other objects this envelope depends on.",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional reference to a Dead-Ledger attestation for this envelope, if required by tier."
+    }
+  },
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "createdAt",
+    "session",
+    "files"
+  ]
+}
