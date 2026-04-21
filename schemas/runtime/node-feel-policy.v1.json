@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/node-feel-policy.v1.json",
+  "title": "NodeFeelPolicy",
+  "description": "Policy mapping invariant and metric ranges to node feel codes for H.Node.describe.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "schemaRef", "objectKind", "rules", "prismMeta"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this feel policy, e.g. node-feel-policy.default.v1."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "node-feel-policy.v1"
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "nodeFeelPolicy"
+    },
+    "rules": {
+      "type": "array",
+      "description": "Ordered rules; first match wins.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["feelCode", "conditions"],
+        "properties": {
+          "feelCode": {
+            "type": "string",
+            "description": "Machine-readable feel classification.",
+            "enum": [
+              "heavyImprint",
+              "quietLiminal",
+              "threatBuildup",
+              "deadCorridor",
+              "safeHub",
+              "ambiguous"
+            ]
+          },
+          "conditions": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "tileClass": {
+                "type": "string",
+                "description": "Optional tile-class filter.",
+                "enum": [
+                  "spawn",
+                  "liminal",
+                  "hub",
+                  "deadend",
+                  "boss",
+                  "saferoom"
+                ]
+              },
+              "mapStyle": {
+                "type": "string",
+                "description": "Optional map style filter.",
+                "enum": [
+                  "WIREAUTOMAP",
+                  "ISOCANVAS",
+                  "FLATOVERLAY",
+                  "COMPASS3D",
+                  "NODEGRID"
+                ]
+              },
+              "invariants": {
+                "type": "object",
+                "description": "Optional invariant constraints for this feel.",
+                "additionalProperties": false,
+                "properties": {
+                  "SHCI": { "$ref": "#/$defs/range01" },
+                  "LSG": { "$ref": "#/$defs/range01" },
+                  "CIC": { "$ref": "#/$defs/range01" },
+                  "DET": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["min", "max"],
+                    "properties": {
+                      "min": { "type": "number" },
+                      "max": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "metrics": {
+                "type": "object",
+                "description": "Optional entertainment metric constraints.",
+                "additionalProperties": false,
+                "properties": {
+                  "UEC": { "$ref": "#/$defs/range01" },
+                  "EMD": { "$ref": "#/$defs/range01" },
+                  "STCI": { "$ref": "#/$defs/range01" },
+                  "CDL": { "$ref": "#/$defs/range01" },
+                  "ARR": { "$ref": "#/$defs/range01" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "defaultFeelCode": {
+      "type": "string",
+      "description": "Fallback feelCode when no rule matches.",
+      "enum": [
+        "ambiguous",
+        "quietLiminal",
+        "deadCorridor"
+      ]
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prismMeta metadata block.",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}
