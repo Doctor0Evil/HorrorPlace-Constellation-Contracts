@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/director-comfort-policy.v1.json",
+  "title": "Director Comfort Policy v1",
+  "description": "Comfort and safety policy for director personas, defining per-session DET limits, cooldown ratios, and CDL spans, aligned with consent and horror intensity budget modules.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "policyId",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "directorKind",
+    "maxDetPerSession",
+    "requiredCooldownRatio",
+    "allowedCdlSpan"
+  ],
+
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "description": "Stable identifier for this comfort policy.",
+      "pattern": "dcp-[a-z0-9\\-]{3,64}"
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "description": "Schema version identifier for validator binding.",
+      "const": "director-comfort-policy.v1"
+    },
+
+    "objectKind": {
+      "type": "string",
+      "description": "Object kind for CHATDIRECTOR routing and manifest validation.",
+      "const": "directorComfortPolicy"
+    },
+
+    "tier": {
+      "type": "string",
+      "description": "Tier in which this comfort policy is valid.",
+      "enum": ["standard", "mature", "research"]
+    },
+
+    "directorKind": {
+      "type": "string",
+      "description": "Director persona kind that this policy is intended for.",
+      "enum": [
+        "coldOverseer",
+        "ritualStatistician",
+        "silentArchivistDirector"
+      ]
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable notes about this comfort policy.",
+      "maxLength": 2048
+    },
+
+    "maxDetPerSession": {
+      "type": "number",
+      "description": "Maximum cumulative DET exposure permitted for a single session under this director, subject to consent caps.",
+      "minimum": 0.0,
+      "maximum": 10.0
+    },
+
+    "requiredCooldownRatio": {
+      "type": "object",
+      "description": "Minimum ratio of low-DET (sanctuary/ambient) time to high-DET events that the director must enforce.",
+      "additionalProperties": false,
+      "required": ["lowDetMinutes", "highDetMinutes"],
+      "properties": {
+        "lowDetMinutes": {
+          "type": "number",
+          "description": "Required minutes (or normalized units) of low-DET segments.",
+          "minimum": 0.0
+        },
+        "highDetMinutes": {
+          "type": "number",
+          "description": "Minutes (or normalized units) of high-DET segments that the low-DET value must cover.",
+          "minimum": 0.0
+        }
+      }
+    },
+
+    "allowedCdlSpan": {
+      "type": "object",
+      "description": "Allowed CDL band for this director persona, to avoid pure noise or pure comfort.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum CDL allowed for this director, respecting XMIT floors.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum CDL allowed for this director.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  },
+
+  "allOf": [
+    {
+      "description": "Tier-aware constraints for DET caps.",
+      "if": {
+        "properties": {
+          "tier": { "const": "standard" }
+        }
+      },
+      "then": {
+        "properties": {
+          "maxDetPerSession": {
+            "maximum": 6.0
+          }
+        }
+      }
+    },
+    {
+      "description": "Ensure cooldown ratio has a meaningful denominator when non-zero.",
+      "if": {
+        "properties": {
+          "requiredCooldownRatio": {
+            "properties": {
+              "highDetMinutes": {
+                "minimum": 0.0
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "requiredCooldownRatio": {
+            "properties": {
+              "highDetMinutes": {
+                "not": {
+                  "const": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
