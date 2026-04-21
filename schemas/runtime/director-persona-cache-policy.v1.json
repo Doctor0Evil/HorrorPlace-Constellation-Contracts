@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/director-persona-cache-policy.v1.json",
+  "title": "Director Persona Cache Policy v1",
+  "description": "Policy configuration for H.Director persona cache behavior: TTL, eviction, and telemetry thresholds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["policyId", "schemaRef", "objectKind", "ttlSeconds", "maxEntries"],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "pattern": "^dpcp-[a-z0-9\\-]{3,64}$",
+      "description": "Stable identifier for this cache policy."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "director-persona-cache-policy.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "directorPersonaCachePolicy",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "ttlSeconds": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 3600,
+      "default": 600,
+      "description": "Maximum age of a cache entry before forced eviction."
+    },
+    "maxEntries": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "default": 100,
+      "description": "Maximum number of session entries retained in memory."
+    },
+    "telemetrySampleRate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "default": 1.0,
+      "description": "Fraction of cache events to log (1.0 = all, 0.1 = 10%)."
+    },
+    "revisionStampPolicy": {
+      "type": "object",
+      "description": "Rules for tracking and comparing revision stamps.",
+      "additionalProperties": false,
+      "required": ["consentVersionField", "budgetVersionField"],
+      "properties": {
+        "consentVersionField": {
+          "type": "string",
+          "const": "H.Consent.revision",
+          "description": "Canonical path to consent revision counter."
+        },
+        "budgetVersionField": {
+          "type": "string",
+          "const": "H.Budget.revision",
+          "description": "Canonical path to budget revision counter."
+        },
+        "personaVersionField": {
+          "type": "string",
+          "const": "personaContract.schemaRef",
+          "description": "Field used to detect persona contract updates."
+        }
+      }
+    },
+    "invalidationTriggers": {
+      "type": "array",
+      "description": "Events that must clear a cache entry.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "consent-session-invalidated",
+          "budget-session-terminated",
+          "director-unload-persona",
+          "schema-version-mismatch"
+        ]
+      },
+      "default": [
+        "consent-session-invalidated",
+        "budget-session-terminated"
+      ]
+    }
+  }
+}
