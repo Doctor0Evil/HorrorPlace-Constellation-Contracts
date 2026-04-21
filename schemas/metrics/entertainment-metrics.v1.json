@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/metrics/entertainment-metrics.v1.json",
+  "title": "Entertainment Metrics v1",
+  "description": "Canonical metric definitions for UEC, EMD, STCI, CDL, ARR and their band vocabulary.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "UEC": {
+      "type": "object",
+      "description": "Uncertainty Engagement Coefficient definition and global bounds.",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "EMD": {
+      "type": "object",
+      "description": "Evidential Mystery Density definition and global bounds.",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "STCI": {
+      "type": "object",
+      "description": "Safe-Threat Contrast Index definition and global bounds.",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "CDL": {
+      "type": "object",
+      "description": "Cognitive Dissonance Load definition and global bounds.",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "ARR": {
+      "type": "object",
+      "description": "Ambiguous Resolution Ratio definition and global bounds.",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+
+    "bands": {
+      "type": "object",
+      "description": "Canonical band vocabulary and default thresholds shared across repos.",
+      "additionalProperties": false,
+      "required": [ "labels", "defaults" ],
+      "properties": {
+        "labels": {
+          "type": "array",
+          "description": "Ordered band labels from lowest to highest intensity.",
+          "items": {
+            "type": "string",
+            "enum": [ "low", "medium", "high", "extreme" ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+
+        "defaults": {
+          "type": "object",
+          "description": "Default threshold cut points for mapping 0.0–1.0 values into bands.",
+          "additionalProperties": false,
+          "required": [ "low", "medium", "high" ],
+          "properties": {
+            "low": {
+              "type": "number",
+              "description": "Upper bound for the 'low' band in normalized space.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "medium": {
+              "type": "number",
+              "description": "Upper bound for the 'medium' band; must be >= low and <= 1.0.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "high": {
+              "type": "number",
+              "description": "Upper bound for the 'high' band; 'extreme' is anything above this.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "required": [ "UEC", "EMD", "STCI", "CDL", "ARR", "bands" ]
+}
