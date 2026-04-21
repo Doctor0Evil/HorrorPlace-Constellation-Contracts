@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/experience-contract.v1.json",
+  "title": "Experience Contract v1",
+  "description": "Preset profile bundling metric bands, invariant envelopes, director persona, and difficulty for CHATDIRECTOR-advertised experience modes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "descriptor",
+    "metricTargets",
+    "invariantEnvelope",
+    "directorPersonaRef",
+    "difficultyDefaults"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable experience preset identifier.",
+      "pattern": "^exp-[a-z0-9\\-]{3,64}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "experience-contract.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "experienceContract",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault"],
+      "description": "Entitlement tier for this experience preset."
+    },
+    "descriptor": {
+      "type": "object",
+      "description": "Human-readable metadata for UI presentation.",
+      "additionalProperties": false,
+      "required": ["name", "shortDescription", "tags"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "shortDescription": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 256
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "investigation-heavy",
+              "process-horror",
+              "slowburn",
+              "short-shock",
+              "liminal-focus",
+              "spectral-anchored"
+            ]
+          }
+        }
+      }
+    },
+    "metricTargets": {
+      "type": "object",
+      "description": "Target entertainment metric bands for this experience.",
+      "additionalProperties": false,
+      "required": ["UEC", "EMD", "STCI", "CDL", "ARR"],
+      "properties": {
+        "UEC": { "$ref": "#/$defs/band" },
+        "EMD": { "$ref": "#/$defs/band" },
+        "STCI": { "$ref": "#/$defs/band" },
+        "CDL": { "$ref": "#/$defs/band" },
+        "ARR": { "$ref": "#/$defs/band" }
+      }
+    },
+    "invariantEnvelope": {
+      "type": "object",
+      "description": "Typical invariant ranges this experience operates within.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "$ref": "#/$defs/band" },
+        "AOS": { "$ref": "#/$defs/band" },
+        "DET": { "$ref": "#/$defs/detBand" },
+        "SHCI": { "$ref": "#/$defs/band" }
+      }
+    },
+    "directorPersonaRef": {
+      "type": "string",
+      "description": "Reference to a directorPersonaContract whose metricTargets sit inside this experience's bands.",
+      "pattern": "^dir-[a-z0-9\\-]{3,64}$"
+    },
+    "difficultyDefaults": {
+      "type": "object",
+      "description": "Default difficulty bands per mode (Novice/Standard/Expert).",
+      "additionalProperties": false,
+      "properties": {
+        "Novice": { "$ref": "#/$defs/difficultyBands" },
+        "Standard": { "$ref": "#/$defs/difficultyBands" },
+        "Expert": { "$ref": "#/$defs/difficultyBands" }
+      }
+    },
+    "personaSkillModifiers": {
+      "type": "object",
+      "description": "Optional per-skill metric weights for persona adaptation.",
+      "additionalProperties": false,
+      "properties": {
+        "analysisSkill": { "$ref": "#/$defs/skillWeights" },
+        "composure": { "$ref": "#/$defs/skillWeights" },
+        "worldviewRigidity": { "$ref": "#/$defs/skillWeights" }
+      }
+    },
+    "cooldownPolicy": {
+      "type": "object",
+      "description": "Required cooldown windows for this experience.",
+      "additionalProperties": false,
+      "properties": {
+        "minCooldownWindows": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1
+        },
+        "cooldownDetBand": { "$ref": "#/$defs/detBand" },
+        "cooldownCdlBand": { "$ref": "#/$defs/band" }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "band": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "detBand": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+      }
+    },
+    "difficultyBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/$defs/band" },
+        "EMD": { "$ref": "#/$defs/band" },
+        "CDL": { "$ref": "#/$defs/band" },
+        "ARR": { "$ref": "#/$defs/band" }
+      }
+    },
+    "skillWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "UECWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
+        "EMDWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
+        "CDLWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
+        "ARRWeight": { "type": "number", "minimum": 0.5, "maximum": 2.0 }
+      }
+    }
+  }
+}
