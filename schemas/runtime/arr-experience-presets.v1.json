@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/arr-experience-presets.v1.json",
+  "title": "ARR Experience Presets v1",
+  "description": "Standardized ARR ceiling presets for experience contracts, with UI labels and metric target guidance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "presetId",
+    "schemaRef",
+    "objectKind",
+    "presets"
+  ],
+  "properties": {
+    "presetId": {
+      "type": "string",
+      "description": "Stable identifier for this preset collection.",
+      "pattern": "^arr-presets-[a-z0-9\\-]{3,64}$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "arr-experience-presets.v1",
+      "description": "Schema version identifier."
+    },
+    "objectKind": {
+      "type": "string",
+      "const": "arrExperiencePresets",
+      "description": "Object kind for CHATDIRECTOR routing."
+    },
+    "presets": {
+      "type": "array",
+      "description": "List of ARR presets with metric targets and UI labels.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "arrBand", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^arr-[a-z0-9\\-]{3,32}$"
+          },
+          "label": {
+            "type": "string",
+            "description": "User-facing label for UI selection.",
+            "enum": [
+              "Closed Case",
+              "Lingering Questions",
+              "Unresolved Haunt"
+            ]
+          },
+          "arrBand": {
+            "type": "object",
+            "description": "Target ARR band for this preset.",
+            "additionalProperties": false,
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            }
+          },
+          "metricGuidance": {
+            "type": "object",
+            "description": "Suggested bands for related metrics.",
+            "additionalProperties": false,
+            "properties": {
+              "EMD": { "$ref": "#/$defs/band" },
+              "CDL": { "$ref": "#/$defs/band" },
+              "UEC": { "$ref": "#/$defs/band" }
+            }
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 256,
+            "description": "Short explanation for designers and players."
+          },
+          "uiHint": {
+            "type": "string",
+            "description": "Optional blurb for session setup UI.",
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block.",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "band": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    }
+  }
+}
