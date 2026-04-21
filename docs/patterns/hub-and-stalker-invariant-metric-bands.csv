@@ -1,0 +1,5 @@
+Pattern ID,Archetype,Recommended Invariant Bands (Range: 0-10),Desired Metric Targets (Range: 0-1)
+pattern.hub.sanctuary-that-lies.v1,Hub / Sanctuary That Lies,"CIC: 4-7, MDI: 5-8, AOS: 7-9, RRM: 4-7, SHCI: 6-8, DET: 0.2-0.5, LSG: 7-9, HVF: 4-6","UEC: 0.6-0.9, EMD: 0.4-0.7, STCI: 0.7-1.0, CDL: 0.4-0.7, ARR: 0.6-0.8"
+pattern.stalker.threshold-breaker.v1,Stalker / Threshold Violator,"CIC: 6-8, AOS: 7-9, RRM: 4-7, LSG: 9-10, SHCI: 8-10, DET: 0.4-0.7","UEC: 0.6-0.9, EMD: 0.4-0.7, STCI: 0.8-1.0, CDL: 0.6-0.9, ARR: 0.6-0.9"
+pattern.corridor.cramped-kinetics.v1,Corridor / Claustrophobia,"CIC: 5-8, MDI: 2-5, AOS: 4-7, RRM: 7-9, LSG: 8-10, DET: 0.5-0.8, SHCI: 7-9","UEC: 0.4-0.7, EMD: 0.5-0.8, STCI: 0.4-0.6, CDL: 0.2-0.5, ARR: 0.4-0.7"
+pattern.process.industrial-indifference.v1,Process / Industrial Indifference,"CIC: 7-9, MDI: 4-7, AOS: 7-9, RRM: 8-10, SHCI: 7-9, DET: 0.5-0.8, HVF: 4-6","UEC: 0.4-0.7, EMD: 0.4-0.7, STCI: 0.4-0.6, CDL: 0.7-1.0, ARR: 0.6-0.9"
