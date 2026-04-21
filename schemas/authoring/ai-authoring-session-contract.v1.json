@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/authoring/ai-authoring-session-contract.v1.json",
+  "title": "AI Authoring Session Contract v1",
+  "description": "Contract describing a single AI authoring session, binding agent identity, target repo, and allowed file operations to invariant-governed file kinds and naming patterns.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this authoring session contract."
+    },
+
+    "schemaRef": {
+      "type": "string",
+      "description": "Schema version identifier.",
+      "const": "ai-authoring-session-contract.v1"
+    },
+
+    "objectKind": {
+      "type": "string",
+      "description": "Object kind for routing and analytics.",
+      "const": "aiAuthoringSessionContract"
+    },
+
+    "tier": {
+      "type": "string",
+      "description": "Entitlement tier for this authoring session.",
+      "enum": [ "Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground" ]
+    },
+
+    "agentProfileId": {
+      "type": "string",
+      "description": "Persona or tool profile ID (e.g., 'persona.archivist.v1', 'tool.schemaCopilot.v1')."
+    },
+
+    "targetRepo": {
+      "type": "string",
+      "description": "Repository this session is allowed to touch (e.g., 'HorrorPlace-Constellation-Contracts')."
+    },
+
+    "targetBranch": {
+      "type": "string",
+      "description": "Target branch for generated changes (e.g., 'feature/ai-seeded-contracts')."
+    },
+
+    "policyProfileId": {
+      "type": "string",
+      "description": "Optional authoring policy profile that constrains intensity, tiers, or invariants."
+    },
+
+    "fileTypeInvariantsRef": {
+      "type": "string",
+      "description": "Reference to the file-type invariants document governing this session (e.g., 'file-type-invariants.core.v1')."
+    },
+
+    "allowedOperations": {
+      "type": "array",
+      "description": "Allowed file-level operations for this session.",
+      "items": {
+        "type": "string",
+        "enum": [ "create", "update", "append", "none" ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+
+    "allowedFileKinds": {
+      "type": "array",
+      "description": "Subset of fileKinds from file-type-invariants that this session may create or modify.",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+
+    "maxFilesPerSession": {
+      "type": "integer",
+      "description": "Hard cap on files that may be created or modified in this session.",
+      "minimum": 0
+    },
+
+    "maxLinesPerFile": {
+      "type": "integer",
+      "description": "Soft cap on lines per generated file to avoid large, under-reviewed diffs.",
+      "minimum": 0
+    },
+
+    "targets": {
+      "type": "array",
+      "description": "Explicit file targets this session is allowed to generate or update, each bound to a fileKind, objectKind, and naming pattern key.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fileKind",
+          "objectKind",
+          "patternKey",
+          "targetPath",
+          "operation"
+        ],
+        "properties": {
+          "fileKind": {
+            "type": "string",
+            "description": "Declared file kind; must be one of the fileKinds defined in file-type invariants."
+          },
+          "objectKind": {
+            "type": "string",
+            "description": "Object kind this file will host (e.g., 'dungeonRunContract', 'surpriseMechanicContract')."
+          },
+          "patternKey": {
+            "type": "string",
+            "description": "Identifier or alias that maps to a namingPatterns entry in the file-type invariants document."
+          },
+          "targetPath": {
+            "type": "string",
+            "description": "Concrete repo-relative path the AI is allowed to touch (must unify with the resolved naming pattern)."
+          },
+          "operation": {
+            "type": "string",
+            "description": "Operation allowed on this target.",
+            "enum": [ "create", "update", "append" ]
+          },
+          "requiresExistingFile": {
+            "type": "boolean",
+            "description": "If true, the targetPath must already exist; used to block silent renames disguised as updates.",
+            "default": false
+          },
+          "requireStableFileId": {
+            "type": "boolean",
+            "description": "If true, the file must contain a stable fileId field that remains unchanged across edits.",
+            "default": true
+          }
+        }
+      }
+    },
+
+    "intensityConstraints": {
+      "type": "object",
+      "description": "Optional caps on horror intensity for authoring, to keep AI-authored content within safe bands.",
+      "additionalProperties": false,
+      "properties": {
+        "maxIntensityBand": {
+          "type": "string",
+          "description": "Maximum allowed intensity band for any contract touched in this session.",
+          "enum": [ "low", "medium", "high" ]
+        },
+        "forbidAdultBand": {
+          "type": "boolean",
+          "description": "If true, contracts or specs with 'adult' intensity are forbidden."
+        }
+      }
+    },
+
+    "invariantConstraints": {
+      "type": "object",
+      "description": "Optional invariant and metric caps to keep generated contracts inside policy envelopes.",
+      "additionalProperties": false,
+      "properties": {
+        "maxDET": {
+          "type": "number",
+          "description": "Maximum DET cap allowed in any generated or modified contract.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxCDL": {
+          "type": "number",
+          "description": "Maximum CDL band upper bound allowed in generated or modified contracts.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "minARR": {
+          "type": "number",
+          "description": "Minimum ARR band lower bound required for generated or modified contracts.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+
+    "sessionNotes": {
+      "type": "string",
+      "description": "Human-readable notes about the session’s intent and scope.",
+      "maxLength": 4000
+    }
+  },
+
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "agentProfileId",
+    "targetRepo",
+    "targetBranch",
+    "fileTypeInvariantsRef",
+    "allowedOperations",
+    "allowedFileKinds",
+    "maxFilesPerSession",
+    "targets"
+  ]
+}
