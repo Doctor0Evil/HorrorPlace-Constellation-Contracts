@@ -1,0 +1,22 @@
+name: Lua H Namespace Lint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.lua'
+      - 'repo-manifest.hpc.codebase-of-death.v1.json'
+
+jobs:
+  lint-h-namespaces:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua and deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4 lua-dkjson lua-filesystem
+
+      - name: Run H namespace linter
+        run: |
+          lua tools/lua/h_namespace_linter_cli.lua .
