@@ -1,0 +1,333 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": "2026-04-30T04:14:00Z",
+  "description": "Routing and sovereignty-hardening roadmap for HorrorPlace-Constellation-Contracts.",
+  "tasks": [
+    {
+      "id": "spine.schema.finalize",
+      "title": "Finalize hpc-routing-spine.schema.json",
+      "status": "in-progress",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "routing-spine",
+      "blocking": [],
+      "dependsOn": [],
+      "files": [
+        "schemas/hpc-routing-spine.schema.json"
+      ],
+      "summary": "Lock down the JSON Schema for the routing spine with objectKinds, routeEntry, mathConstraints, and docHints.",
+      "notes": "Ensure schema matches existing invariants/metrics vocab and includes tier/repo enums consistent with the constellation."
+    },
+    {
+      "id": "spine.instance.bootstrap",
+      "title": "Bootstrap hpc-routing-spine-v1.json instance",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "routing-spine",
+      "blocking": [],
+      "dependsOn": [
+        "spine.schema.finalize"
+      ],
+      "files": [
+        "schemas/hpc-routing-spine-v1.json"
+      ],
+      "summary": "Populate the routing spine instance with routes for moodContract, eventContract, regionContractCard, seedContractCard, and bci-geometry-tileset.",
+      "notes": "Each (objectKind, tier) must map to a unique (repo, schemaRef, defaultTargetPath) triple with invariants, metrics, constraints, and phase."
+    },
+    {
+      "id": "spine.align.invariants.metrics",
+      "title": "Align routing spine with invariant and metric spines",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "routing-spine",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "schemas/hpc-routing-spine-v1.json",
+        "schemas/spine/spine-index.schema.json",
+        "schemas/spine/spine-index.instance.json"
+      ],
+      "summary": "Ensure all invariant and metric codes referenced in routes exist in the canonical invariant and entertainment metric spines.",
+      "notes": "Valid invariant codes: CIC, MDI, AOS, RRM, FCF, LSG, HVF, DET, SPR, SHCI, RWF. Valid metric codes: UEC, EMD, STCI, CDL, ARR."
+    },
+    {
+      "id": "spine.mathConstraints.populate",
+      "title": "Populate mathConstraints catalog in routing spine",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "routing-spine",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "schemas/hpc-routing-spine-v1.json"
+      ],
+      "summary": "Add named mathConstraints entries (e.g., sprFromInvariants.v1, moodUECARRTradeoff.v1) and associate them with contract families.",
+      "notes": "These constraints are references to separate, versioned formulas and do not need full math expressions at this stage."
+    },
+    {
+      "id": "spine.docs.generate",
+      "title": "Generate routing spine documentation from instance",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "docs",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "docs/routing-spine-overview.md",
+        "docs/routing-spine-object-kinds.md"
+      ],
+      "summary": "Generate human-readable Markdown docs from hpc-routing-spine-v1.json for maintainers and external AI-chat platforms.",
+      "notes": "Docs should list objectKinds, allowed tiers, repos, schemaRefs, invariants, metrics, and constraint IDs."
+    },
+    {
+      "id": "manifest.schema.commit",
+      "title": "Commit repo-manifest-v1.json schema",
+      "status": "in-progress",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "manifests",
+      "blocking": [],
+      "dependsOn": [],
+      "files": [
+        "schemas/core/repo-manifest-v1.json"
+      ],
+      "summary": "Introduce a canonical schema for per-repo manifests capturing repoName, tier, allowedObjectKinds, policies, and ciChecks.",
+      "notes": "Schema should be reusable across all constellation repos with consistent enums for repoName and tier."
+    },
+    {
+      "id": "manifest.instances.normalize",
+      "title": "Normalize all repo manifests to v1 schema",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "manifests",
+      "blocking": [],
+      "dependsOn": [
+        "manifest.schema.commit"
+      ],
+      "files": [
+        "repo-manifest.hpc.Horror.Place.json",
+        "repo-manifest.hpc.HorrorPlace-Atrocity-Seeds.json",
+        "repo-manifest.hpc.HorrorPlace-Codebase-of-Death.json",
+        "repo-manifest.hpc.HorrorPlace-Black-Archivum.json",
+        "repo-manifest.hpc.HorrorPlace-Spectral-Foundry.json",
+        "repo-manifest.hpc.HorrorPlace-RotCave.json"
+      ],
+      "summary": "Create or update per-repo manifest files to conform to repo-manifest-v1.json and accurately reflect each repo's jurisdiction.",
+      "notes": "Set implicitDeny and allowedObjectKinds to match real capabilities; ensure schemaWhitelist and defaultPaths are populated."
+    },
+    {
+      "id": "manifest.add.routingSpineRef",
+      "title": "Add routingSpineRef and routing policies to manifests",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "manifests",
+      "blocking": [],
+      "dependsOn": [
+        "manifest.instances.normalize",
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "repo-manifest.hpc.Horror.Place.json",
+        "repo-manifest.hpc.HorrorPlace-Atrocity-Seeds.json",
+        "repo-manifest.hpc.HorrorPlace-Codebase-of-Death.json"
+      ],
+      "summary": "Set routingSpineRef and enable key policies (POL003, POL004, POL006) in Tier-1 and Tier-2 repos.",
+      "notes": "routingSpineRef should point to schemas/hpc-routing-spine-v1.json; policies enforce schemaRef and target metadata presence."
+    },
+    {
+      "id": "manifest.spine.crosscheck",
+      "title": "Cross-check manifests against routing spine",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "routing-spine",
+      "blocking": [],
+      "dependsOn": [
+        "manifest.instances.normalize",
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "schemas/hpc-routing-spine-v1.json",
+        "repo-manifest.hpc.*.json"
+      ],
+      "summary": "Ensure each route's objectKind and tier are permitted by the target repo's manifest and that tier classifications match.",
+      "notes": "Resolve discrepancies by updating either the route or the manifest and rerun linting until no conflicts remain."
+    },
+    {
+      "id": "validator.crate.complete",
+      "title": "Complete hpc-routing-validator crate",
+      "status": "in-progress",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "validator",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap",
+        "manifest.schema.commit"
+      ],
+      "files": [
+        "crates/hpc-routing-validator/Cargo.toml",
+        "crates/hpc-routing-validator/src/lib.rs"
+      ],
+      "summary": "Implement core Rust library that loads manifests and routing spine, validates uniqueness and sovereignty, and exposes resolve_route.",
+      "notes": "validate_routing_system must return structured error codes: ERR_ROUTE_CONFLICT, ERR_MANIFEST_IMPLICIT_DENY, ERR_SOVEREIGNTY_VIOLATION, etc."
+    },
+    {
+      "id": "validator.wasm.surface",
+      "title": "Add optional WASM surface to hpc-routing-validator",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "validator",
+      "blocking": [],
+      "dependsOn": [
+        "validator.crate.complete"
+      ],
+      "files": [
+        "crates/hpc-routing-validator/src/wasm.rs",
+        "crates/hpc-routing-validator/Cargo.toml"
+      ],
+      "summary": "Expose JSON-in/JSON-out WASM bindings for validation and route resolution.",
+      "notes": "Guard with a 'wasm' feature; functions should accept JSON strings and return JSON strings for easy embedding."
+    },
+    {
+      "id": "cli.lint.crate",
+      "title": "Create hpc-routing-lint CLI crate",
+      "status": "in-progress",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "validator",
+      "blocking": [],
+      "dependsOn": [
+        "validator.crate.complete"
+      ],
+      "files": [
+        "crates/hpc-routing-lint/Cargo.toml",
+        "crates/hpc-routing-lint/src/main.rs"
+      ],
+      "summary": "Implement CLI tool that scans repo manifests and routing spine, runs validation, and emits human and JSON reports.",
+      "notes": "CLI must exit non-zero when any validation errors exist; suitable for use in GitHub Actions."
+    },
+    {
+      "id": "validator.tests.unit",
+      "title": "Add unit tests for routing validator",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "validator",
+      "blocking": [],
+      "dependsOn": [
+        "validator.crate.complete"
+      ],
+      "files": [
+        "crates/hpc-routing-validator/tests/"
+      ],
+      "summary": "Cover core routing cases: uniqueness, implicitDeny semantics, tier mismatches, and missing constraint references.",
+      "notes": "Use small in-memory manifests and spine structures for fast test runs."
+    },
+    {
+      "id": "cli.lint.tests.integration",
+      "title": "Add integration tests for hpc-routing-lint CLI",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "validator",
+      "blocking": [],
+      "dependsOn": [
+        "cli.lint.crate"
+      ],
+      "files": [
+        "crates/hpc-routing-lint/tests/"
+      ],
+      "summary": "Validate CLI behavior end-to-end with fixture directories and ensure exit codes and JSON reports are correct.",
+      "notes": "Include both successful and failure scenarios, including route conflicts and sovereignty violations."
+    },
+    {
+      "id": "ci.routing-lint.workflow",
+      "title": "Add routing-lint GitHub Actions workflow",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "ci",
+      "blocking": [],
+      "dependsOn": [
+        "cli.lint.crate"
+      ],
+      "files": [
+        ".github/workflows/routing-lint.yml"
+      ],
+      "summary": "Configure CI to build the workspace and run hpc-routing-lint on pushes and pull requests to main.",
+      "notes": "Use caching for Cargo; treat any non-zero exit from hpc-routing-lint as a hard fail."
+    },
+    {
+      "id": "ci.schema.validate.spine",
+      "title": "Add schema validation job for routing spine",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "ci",
+      "blocking": [],
+      "dependsOn": [
+        "spine.schema.finalize",
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        ".github/workflows/schema-validate.yml",
+        "schemas/hpc-routing-spine.schema.json",
+        "schemas/hpc-routing-spine-v1.json"
+      ],
+      "summary": "Validate routing spine instance against its schema as part of CI.",
+      "notes": "Ensure any structural changes to the spine are caught before merge."
+    },
+    {
+      "id": "ci.schema.validate.manifests",
+      "title": "Add schema validation job for repo manifests",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "ci",
+      "blocking": [],
+      "dependsOn": [
+        "manifest.schema.commit",
+        "manifest.instances.normalize"
+      ],
+      "files": [
+        ".github/workflows/schema-validate.yml",
+        "schemas/core/repo-manifest-v1.json",
+        "repo-manifest.hpc.*.json"
+      ],
+      "summary": "Validate all repo-manifest files against repo-manifest-v1.json in CI.",
+      "notes": "Run alongside routing lint to catch pure schema drift separately from routing conflicts."
+    },
+    {
+      "id": "docs.public.spine.surface",
+      "title": "Publish public-facing routing spine surface for external AI",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "docs",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap"
+      ],
+      "files": [
+        "docs/schema-spine/public-routing-surface.json",
+        "docs/schema-spine/README.md"
+      ],
+      "summary": "Expose a minimal, AI-safe routing surface summarizing objectKinds, tiers, repos, and schemaRefs.",
+      "notes": "Intended for external AI-chat platforms that cannot access private repos but need valid routing triples."
+    },
+    {
+      "id": "ai.contracts.crosscheck",
+      "title": "Cross-check AI authoring contracts against routing spine",
+      "status": "todo",
+      "targetRepo": "HorrorPlace-Constellation-Contracts",
+      "area": "ai-authoring",
+      "blocking": [],
+      "dependsOn": [
+        "spine.instance.bootstrap",
+        "validator.crate.complete"
+      ],
+      "files": [
+        "schemas/ai/ai-authoring-request-v1.json",
+        "schemas/ai/ai-authoring-response-v1.json"
+      ],
+      "summary": "Ensure AI authoring request/response schemas require objectKind, tier, targetRepo, and schemaRef, and validate them via the routing validator.",
+      "notes": "CI should fail when AI authoring envelopes specify routing tuples that do not match hpc-routing-spine-v1.json."
+    }
+  ]
+}
