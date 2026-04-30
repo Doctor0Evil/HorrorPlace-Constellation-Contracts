@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Neural-Resonance-Lab",
+  "tier": "T3-lab",
+  "kind": "RESEARCH_LAB_REPO",
+  "description": "BCI and telemetry research lab, storing metrics envelopes, tileset performance data, and analysis artifacts.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "bciMetricsEnvelope",
+    "tilesetSelectionEvent",
+    "telemetrySummary"
+  ],
+  "defaultPaths": {
+    "bciMetricsEnvelope": "telemetry/bci/",
+    "tilesetSelectionEvent": "telemetry/tileset-events/",
+    "telemetrySummary": "telemetry/summaries/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/telemetry/bci-metrics-envelope-v1.json",
+    "schemas/telemetry/tileset-selection-event-v1.json",
+    "schemas/telemetry/telemetry-summary-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": false,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "Telemetry should remain structural and numeric; no narrative content here."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All telemetry and summary artifacts must reference their canonical schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Telemetry must record which tileset, geometryProfile, and contract families are being measured."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 2097152
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Telemetry transformers should use the spine to classify events by objectKind and repo."
+    }
+  },
+  "ciChecks": {
+    "validateTelemetry": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema-glob",
+        "schemas/telemetry/*.json",
+        "--input-glob",
+        "telemetry/**/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this repo for BCI metrics, tileset selection events, and aggregate summaries that inform contract tuning.",
+    "aiBehavior": [
+      "Do not generate contracts here; only telemetry and analysis artifacts.",
+      "Always include references to tilesetId and geometryProfileId in tilesetSelectionEvent artifacts.",
+      "Use these artifacts to propose changes to contracts upstream, not to directly influence runtime behavior."
+    ]
+  }
+}
