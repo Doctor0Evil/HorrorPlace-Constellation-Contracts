@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-geometry-binding-v1.json",
+  "title": "BCI Geometry Binding v1",
+  "description": "Defines mapping from BciSummary + invariants + metrics + CSI to visual/audio/haptic parameters via curve families.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bindingId",
+    "regionClass",
+    "invariantFilter",
+    "bciFilter",
+    "metricsFilter",
+    "curves",
+    "safetyProfile",
+    "tier",
+    "targets"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "bindingId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "regionClass": {
+      "type": "string",
+      "enum": [
+        "corridor",
+        "chamber",
+        "threshold",
+        "open",
+        "liminal",
+        "sanctuary"
+      ]
+    },
+    "priority": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 5,
+      "description": "Explicit priority for resolver scoring."
+    },
+    "invariantFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cic": {
+          "$ref": "#/$defs/range01"
+        },
+        "mdi": {
+          "$ref": "#/$defs/range01"
+        },
+        "aos": {
+          "$ref": "#/$defs/range01"
+        },
+        "det": {
+          "$ref": "#/$defs/range010"
+        },
+        "hvf": {
+          "$ref": "#/$defs/range01"
+        },
+        "lsg": {
+          "$ref": "#/$defs/range01"
+        },
+        "spr": {
+          "$ref": "#/$defs/range01"
+        },
+        "shci": {
+          "$ref": "#/$defs/range01"
+        }
+      }
+    },
+    "bciFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stressScoreMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "stressScoreMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "stressBand": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Extreme"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "attentionBand": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Distracted",
+              "Neutral",
+              "Focused",
+              "HyperFocused"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "visualOverloadMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "allowStartleSpike": {
+          "type": "boolean"
+        },
+        "signacy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "amplitude": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "safetyProfile": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to bci-safety-profile-v1 profileId."
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "lab",
+        "standard",
+        "mature",
+        "research"
+      ],
+      "description": "Promotion tier; runtime only allows standard/mature."
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visual": {
+          "type": "boolean",
+          "default": true
+        },
+        "audio": {
+          "type": "boolean",
+          "default": true
+        },
+        "haptics": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "metricsFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uecBand": {
+          "$ref": "#/$defs/range01"
+        },
+        "emdBand": {
+          "$ref": "#/$defs/range01"
+        },
+        "stciBand": {
+          "$ref": "#/$defs/range01"
+        },
+        "cdlBand": {
+          "$ref": "#/$defs/range01"
+        },
+        "arrBand": {
+          "$ref": "#/$defs/range01"
+        }
+      }
+    },
+    "curves": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "target",
+          "familyCode",
+          "params"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": [
+              "visual",
+              "audio",
+              "haptics"
+            ]
+          },
+          "familyCode": {
+            "type": "string",
+            "enum": [
+              "PKLIN",
+              "PKSIG",
+              "PKHYS",
+              "PKRHY",
+              "PKAMB",
+              "PKSTC"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "range01": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "range010": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    }
+  }
+}
