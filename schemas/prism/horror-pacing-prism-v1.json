@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:horror-pacing-prism-v1.json",
+  "title": "Horror Pacing Prism Output v1",
+  "description": "Derived pacing indices computed from invariants + metrics + BciSummary + CSI. Used by H.Director/H.Selector for beat scheduling and intensity gating.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "timestamp", "pressure", "noveltyBudget", "escalationGate"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "timestamp": { "type": "integer", "description": "Unix epoch milliseconds" },
+    "pressure": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Weighted combination of DET, UEC, and BCI stressScore. Higher = more intense pacing pressure."
+    },
+    "noveltyBudget": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Remaining capacity for new horror content. Recharges when pressure is low, depletes when high."
+    },
+    "escalationGate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Scalar gate [0,1] for escalation decisions. 0 = block major beats; 1 = allow full escalation."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pressureComponents": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "detWeight": { "type": "number", "minimum": 0, "maximum": 1 },
+            "uecWeight": { "type": "number", "minimum": 0, "maximum": 1 },
+            "bciWeight": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "budgetState": { "enum": ["recharging", "stable", "depleting", "exhausted"] }
+      }
+    }
+  }
+}
