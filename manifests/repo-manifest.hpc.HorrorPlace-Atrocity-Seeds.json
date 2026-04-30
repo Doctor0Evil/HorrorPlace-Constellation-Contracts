@@ -4,60 +4,105 @@
   "repoName": "HorrorPlace-Atrocity-Seeds",
   "tier": "T2-vault",
   "kind": "CONTENT_VAULT_REPO",
-  "description": "Dedicated repository for high-intensity seedContractCard entries and eventContract instances. Vault content repo for procedural horror seeds and encounter-level events.",
+  "description": "Vault of high-intensity procedural seeds and events, bound to sensitive region history. Instances only; schemas live in HorrorPlace-Constellation-Contracts.",
   "visibility": "private",
   "implicitDeny": true,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
   "allowedObjectKinds": [
     "seedContractCard",
-    "eventContract"
+    "eventContract",
+    "policyContractCard"
   ],
   "defaultPaths": {
     "seedContractCard": "seeds/",
     "eventContract": "events/",
-    "policyContractCard": "policies/"
+    "policyContractCard": "policies/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
   },
   "schemaWhitelist": [
     "schemas/contracts/seed-contract-card-v1.json",
     "schemas/contracts/event-contract-v1.json",
-    "schemas/contracts/policy-envelope-v1.json"
+    "schemas/contracts/policy-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
   ],
   "policies": {
     "POL001_OneFilePerRequest": {
       "enabled": true,
       "maxFilesPerRequest": 1
     },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "This vault may contain explicit horror narratives, subject to Dead-Ledger and internal governance."
+    },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All seed, event, and policy artifacts must include a valid schemaRef pointing to an approved schema in this repo or HorrorPlace-Constellation-Contracts."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "All artifacts must include explicit routing metadata (objectKind, tier, targetRepo, targetPath, schemaRef, and registry bindings)."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 524288
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "All authoring requests that produce seedContractCard, eventContract, or policyContractCard for this repo must resolve routes through the routing spine."
     }
   },
   "ciChecks": {
-    "schemaValidation": {
+    "validateSeedContracts": {
       "enabled": true,
-      "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/seed-contract-card-v1.json",
+        "--input-glob",
+        "seeds/*.json"
+      ]
+    },
+    "validateEventContracts": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/event-contract-v1.json",
+        "--input-glob",
+        "events/*.json"
+      ]
+    },
+    "validatePolicyContracts": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/policy-envelope-v1.json",
+        "--input-glob",
+        "policies/*.json"
+      ]
     },
     "routingLint": {
       "enabled": true,
       "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "args": [
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     }
   },
   "authoringHints": {
-    "summary": "T2-vault content repo for seed and event contract instances. Schemas are defined in Horror.Place; instances live here.",
+    "summary": "T2-vault content repo for high-intensity seeds, events, and related policy envelopes. Schemas are defined upstream; instances live here under strict governance.",
     "aiBehavior": [
-      "Always verify schemaRef before generating seed or event artifacts",
-      "Route seedContractCard and eventContract T2-vault requests to this repo",
-      "Ensure all seeds reference valid regionContractCard and personaContractCard dependencies"
+      "Only generate seedContractCard, eventContract, or policyContractCard instances in this repo.",
+      "Always verify schemaRef is one of the whitelisted contract schemas before generating artifacts.",
+      "Route Tier-2 seedContractCard and eventContract requests to this repo only when routingSpineRef resolves here.",
+      "Ensure all seeds reference valid regionContractCard and personaContractCard IDs, not raw narrative blocks.",
+      "Treat every artifact as subject to Dead-Ledger and internal review; avoid generating public-facing examples here."
     ]
   }
 }
