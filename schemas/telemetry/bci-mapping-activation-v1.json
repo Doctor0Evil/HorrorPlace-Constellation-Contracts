@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-mapping-activation-v1.json",
+  "title": "BCI Mapping Activation Event v1",
+  "description": "Telemetry event logged when BciGeometry.sample() evaluates a binding. Used by Neural-Resonance-Lab for drift detection and comfort outcome analysis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventType", "timestamp", "playerId", "regionId", "tileId", "bindingId", "inputs", "outputs", "telemetry"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "eventType": { "type": "string", "const": "bci-mapping-activation" },
+    "timestamp": { "type": "integer" },
+    "playerId": { "type": "string", "description": "Anonymized session-scoped player ID" },
+    "regionId": { "type": "string" },
+    "tileId": { "type": "string" },
+    "bindingId": { "type": "string", "description": "ID of the resolved bci-geometry-binding-v1" },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stressScore", "stressBand", "csi", "det"],
+      "properties": {
+        "stressScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "stressBand": { "enum": ["Low", "Medium", "High", "Extreme"] },
+        "visualOverloadIndex": { "type": "number", "minimum": 0, "maximum": 1 },
+        "startleSpike": { "type": "boolean" },
+        "signalQuality": { "enum": ["Good", "Degraded", "Unavailable"] },
+        "csi": { "type": "number", "minimum": 0, "maximum": 1 },
+        "det": { "type": "number", "minimum": 0, "maximum": 10 },
+        "cic": { "type": "number", "minimum": 0, "maximum": 1 },
+        "lsg": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visual": { "$ref": "#/$defs/channelOutput" },
+        "audio": { "$ref": "#/$defs/channelOutput" },
+        "haptics": { "$ref": "#/$defs/channelOutput" }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "safetyProfileId": { "type": "string" },
+        "capsApplied": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "intensityClamp": { "type": "boolean" },
+            "rateClamp": { "type": "boolean" },
+            "recoveryActive": { "type": "boolean" },
+            "safeZoneActive": { "type": "boolean" }
+          }
+        },
+        "processingTimeMs": { "type": "number", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "channelOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rawValue": { "type": "number" },
+        "clampedValue": { "type": "number" },
+        "capSource": { "enum": ["safetyProfile", "csi", "det", "recovery", "safeZone", "none"] }
+      }
+    }
+  }
+}
