@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Process-Gods-Research",
+  "tier": "T3-lab",
+  "kind": "RESEARCH_LAB_REPO",
+  "description": "Experimental lab for procedural horror algorithms, process-deity models, and high-risk research contracts.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "researchContract",
+    "processGodProfile",
+    "experimentEnvelope"
+  ],
+  "defaultPaths": {
+    "researchContract": "research/contracts/",
+    "processGodProfile": "research/process-gods/",
+    "experimentEnvelope": "research/experiments/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/research-contract-v1.json",
+    "schemas/contracts/process-god-profile-v1.json",
+    "schemas/contracts/experiment-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": false,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "Research artifacts may contain intense content but must be gated from public exposure."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All research artifacts must use dedicated research schemas, separate from production contracts."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Experiments must declare which production contract families they shadow or extend."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 1048576
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Only explicitly registered research objectKinds should route here from the spine."
+    }
+  },
+  "ciChecks": {
+    "validateResearchContracts": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema-glob",
+        "schemas/contracts/*research*.json",
+        "--input-glob",
+        "research/**/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this lab for experimental contract forms and process-god models that may never ship to production.",
+    "aiBehavior": [
+      "Do not generate production moodContract, eventContract, seedContractCard, or regionContractCard here.",
+      "Use this repo for experiments that extend or test new invariants and metrics configurations.",
+      "Assume higher tolerance for unsatisfied constraints, but keep everything behind Dead-Ledger and internal reviews."
+    ]
+  }
+}
