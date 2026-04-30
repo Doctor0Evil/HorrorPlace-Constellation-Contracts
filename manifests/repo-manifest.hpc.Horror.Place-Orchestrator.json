@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "Horror.Place-Orchestrator",
+  "tier": "T1-core",
+  "kind": "ORCHESTRATOR_REPO",
+  "description": "CHATDIRECTOR and orchestration core for routing AiAuthoringRequests into the correct constellation repos based on the routing spine.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "aiAuthoringRequest",
+    "aiAuthoringPlan",
+    "aiAuthoringProfile",
+    "routingAuditReport"
+  ],
+  "defaultPaths": {
+    "aiAuthoringRequest": "authoring/requests/",
+    "aiAuthoringPlan": "authoring/plans/",
+    "aiAuthoringProfile": "authoring/profiles/",
+    "routingAuditReport": "authoring/reports/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/tooling/ai-authoring-request-v1.json",
+    "schemas/tooling/ai-authoring-plan-v1.json",
+    "schemas/tooling/ai-safe-authoring-profile-v1.json",
+    "schemas/tooling/ai-authoring-contract-v1.json",
+    "schemas/tooling/routing-audit-report-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "Orchestrator must not store narrative content; only envelopes, plans, and audit artifacts."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All authoring and routing artifacts must include schemaRef pointing to tooling schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "AiAuthoringRequest and AiAuthoringPlan must always declare objectKind, tier, targetRepo, targetPath, and schemaRef for each step."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 262144
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "CHATDIRECTOR must resolve all routes using the routing spine before dispatching to any repo."
+    }
+  },
+  "ciChecks": {
+    "validateToolingSchemas": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema-glob",
+        "schemas/tooling/*.json",
+        "--input-glob",
+        "authoring/**/*.json"
+      ]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": [
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Central planner for all AI-authored flows. No contracts live here; only requests, plans, profiles, and audit logs.",
+    "aiBehavior": [
+      "Always call resolve_route(objectKind, tier) against the routing spine before selecting targetRepo.",
+      "Store only AiAuthoringRequest, AiAuthoringPlan, and audit envelopes here, never concrete region/seed/event contracts.",
+      "Use this repo as the coordination surface for multi-repo authoring sessions."
+    ]
+  }
+}
