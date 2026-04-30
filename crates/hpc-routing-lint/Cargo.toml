@@ -1,0 +1,16 @@
+[package]
+name = "hpc-routing-lint"
+version = "0.1.0"
+edition = "2021"
+description = "CLI wrapper for the Horror.Place routing validator."
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+walkdir = "2.5"
+thiserror = "1.0"
+
+# Internal validator crate in this workspace
+hpc-routing-validator = { path = "../hpc-routing-validator" }
