@@ -2,37 +2,46 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://horror.place/schemas/horror-mapping-config-bci-v1.json",
   "title": "HorrorMappingConfig.BCI.v1",
-  "description": "Canonical, schema-bound configuration that maps BCI metrics to horror-facing control channels via a small set of mathematically defined mapping families and guardrails.",
+  "description": "Canonical configuration that maps BCI metrics and invariants to horror-facing control channels via a constrained set of mapping families and safety-checked guardrails.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
     "version",
     "schemaref",
+    "schemaVersion",
     "policyId",
     "inputs",
     "channels",
     "profiles",
-    "safety"
+    "safety",
+    "lifecycle",
+    "features",
+    "inputDomain"
   ],
   "properties": {
     "id": {
       "type": "string",
-      "description": "Stable mapping-config identifier, e.g. 'HorrorMappingConfig.BCI.SprintTunnelFlash.v1'."
+      "description": "Stable mapping-config identifier, e.g. HorrorMappingConfig.BCI.SprintTunnelFlash.v1."
     },
     "version": {
       "type": "string",
-      "description": "Semantic version for this mapping config, e.g. '1.0.0'."
+      "description": "Semantic version for this mapping config, e.g. 1.0.0."
     },
     "schemaref": {
       "type": "string",
-      "const": "schemas/horror-mapping-config-bci-v1.json",
-      "description": "Local schema reference for CI and toolchains."
+      "const": "schemas/bci/horror-mapping-config-bci-v1.json",
+      "description": "Local schema path for CI and toolchains."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "HorrorMappingConfig.BCI.v1",
+      "description": "Explicit schema version identifier for this binding."
     },
     "tier": {
       "type": "string",
-      "enum": ["research", "mature", "standard"],
-      "description": "Safety tier for this mapping profile."
+      "enum": [ "research", "standard", "mature" ],
+      "description": "Legacy safety tier for this mapping profile; superseded by lifecycle.tier but retained for backward compatibility."
     },
     "policyId": {
       "type": "string",
@@ -40,16 +49,13 @@
     },
     "inputs": {
       "type": "object",
-      "description": "Declaration of which BCI metrics and bcistate fields this config may read.",
+      "description": "Declaration of which BCI metrics, invariants, and bcistate fields this config may read.",
       "additionalProperties": false,
-      "required": [
-        "metrics",
-        "bcistate"
-      ],
+      "required": [ "metrics", "invariants", "bcistate" ],
       "properties": {
         "metrics": {
           "type": "array",
-          "description": "Known normalized metric inputs drawn from bci-metrics-envelope (0..1 unless documented otherwise).",
+          "description": "Known normalized metric inputs drawn from bci-metrics-envelope-v2; typically 0..1.",
           "items": {
             "type": "string",
             "enum": [
@@ -57,29 +63,49 @@
               "calmScore",
               "stressScore",
               "attentionFocus",
-              "overloadFlag",
               "UEC",
               "EMD",
               "STCI",
               "CDL",
               "ARR",
-              "signalQuality"
+              "DET"
             ]
           },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "invariants": {
+          "type": "array",
+          "description": "Invariant inputs from the invariants/metrics spine.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "AOS",
+              "HVF",
+              "LSG",
+              "SHCI",
+              "RRM",
+              "MDI",
+              "SPR",
+              "RWF"
+            ]
+          },
+          "minItems": 0,
           "uniqueItems": true
         },
         "bcistate": {
           "type": "object",
-          "description": "Optional bcistate inputs coming from bcicore-intensity and BCI state fusion.",
+          "description": "Optional bcistate inputs coming from bcicore-intensity and related envelopes.",
           "additionalProperties": false,
           "properties": {
             "useIntensityMode": {
               "type": "boolean",
-              "description": "Whether bcicore intensity mode (CALM, FOCUSED, TENSE, OVERLOADED) is available as a condition."
+              "description": "Whether bcicore intensity mode CALM, FOCUSED, TENSE, OVERLOADED is available as a condition."
             },
             "useFearBand": {
               "type": "boolean",
-              "description": "Whether bcistate.fearBand (LOW, MED, HIGH) is used for gating."
+              "description": "Whether bcistate.fearBand LOW, MED, HIGH is used for gating."
             },
             "useOverloadFlag": {
               "type": "boolean",
@@ -96,8 +122,8 @@
       "properties": {
         "tension": {
           "type": "object",
-          "description": "Normalized tension signal in [0,1].",
-          "required": ["enabled", "min", "max"],
+          "description": "Normalized tension signal in 0..1.",
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
@@ -108,29 +134,29 @@
         "sprintMul": {
           "type": "object",
           "description": "Sprint multiplier affecting player movement speed.",
-          "required": ["enabled", "min", "max"],
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            "min": { "type": "number" },
+            "max": { "type": "number" }
           }
         },
         "tunnelRadius": {
           "type": "object",
-          "description": "Radius for tunnel-vision effect, in normalized screen units.",
-          "required": ["enabled", "min", "max"],
+          "description": "Radius of tunnel vision mask.",
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            "min": { "type": "number" },
+            "max": { "type": "number" }
           }
         },
         "tunnelOpacity": {
           "type": "object",
-          "description": "Opacity for tunnel-vision darkening.",
-          "required": ["enabled", "min", "max"],
+          "description": "Opacity of tunnel vision mask.",
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
@@ -141,72 +167,89 @@
         "flashlightJitterAmp": {
           "type": "object",
           "description": "Amplitude of flashlight jitter.",
-          "required": ["enabled", "min", "max"],
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            "min": { "type": "number" },
+            "max": { "type": "number" }
           }
         },
         "flashlightJitterFreq": {
           "type": "object",
-          "description": "Frequency factor for flashlight jitter (normalized into a safe non-strobe band).",
-          "required": ["enabled", "min", "max"],
+          "description": "Frequency of flashlight jitter.",
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
-            "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            "min": { "type": "number" },
+            "max": { "type": "number" }
           }
         },
         "encounterSpawnMul": {
           "type": "object",
-          "description": "Multiplier on encounter spawn intensity.",
-          "required": ["enabled", "min", "max"],
+          "description": "Multiplier for encounter spawn rates.",
+          "required": [ "enabled", "min", "max" ],
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
-            "min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-            "max": { "type": "number", "minimum": 0.0, "maximum": 2.0 }
+            "min": { "type": "number" },
+            "max": { "type": "number" }
           }
         }
       }
     },
     "profiles": {
       "type": "array",
-      "description": "Named mapping profiles (e.g., sprint-inhibition, tunnel-vision, flashlight-jitter) each built from mapping entries and guardrails.",
+      "description": "Named mapping profiles grouping per-channel mappings and conditions.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "profileId",
-          "description",
-          "mappings",
-          "safety"
-        ],
+        "required": [ "profileId", "channels", "mappings" ],
         "properties": {
           "profileId": {
             "type": "string",
-            "description": "Identifier for this mapping profile, e.g. 'sprint-inhibition-v1'."
+            "description": "Local identifier for this profile, e.g. sprint-inhibition."
           },
-          "description": {
-            "type": "string"
+          "channels": {
+            "type": "array",
+            "description": "Channels this profile drives.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "tension",
+                "sprintMul",
+                "tunnelRadius",
+                "tunnelOpacity",
+                "flashlightJitterAmp",
+                "flashlightJitterFreq",
+                "encounterSpawnMul"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
           },
           "conditions": {
             "type": "object",
-            "description": "Optional global gating conditions for this profile.",
+            "description": "Optional per-profile gating conditions.",
             "additionalProperties": false,
             "properties": {
-              "minCIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-              "maxCIC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-              "minAOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-              "maxAOS": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxUEC": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxARR": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minCDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "maxCDL": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "minSignalQuality": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "disableOnLowSignal": {
+                "type": "boolean",
+                "description": "Disable mapping when signalQuality falls below minSignalQuality."
+              },
               "allowedIntensityModes": {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
+                  "enum": [ "CALM", "FOCUSED", "TENSE", "OVERLOADED" ]
                 },
                 "uniqueItems": true
               },
@@ -222,13 +265,7 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "mappingId",
-                "channel",
-                "family",
-                "inputs",
-                "params"
-              ],
+              "required": [ "mappingId", "channel", "family", "inputs", "params" ],
               "properties": {
                 "mappingId": {
                   "type": "string",
@@ -262,10 +299,8 @@
                 },
                 "inputs": {
                   "type": "array",
-                  "description": "Names of inputs used by this mapping (subset of declared inputs.metrics and bcistate flags).",
-                  "items": {
-                    "type": "string"
-                  },
+                  "description": "Names of inputs used by this mapping; subset of declared inputs.metrics, invariants, and bcistate flags.",
+                  "items": { "type": "string" },
                   "minItems": 1,
                   "uniqueItems": true
                 },
@@ -276,7 +311,7 @@
                   "properties": {
                     "linear": {
                       "type": "object",
-                      "description": "Parameters for linear family y = a * x + b.",
+                      "description": "Parameters for linear family y = a*x + b.",
                       "additionalProperties": false,
                       "properties": {
                         "a": { "type": "number" },
@@ -287,7 +322,7 @@
                     },
                     "sigmoid": {
                       "type": "object",
-                      "description": "Parameters for logistic family S(x)=1/(1+exp(-k(x-x0))).",
+                      "description": "Parameters for logistic family S(x) = 1 / (1 + exp(-k*(x - x0))).",
                       "additionalProperties": false,
                       "properties": {
                         "k": { "type": "number" },
@@ -303,9 +338,7 @@
                       "properties": {
                         "breakpoints": {
                           "type": "array",
-                          "items": {
-                            "type": "number"
-                          },
+                          "items": { "type": "number" },
                           "minItems": 1
                         },
                         "valuesLow": {
@@ -372,7 +405,7 @@
                       "properties": {
                         "baseFamily": {
                           "type": "string",
-                          "enum": ["linear", "sigmoid", "piecewise"]
+                          "enum": [ "linear", "sigmoid", "piecewise" ]
                         },
                         "baseParams": {
                           "type": "object",
@@ -411,7 +444,7 @@
                         },
                         "nonlinearity": {
                           "type": "string",
-                          "enum": ["none", "tanh", "relu", "sigmoid"]
+                          "enum": [ "none", "tanh", "relu", "sigmoid" ]
                         },
                         "yMin": { "type": "number" },
                         "yMax": { "type": "number" }
@@ -434,52 +467,9 @@
                     "disableOnLowSignal": {
                       "type": "boolean",
                       "description": "Disable mapping when signalQuality falls below minSignalQuality."
-                    },
-                    "allowedIntensityModes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": ["CALM", "FOCUSED", "TENSE", "OVERLOADED"]
-                      },
-                      "uniqueItems": true
-                    },
-                    "disableWhenOverloadFlag": {
-                      "type": "boolean"
                     }
                   }
                 }
-              }
-            }
-          },
-          "safety": {
-            "type": "object",
-            "description": "Safety envelopes specific to this profile.",
-            "additionalProperties": false,
-            "properties": {
-              "maxSlopePerSec": {
-                "type": "object",
-                "description": "Per-channel maximum |dy/dt| caps.",
-                "additionalProperties": {
-                  "type": "number",
-                  "minimum": 0.0
-                }
-              },
-              "exposureCaps": {
-                "type": "object",
-                "description": "Per-channel exposure caps above given thresholds.",
-                "additionalProperties": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "threshold": { "type": "number" },
-                    "maxSecondsAbove": { "type": "number", "minimum": 0.0 },
-                    "cooldownSeconds": { "type": "number", "minimum": 0.0 }
-                  }
-                }
-              },
-              "disableOnPoorSignal": {
-                "type": "boolean",
-                "description": "Disable this profile entirely when signal quality is persistently low."
               }
             }
           }
@@ -494,7 +484,7 @@
         "globalMaxSlopePerSec": {
           "type": "number",
           "minimum": 0.0,
-          "description": "Global hard cap on |dy/dt| for any channel."
+          "description": "Global hard cap on dy/dt for any channel."
         },
         "globalExposureSecondsCap": {
           "type": "number",
@@ -509,8 +499,92 @@
         },
         "fallbackBehavior": {
           "type": "string",
-          "enum": ["scripted_only", "reduced_intensity", "hold_last_safe"],
-          "description": "Behavior when BCI mappings are disabled (e.g. poor signal)."
+          "enum": [ "scriptedonly", "reducedintensity", "holdlastsafe" ],
+          "description": "Behavior when BCI mappings are disabled, e.g. poor signal."
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "description": "Lifecycle and promotion metadata for this binding.",
+      "required": [ "tier", "promotionCriteriaRef" ],
+      "additionalProperties": false,
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": [ "lab", "standard", "mature" ],
+          "description": "Lifecycle tier for this binding."
+        },
+        "promotionCriteriaRef": {
+          "type": "string",
+          "description": "ID of a shared promotion criteria artifact that defines quantitative thresholds."
+        },
+        "promotedFrom": {
+          "type": "string",
+          "enum": [ "lab", "standard" ],
+          "description": "Previous lifecycle tier, if this binding has been promoted."
+        },
+        "promotedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last promotion."
+        },
+        "promotionEvidenceRef": {
+          "type": "array",
+          "description": "References to telemetry summaries and reports that justify promotion.",
+          "items": { "type": "string" }
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "ID of human or tool that created this binding."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags controlling optional behavior and rollout of new mapping capabilities.",
+      "additionalProperties": false,
+      "properties": {
+        "enableNewOutputChannel": {
+          "type": "boolean",
+          "description": "Gate for using any optional or newly introduced output channels."
+        },
+        "enableExperimentalFamilyCode": {
+          "type": "boolean",
+          "description": "Gate for using experimental mapping families reserved for lab/standard tiers."
+        },
+        "enableAdvancedSafetyDiagnostics": {
+          "type": "boolean",
+          "description": "Gate for emitting additional safety diagnostics in telemetry."
+        }
+      }
+    },
+    "inputDomain": {
+      "type": "object",
+      "description": "Binding to a specific invariants/metrics spine and input-domain definition.",
+      "required": [ "version", "metricsSchemaRef", "invariantsSchemaRef" ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Identifier for the invariants/metrics spine version, e.g. invariants-metrics-spine-v2."
+        },
+        "metricsSchemaRef": {
+          "type": "string",
+          "description": "Schema ID for metrics envelope, e.g. bci-metrics-envelope-v2."
+        },
+        "invariantsSchemaRef": {
+          "type": "string",
+          "description": "Schema ID for invariants/metrics spine."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about the input-domain assumptions and corridors."
         }
       }
     }
