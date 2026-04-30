@@ -1,0 +1,238 @@
+Here is a concrete, repo‑ready plan for those four items, plus the key math/logic they touch. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+***
+
+## 27. `bci-geometry-authoring-prompt-v1.txt`
+
+**Goal:** One canonical prompt template that every AI‑chat binding request must use before generating or editing bindings. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+**Target repo / path**
+
+- target-repo: HorrorPlace-Constellation-Contracts  
+- file: `docs/ai-chat-integration/bci-geometry-authoring-prompt-v1.txt` [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+
+**Core structure (sections)**
+
+1. **Intro and scope**  
+   - States that the AI is only allowed to author `bci-geometry-binding-v1` objects, plus comments in `style-spec.md`‑like docs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+   - Clarifies that schemas define reality and that Rust/Lua are compiled implementations. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+2. **Canonical schemas (IDs + paths)**  
+   - Lists exact schema IDs and paths the AI may reference:  
+     - `schemas/bci/bci-geometry-binding-v1.json`  
+     - `schemas/bci/bci-safety-profile-v1.json`  
+     - `schemas/bci/bci-mapping-request-v1.json` (when present)  
+     - `schemas/bci/bci-mapping-response-v1.json` [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+   - Explicitly forbids inventing new schemas or fields.
+
+3. **Allowed curve families and params**  
+   - Small table listing each `familyCode` (PKLIN, PKSIG, PKHYS, PKOSC, PKPIECE, PKNOISE) with param semantics and safe ranges, extracted from the curve‑catalog when it exists. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+   - States that any `familyCode` not in this list is forbidden.
+
+4. **Example binding (golden pattern)**  
+   - A single `bci-geometry-binding-v1` example that is known to validate and work with the corridor kernel:  
+     - Has `bindingId`, `regionClass`, `invariantFilter`, `bciFilter`, `metricsFilter`, `curves`, `safetyProfile.profileId`, `tier`, `priority`, `notes`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+   - This example is wired in the doc to its Rust struct, C header, and Lua `BciGeometry.sample` usage (by reference, not inline code). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+
+5. **Forbidden operations**  
+   - Explicit bullet list:  
+     - No raw EEG, no new metric dimensions, no new top‑level fields. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+     - No external libraries in engine code (no MNE, SciPy, etc.). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+     - No direct manipulation of CSI or DET formulas; those live only in Rust kernel modules (`bcikernel::timing`, `bcikernel::safety`). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+     - No editing of schemas; only JSON instances conforming to them.
+
+This file is plain text; your tooling can embed it into higher‑level envelopes like `ai-bci-geometry-request-v1.json`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+***
+
+## 28. Schema‑first `schemaVerification` pattern
+
+**Goal:** Force AI‑chat to prove it has fetched and understood the latest schema before it emits any bindings. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+**Target repo / paths**
+
+- target-repo: HorrorPlace-Constellation-Contracts  
+- file 1: `schemas/ai/ai-bci-geometry-request-v1.json`  
+- file 2: `schemas/ai/ai-bci-geometry-response-v1.json` [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+
+**`ai-bci-geometry-request-v1.json` additions**
+
+You already have the core fields sketched (targetRepo, targetPath, bindingSchemaId, regionHints, experienceType, constraints). Add: [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+```json
+"schemaVerification": {
+  "type": "object",
+  "required": ["schemaId", "schemaHash"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "description": "Canonical ID of the schema being targeted, e.g. hpnrl-bci-geometry-binding-v1."
+    },
+    "schemaHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of the exact schema document used by the AI when generating bindings."
+    }
+  }
+}
+```
+
+**`ai-bci-geometry-response-v1.json` structure**
+
+```json
+{
+  "type": "object",
+  "required": ["schemaVersion", "schemaVerification", "bindings"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "schemaVerification": {
+      "$ref": "ai-bci-geometry-request-v1.json#/properties/schemaVerification"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "bci-geometry-binding-v1.json"
+      },
+      "minItems": 1
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authorAgent": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}
+```
+
+**Interaction rule**
+
+- Tooling must reject any AI response where:  
+  - `schemaVerification.schemaId` does not match the configured `bindingSchemaId`, or  
+  - `schemaVerification.schemaHash` does not match the current on‑disk hash of `bci-geometry-binding-v1.json`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+That makes schema‑first behavior mechanically enforced: if schema changes, old AI responses are automatically invalid until regenerated. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+***
+
+## 29. CI checks on AI‑generated bindings
+
+**Goal:** A deterministic CI gate that validates bindings structurally, numerically, and against your curve‑safety catalog. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+**Target repo / paths**
+
+- target-repo: HorrorPlace-Neural-Resonance-Lab  
+- file: `tools/bci-schema-validator/src/main.rs` (binary `bci-schema-validator`) [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+**Checks to implement**
+
+1. **JSON Schema validation**  
+   - Validate each binding file (`bci-geometry-bindings.*.json`) against `bci-geometry-binding-v1.json` using `jsonschema` or equivalent. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+   - Fail on any `additionalProperties` or type/range violation.
+
+2. **Unique `bindingId` within collection**  
+   - For each collection file (`bci-geometry-bindings-collection-v1.json`):  
+     - Load into memory; ensure all `bindingId` values are unique. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+3. **Numeric range checks**  
+   - Enforce canonical ranges independent of schema (defense in depth):  
+     - All band filters and weights in \([0,1]\).  
+     - DET‑like values in \([0,10]\).  
+   - These should match your Range01 / Range010 definitions. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/e5f42853-ca4b-4854-9423-8f1ee347ed4b/1b66188a-50ff-44f9-b016-d8c2da803aa6.md)
+
+4. **Approved `familyCode` validation**  
+   - Load `curve-family-catalog-v1.json` (when present) and construct an allowed set of `familyCode` values with param ranges. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+   - For each curve in each binding:  
+     - `familyCode` must be in the catalog.  
+     - `params[i]` must be within the catalog’s documented safe ranges.
+
+5. **Safety profile reference integrity**  
+   - Ensure `safetyProfile.profileId` in each binding refers to a defined profile in `bci-safety-profile-v1.json`. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+6. **Optional “AI‑authored” lint**  
+   - If a binding includes `meta.authorAgent` or similar, ensure it has a value and no forbidden content (no external dataset IDs, etc.). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+**CI wiring**
+
+- In both Neural‑Resonance‑Lab and Death‑Engine:  
+  - Add a job that runs:  
+    - `bci-schema-validator bindings/*bci-geometry-bindings*.json`  
+  - Fail the pipeline on any error code. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+This matches your plan for a CI validator that checks schemas, ranges, and forbidden `familyCode` usage. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+***
+
+## 30. Mandatory “no‑bindings” fallback (`bci-off`)
+
+**Goal:** A canonical, schema‑valid binding that completely disables BCI influence and provides safe baseline outputs, usable as a kill‑switch. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+**Target repos / paths**
+
+1. **Schema + canonical instance**
+
+   - target-repo: HorrorPlace-Neural-Resonance-Lab  
+   - file 1: `schemas/bci/bci-no-binding-contract-v1.json` (tiny helper schema, optional)  
+   - file 2: `bindings/bci-geometry-bindings.bci-off.json` [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+2. **Engine‑side registration**
+
+   - target-repo: Death-Engine  
+   - file: `scripts/bci/geometry.lua` (or `scripts/bci/init.lua`, depending on your layout) [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+**Canonical `bci-off` binding (conceptual)**
+
+A single `bci-geometry-binding-v1` instance:
+
+- `bindingId`: `"bci-off"`  
+- `tier`: `"standard"` (always allowed)  
+- `regionClass`: `"any"` or a dedicated class like `"global-off"`  
+- `invariantFilter`, `bciFilter`, `metricsFilter`: either wildcard or ranges that always match, with `specificity` explicitly low. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+- `safetyProfile.profileId`: `"hard-off"` or `"tutorial-soft"` where all max intensities and delta caps are near zero. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+- `curves.visual`, `curves.audio`, `curves.haptics` all map to constant zero outputs (e.g., PKLIN with all params = 0) or simply omitted in a way the kernel interprets as “no BCI contribution”. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+- `inputWeights` set to zero for all BciSummary and metric fields.
+
+**Runtime use**
+
+In Rust `BindingResolver::resolve()`:
+
+- Always keep a reference to the `bci-off` binding loaded at startup.  
+- If no binding matches, or if safety logic rejects all candidates, or if contract context / user settings demand BCI disablement, then:
+
+\[
+\text{selectedBinding} = \text{bciOffBinding}
+\]
+
+- The kernel evaluates it normally, but all outputs are zero or baseline‑only, and telemetry marks `bindingId="bci-off"` so lab tools know the kill‑switch was used. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/8ec8d7a3-c055-485c-a7de-ccf6cb5237a2/e90fecc7-8c83-49c7-848a-aec1ad8495ed.md)
+
+**Lua side**
+
+In `scripts/bci/geometry.lua`:
+
+- Expose an override like:
+
+```lua
+-- Pseudocode, not full file content
+local function setBciEnabled(enabled)
+  BciGeometry._bciEnabled = enabled
+end
+
+local function sample(playerId, regionId, tileId)
+  if not BciGeometry._bciEnabled then
+    -- Force use of bci-off behavior; either call kernel with a bci-off bindingId hint,
+    -- or bypass BCI and return baseline outputs.
+  end
+  -- normal path...
+end
+```
+
+This aligns with your desire for a “kill switch design for BCI geometry” that can safely disable all BCI‑driven effects without breaking bindings or invariants. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_b5bbed5e-6469-4076-9528-305f2ec886fc/42dc24b6-4ba5-4242-a830-6eb872e4e66c/f47e303e-f715-4fcf-826c-968d01bf9866.md)
+
+***
+
+If you want the next step, I can draft one of these artifacts in full repo‑ready form (e.g., the exact `ai-bci-geometry-request-v1.json` schema with `schemaVerification`, or a concrete `bci-off` binding JSON plus a short section for `rust-lua-patterns-for-bci.md`).
