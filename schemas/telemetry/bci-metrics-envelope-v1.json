@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema/HorrorPlace-Constellation-Contracts/bci-metrics-envelope-v1.json",
   "title": "BCI Metrics Envelope v1",
-  "description": "BCI-derived entertainment metrics window for HorrorPlace VM-Constellation.",
+  "description": "Normalized BCI-derived entertainment metrics window for HorrorPlace VM-Constellation. All metric bands are normalized to [0,1]; DET is normalized to [0,10].",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,7 +11,8 @@
     "sessionId",
     "timestamp",
     "source",
-    "metrics"
+    "metrics",
+    "transform"
   ],
   "properties": {
     "schemaVersion": {
@@ -21,7 +22,7 @@
     "windowId": {
       "type": "string",
       "minLength": 1,
-      "description": "Identifier for the analysis window; should match the feature envelope when paired."
+      "description": "Identifier for the analysis window; should match the feature envelope window when paired."
     },
     "sessionId": {
       "type": "string",
@@ -30,22 +31,35 @@
     },
     "timestamp": {
       "type": "number",
+      "minimum": 0,
       "description": "Window start time in Unix seconds (may be fractional)."
     },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": [],
+      "required": [
+        "processingVersion"
+      ],
       "properties": {
         "featureEnvelopeId": {
           "type": "string",
           "description": "Optional reference to the originating feature envelope or NDJSON file identifier."
         },
+        "processingVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version string for the processing pipeline that produced this metrics envelope."
+        },
         "calibrationProfileId": {
           "type": "string",
-          "description": "Optional identifier for the calibration profile used to derive these metrics."
+          "description": "Optional identifier for the calibration profile active in the feature-processing stage."
         }
       }
+    },
+    "calibrationProfileId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier for the calibration profile used for metrics normalization at this stage."
     },
     "metrics": {
       "type": "object",
@@ -62,31 +76,60 @@
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Unsettling Emotional Content band, normalized to [0,1]."
+          "description": "Unease/Engagement Coherence band, normalized to [0,1]."
         },
         "emdBand": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Emerging Malevolence Dimension band, normalized to [0,1]."
+          "description": "Environmental Mystery Density band, normalized to [0,1]."
         },
         "stciBand": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Spectral Threat Concealment Index band, normalized to [0,1]."
+          "description": "Safe-Threat Contrast Index band, normalized to [0,1]."
         },
         "cdlBand": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Cognitive Dissonance Level band, normalized to [0,1]."
+          "description": "Cognitive Dissonance Load band, normalized to [0,1]."
         },
         "arrBand": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Affective Resonance Ratio band, normalized to [0,1]."
+          "description": "Ambiguous Resolution Ratio band, normalized to [0,1]."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "detEstimate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Dread Exposure Time estimate for this window, on canonical [0,10] scale aligned with invariants."
+        },
+        "overload": {
+          "type": "boolean",
+          "description": "Flag indicating that BCI suggests the player is overloaded for this window."
+        },
+        "underengaged": {
+          "type": "boolean",
+          "description": "Flag indicating that BCI suggests the player is under-engaged for this window."
+        },
+        "signalQuality": {
+          "type": "string",
+          "enum": [
+            "Good",
+            "Degraded",
+            "Unavailable"
+          ],
+          "description": "Qualitative indicator of BCI signal quality for this window."
         }
       }
     },
@@ -104,6 +147,7 @@
             "kalman",
             "static",
             "ml-classifier",
+            "hybrid",
             "other"
           ],
           "description": "Method used to derive metrics from features."
@@ -116,32 +160,18 @@
         },
         "modelId": {
           "type": "string",
-          "description": "Optional identifier for the model used to compute metrics."
+          "description": "Optional identifier for the model used to compute metrics (for ML methods)."
         },
         "featureMappingVersion": {
           "type": "string",
-          "description": "Optional version string for the feature-to-metrics mapping spec."
-        }
-      }
-    },
-    "safety": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [],
-      "properties": {
-        "detEstimate": {
-          "type": "number",
-          "minimum": 0.0,
-          "maximum": 10.0,
-          "description": "Optional DET estimate for this window, aligned with invariants DET range."
+          "description": "Optional version string for the feature-to-metrics mapping specification."
         },
-        "overload": {
-          "type": "boolean",
-          "description": "Flag indicating that BCI suggests the player is overloaded for this window."
-        },
-        "underengaged": {
-          "type": "boolean",
-          "description": "Flag indicating that BCI suggests the player is under-engaged for this window."
+        "featureMappingRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional list of human-readable mapping rules or tags applied in this transform."
         }
       }
     }
