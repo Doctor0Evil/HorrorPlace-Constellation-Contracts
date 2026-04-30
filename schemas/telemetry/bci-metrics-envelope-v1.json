@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "schema/HorrorPlace-Constellation-Contracts/bci-metrics-envelope-v1.json",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-metrics-envelope-v1.json",
   "title": "BCI Metrics Envelope v1",
-  "description": "Normalized BCI-derived entertainment metrics window for HorrorPlace VM-Constellation. All metric bands are normalized to [0,1]; DET is normalized to [0,10].",
+  "description": "Normalized BCI-derived entertainment metrics window for HorrorPlace VM-Constellation. All metric bands are normalized to [0,1]; DET is normalized to [0,10]. signalQuality enum matches bci-summary-v1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -22,17 +22,17 @@
     "windowId": {
       "type": "string",
       "minLength": 1,
-      "description": "Identifier for the analysis window; should match the feature envelope window when paired."
+      "description": "Identifier for this metrics analysis window; should align with the corresponding feature envelope windowId when paired."
     },
     "sessionId": {
       "type": "string",
       "minLength": 1,
-      "description": "Pseudonymous identifier for the recording session; must not be a dataset subject ID."
+      "description": "Pseudonymous identifier for the recording session; must not be a dataset subject ID or any direct player identifier."
     },
     "timestamp": {
-      "type": "number",
+      "type": "integer",
       "minimum": 0,
-      "description": "Window start time in Unix seconds (may be fractional)."
+      "description": "Window start time in Unix epoch milliseconds."
     },
     "source": {
       "type": "object",
@@ -59,7 +59,7 @@
     "calibrationProfileId": {
       "type": "string",
       "minLength": 1,
-      "description": "Identifier for the calibration profile used for metrics normalization at this stage."
+      "description": "Identifier for the calibration profile used for metrics normalization at this stage. Preferred location for calibration profile reference."
     },
     "metrics": {
       "type": "object",
@@ -116,11 +116,11 @@
         },
         "overload": {
           "type": "boolean",
-          "description": "Flag indicating that BCI suggests the player is overloaded for this window."
+          "description": "True when the metrics suggest the player is in an overload regime for this window."
         },
         "underengaged": {
           "type": "boolean",
-          "description": "Flag indicating that BCI suggests the player is under-engaged for this window."
+          "description": "True when the metrics suggest the player is under-engaged for this window."
         },
         "signalQuality": {
           "type": "string",
@@ -129,7 +129,7 @@
             "Degraded",
             "Unavailable"
           ],
-          "description": "Qualitative indicator of BCI signal quality for this window."
+          "description": "Qualitative indicator of BCI signal quality for this window. Enum is kept in sync with bci-summary-v1."
         }
       }
     },
@@ -143,12 +143,12 @@
         "method": {
           "type": "string",
           "enum": [
-            "ema",
-            "kalman",
-            "static",
-            "ml-classifier",
-            "hybrid",
-            "other"
+            "EMA",
+            "Kalman",
+            "Static",
+            "MLClassifier",
+            "Hybrid",
+            "Other"
           ],
           "description": "Method used to derive metrics from features."
         },
@@ -156,11 +156,11 @@
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Optional alpha parameter when EMA or similar smoothing is used."
+          "description": "Alpha parameter when EMA or similar smoothing is used. Optional for non-smoothing methods."
         },
         "modelId": {
           "type": "string",
-          "description": "Optional identifier for the model used to compute metrics (for ML methods)."
+          "description": "Optional identifier for the model used to compute metrics, especially for ML methods."
         },
         "featureMappingVersion": {
           "type": "string",
