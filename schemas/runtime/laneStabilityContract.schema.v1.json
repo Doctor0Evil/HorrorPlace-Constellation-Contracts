@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/laneStabilityContract.schema.v1.json",
+  "title": "laneStabilityContract.v1",
+  "description": "Phase-2 stability contract for a traversable lane between nodes, defining invariant and sanity metric bands and admissible perturbations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objectKind",
+    "id",
+    "version",
+    "phase",
+    "tier",
+    "regionRef",
+    "laneRef",
+    "schemaref",
+    "prismMeta",
+    "invariantBands",
+    "sanityBands",
+    "sanityPolicy",
+    "deadLedgerRef"
+  ],
+  "properties": {
+    "objectKind": {
+      "type": "string",
+      "const": "laneStabilityContract.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160,
+      "description": "Stable identifier for this lane stability contract."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?$",
+      "description": "Semantic version of this contract."
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [2],
+      "description": "Lifecycle phase; lane stability contracts are Phase-2 bundle artifacts."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Policy/entitlement tier, aligned with Constellation-Contracts tier routing."
+    },
+    "regionRef": {
+      "type": "string",
+      "description": "Reference to a regionContractCard or region/run contract this lane belongs to."
+    },
+    "laneRef": {
+      "type": "string",
+      "description": "Reference to the underlying lane or connection in dungeon-node / topology contracts."
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "laneStabilityContract.schema.v1",
+      "description": "Logical schema identifier for this contract type."
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block used across Constellation-Contracts.",
+      "additionalProperties": true
+    },
+
+    "invariantBands": {
+      "type": "object",
+      "description": "Invariant bands for this lane, constrained by region/run envelopes and canonical invariants.v1.json.",
+      "additionalProperties": false,
+      "properties": {
+        "CIC": { "$ref": "#/$defs/invariantBand01" },
+        "MDI": { "$ref": "#/$defs/invariantBand01" },
+        "AOS": { "$ref": "#/$defs/invariantBand01" },
+        "RRM": { "$ref": "#/$defs/invariantBand01" },
+        "FCF": { "$ref": "#/$defs/invariantBand01" },
+        "SPR": { "$ref": "#/$defs/invariantBand01" },
+        "RWF": { "$ref": "#/$defs/invariantBand01" },
+        "DET": { "$ref": "#/$defs/invariantBandDet" },
+        "HVF": { "$ref": "#/$defs/invariantBand01" },
+        "LSG": { "$ref": "#/$defs/invariantBand01" },
+        "SHCI": { "$ref": "#/$defs/invariantBand01" }
+      }
+    },
+
+    "sanityBands": {
+      "type": "object",
+      "description": "Lane-level bands for derived sanity metrics as read by SANITY_CORE.",
+      "additionalProperties": false,
+      "properties": {
+        "UEC": { "$ref": "#/$defs/metricBand01" },
+        "EMD": { "$ref": "#/$defs/metricBand01" },
+        "STCI": { "$ref": "#/$defs/metricBand01" },
+        "CDL": { "$ref": "#/$defs/metricBand01" },
+        "ARR": { "$ref": "#/$defs/metricBand01" }
+      }
+    },
+
+    "sanityPolicy": {
+      "type": "object",
+      "description": "Policy for how SANITY_CORE should treat excursions and perturbations along this lane.",
+      "additionalProperties": false,
+      "required": [
+        "maxDetDeltaPerTraversal",
+        "maxCdlDeltaPerTraversal",
+        "allowedExcursionRatio",
+        "stabilityClass"
+      ],
+      "properties": {
+        "stabilityClass": {
+          "type": "string",
+          "enum": [
+            "stable",
+            "tense",
+            "liminal-fragile",
+            "catastrophic-edge"
+          ],
+          "description": "Qualitative class for routing and safety policies."
+        },
+        "maxDetDeltaPerTraversal": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Maximum DET change allowed over a single full traversal of this lane."
+        },
+        "maxCdlDeltaPerTraversal": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum CDL change allowed per full traversal."
+        },
+        "allowedExcursionRatio": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of traversal steps allowed to leave target bands before SANITY_CORE must clamp or reroute."
+        },
+        "sanityFailureMode": {
+          "type": "string",
+          "enum": [
+            "reroute",
+            "cooldown-required",
+            "lockout",
+            "soft-break"
+          ],
+          "description": "What SANITY_CORE should request when bands are violated persistently."
+        }
+      }
+    },
+
+    "safetyEnvelope": {
+      "type": "object",
+      "description": "Optional safety caps derived from consent/budget policies and Dead-Ledger decisions.",
+      "additionalProperties": false,
+      "properties": {
+        "maxDetPerSessionOnLane": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxTraversalsPerSession": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+
+    "telemetryHints": {
+      "type": "object",
+      "description": "Hints for how to log and analyze lane stability (for UEC/EMD/STCI/CDL/ARR calibration).",
+      "additionalProperties": false,
+      "properties": {
+        "logBucketId": {
+          "type": "string",
+          "description": "Optional grouping key for telemetry aggregation."
+        },
+        "expectedTraversalCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Opaque Dead-Ledger reference anchoring this lane stability contract."
+    },
+
+    "notes": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Designer-facing rationale and commentary; ignored by runtime."
+    }
+  },
+
+  "$defs": {
+    "invariantBand01": {
+      "type": "array",
+      "description": "Min, max for a 0.0–1.0 normalized invariant.",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "invariantBandDet": {
+      "type": "array",
+      "description": "Min, max for DET, 0.0–10.0 as in the canonical spine.",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 10.0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "metricBand01": {
+      "type": "array",
+      "description": "Min, max for a 0.0–1.0 sanity/entertainment metric.",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
+}
