@@ -1,0 +1,654 @@
+{
+  "$id": "schema://HorrorPlace-Neural-Resonance-Lab/bci-mapping-request-response-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BCI Mapping Request/Response v1",
+  "description": "Schema-first definition of the BciMappingRequest/BciMappingResponse pair used as the sole JSON integration surface for the unified BCI mapping kernel.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "request": {
+      "type": "object",
+      "title": "BciMappingRequest",
+      "description": "Everything the mapping kernel needs for a single tick.",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "tickSeconds",
+        "playerId",
+        "regionId",
+        "tileId",
+        "invariants",
+        "metrics",
+        "bciSummary",
+        "csi",
+        "safetyProfile",
+        "contractContext"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier for this mapping tick; used to join with NDJSON telemetry."
+        },
+        "tickSeconds": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 1.0,
+          "description": "Duration of this tick in seconds (e.g. 0.0167 for 60 Hz)."
+        },
+        "playerId": {
+          "type": "integer"
+        },
+        "regionId": {
+          "type": "integer"
+        },
+        "tileId": {
+          "type": "integer"
+        },
+        "invariants": {
+          "type": "object",
+          "title": "InvariantsSlice",
+          "description": "Canonical invariants normalized to [0,1] or [0,10].",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "type": "string"
+            },
+            "cic": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "lsg": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "aos": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "det": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 10.0
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "title": "EntertainmentSlice",
+          "description": "Normalized entertainment metrics derived from feature envelopes.",
+          "additionalProperties": false,
+          "required": [
+            "uec",
+            "emd",
+            "stci",
+            "cdl",
+            "arr"
+          ],
+          "properties": {
+            "uec": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "emd": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "stci": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "cdl": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "arr": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "detEstimate": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 10.0
+            }
+          }
+        },
+        "bciSummary": {
+          "type": "object",
+          "title": "BciSummary",
+          "description": "High-level BCI state for this tick.",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "stressScore",
+            "visualOverloadIndex",
+            "stressBand",
+            "attentionBand",
+            "startleSpike",
+            "signalQuality"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "type": "string"
+            },
+            "stressScore": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "visualOverloadIndex": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "stressBand": {
+              "type": "string",
+              "enum": [
+                "Low",
+                "Medium",
+                "High",
+                "Extreme"
+              ]
+            },
+            "attentionBand": {
+              "type": "string",
+              "enum": [
+                "Distracted",
+                "Neutral",
+                "Focused",
+                "HyperFocused"
+              ]
+            },
+            "startleSpike": {
+              "type": "boolean"
+            },
+            "signalQuality": {
+              "type": "string",
+              "enum": [
+                "Good",
+                "Degraded",
+                "Unavailable"
+              ]
+            }
+          }
+        },
+        "csi": {
+          "type": "object",
+          "title": "CsiState",
+          "description": "Cumulative stress index state for this tick.",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "pressureSignal",
+            "weight",
+            "bias"
+          ],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "pressureSignal": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "bias": {
+              "type": "number",
+              "minimum": -1.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "safetyProfile": {
+          "type": "object",
+          "title": "BciSafetyProfileRef",
+          "description": "Reference to the active safety profile for this tick.",
+          "additionalProperties": false,
+          "required": [
+            "profileId",
+            "schemaVersion",
+            "tier"
+          ],
+          "properties": {
+            "profileId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "schemaVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tier": {
+              "type": "string",
+              "enum": [
+                "lab",
+                "standard",
+                "mature",
+                "research"
+              ]
+            }
+          }
+        },
+        "contractContext": {
+          "type": "object",
+          "title": "ContractContextRef",
+          "description": "Policy context governing this mapping tick.",
+          "additionalProperties": false,
+          "required": [
+            "regionClass",
+            "policyEnvelopeId",
+            "seedContractId"
+          ],
+          "properties": {
+            "regionClass": {
+              "type": "string",
+              "minLength": 1
+            },
+            "policyEnvelopeId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "seedContractId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "personaMode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "bindingHints": {
+          "type": "object",
+          "title": "BindingHints",
+          "description": "Optional hints to guide binding resolution.",
+          "additionalProperties": false,
+          "properties": {
+            "preferredBindingId": {
+              "type": "string"
+            },
+            "disfavoredBindingIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "title": "BciMappingResponse",
+      "description": "Kernel outputs for a single mapping tick.",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "metrics",
+        "bciSummary",
+        "csi",
+        "outputs",
+        "telemetry"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metrics": {
+          "type": "object",
+          "title": "UpdatedEntertainmentSlice",
+          "description": "Updated entertainment metrics after mapping.",
+          "additionalProperties": false,
+          "required": [
+            "uec",
+            "emd",
+            "stci",
+            "cdl",
+            "arr"
+          ],
+          "properties": {
+            "uec": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "emd": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "stci": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "cdl": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "arr": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "bciSummary": {
+          "type": "object",
+          "title": "UpdatedBciSummary",
+          "description": "Updated BciSummary after mapping.",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "stressScore",
+            "visualOverloadIndex",
+            "stressBand",
+            "attentionBand",
+            "startleSpike",
+            "signalQuality"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "type": "string"
+            },
+            "stressScore": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "visualOverloadIndex": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "stressBand": {
+              "type": "string",
+              "enum": [
+                "Low",
+                "Medium",
+                "High",
+                "Extreme"
+              ]
+            },
+            "attentionBand": {
+              "type": "string",
+              "enum": [
+                "Distracted",
+                "Neutral",
+                "Focused",
+                "HyperFocused"
+              ]
+            },
+            "startleSpike": {
+              "type": "boolean"
+            },
+            "signalQuality": {
+              "type": "string",
+              "enum": [
+                "Good",
+                "Degraded",
+                "Unavailable"
+              ]
+            }
+          }
+        },
+        "csi": {
+          "type": "object",
+          "title": "UpdatedCsiState",
+          "description": "Updated CSI state.",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "title": "BciMappingOutputs",
+          "description": "Visual, audio, and haptic outputs, all in [0,1].",
+          "additionalProperties": false,
+          "required": [
+            "visual",
+            "audio",
+            "haptics"
+          ],
+          "properties": {
+            "visual": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            },
+            "audio": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            },
+            "haptics": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        },
+        "telemetry": {
+          "type": "object",
+          "title": "BciMappingTelemetry",
+          "description": "Telemetry block capturing binding selection, caps, and perf.",
+          "additionalProperties": false,
+          "required": [
+            "bindingSelection",
+            "caps",
+            "violations",
+            "performance",
+            "debug"
+          ],
+          "properties": {
+            "bindingSelection": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "score",
+                "priority",
+                "tierWeight",
+                "specificity",
+                "distance",
+                "candidateCount",
+                "hintRejected"
+              ],
+              "properties": {
+                "bindingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "bindingSchemaVersion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "priority": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "tierWeight": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "specificity": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "distance": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "candidateCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "hintRejected": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "caps": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "det",
+                "csi",
+                "channels"
+              ],
+              "properties": {
+                "det": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 10.0
+                },
+                "csi": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "channels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "limiter",
+                      "intensityCap",
+                      "clampRatio"
+                    ],
+                    "properties": {
+                      "limiter": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                      },
+                      "intensityCap": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                      },
+                      "clampRatio": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "violations": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "hasViolation",
+                "types"
+              ],
+              "properties": {
+                "hasViolation": {
+                  "type": "boolean"
+                },
+                "types": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            },
+            "performance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "evalNanoseconds",
+                "evalErrors"
+              ],
+              "properties": {
+                "evalNanoseconds": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "evalErrors": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "debug": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "request",
+    "response"
+  ]
+}
