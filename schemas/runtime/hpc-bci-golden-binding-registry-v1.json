@@ -1,0 +1,348 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HpcBciGoldenBindingRegistryEntry.v1",
+  "description": "Schema for NDJSON entries that record validated 'golden' HorrorMappingConfig.BCI.v1 bindings which remain safe under brute-force BciSummary and invariant sweeps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaVersion",
+    "bindingProfileRef",
+    "sweepConfigRef",
+    "familyCode",
+    "tierId",
+    "status",
+    "safetySummary",
+    "capsObserved",
+    "metricsSummary",
+    "invariantCoverage"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Opaque identifier for this golden-binding registry entry."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "hpc-bci-golden-binding-registry-v1"
+    },
+    "bindingProfileRef": {
+      "type": "object",
+      "description": "Reference to the underlying HorrorMappingConfig.BCI.v1 profile that was evaluated.",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "profileId",
+        "schemaRef"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Repository that owns the mapping profile registry or file."
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the registry or file that contains the mapping profile."
+        },
+        "profileId": {
+          "type": "string",
+          "description": "Identifier of the mapping profile within the registry or file."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Canonical schema ID for HorrorMappingConfig.BCI.v1."
+        }
+      }
+    },
+    "sweepConfigRef": {
+      "type": "object",
+      "description": "Reference to the HpcBciGoldenBindingSweepConfig.v1 object used to validate this profile.",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "configId",
+        "schemaRef"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "configId": {
+          "type": "string"
+        },
+        "schemaRef": {
+          "type": "string",
+          "const": "hpc-bci-golden-binding-sweep-v1"
+        }
+      }
+    },
+    "familyCode": {
+      "type": "string",
+      "description": "Mapping family code as defined in HorrorMappingConfig.BCI.v1.",
+      "enum": [
+        "0xPKLIN",
+        "0xPKSIG",
+        "0xPKHYS",
+        "0xPKGEN"
+      ]
+    },
+    "tierId": {
+      "type": "string",
+      "description": "Safety/policy tier for which this golden binding is valid.",
+      "enum": [
+        "BCI_TIER_1",
+        "BCI_TIER_2",
+        "BCI_TIER_3"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "Golden binding status for this profile under the referenced sweep configuration.",
+      "enum": [
+        "GOLDEN",
+        "CONDITIONALLY_GOLDEN",
+        "REJECTED"
+      ]
+    },
+    "safetySummary": {
+      "type": "object",
+      "description": "Summary of safety results from the brute-force sweep.",
+      "additionalProperties": false,
+      "required": [
+        "capsBreached",
+        "hardCapBreaches",
+        "slopeCapBreaches",
+        "unsanitisedMetadataBreaches",
+        "maxTensionObserved",
+        "maxExposureAboveCapSecondsObserved"
+      ],
+      "properties": {
+        "capsBreached": {
+          "type": "boolean",
+          "description": "True if any safety cap was breached before clamping."
+        },
+        "hardCapBreaches": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of hard cap breaches (pre-clamp) across the grid."
+        },
+        "slopeCapBreaches": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of slope (rate-of-change) cap breaches across the grid."
+        },
+        "unsanitisedMetadataBreaches": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of violations related to metadata sanitisation."
+        },
+        "maxTensionObserved": {
+          "type": "number",
+          "description": "Maximum value of the derived tension envelope across all simulated trajectories."
+        },
+        "maxExposureAboveCapSecondsObserved": {
+          "type": "number",
+          "description": "Observed worst-case time spent near or above the tension cap."
+        }
+      }
+    },
+    "capsObserved": {
+      "type": "object",
+      "description": "Observed effective caps and their relationship to policy limits.",
+      "additionalProperties": false,
+      "required": [
+        "bindingClampPolicyId",
+        "intensityPolicyId",
+        "channels"
+      ],
+      "properties": {
+        "bindingClampPolicyId": {
+          "type": "string",
+          "description": "ID of the HpcBciBindingClampPolicy.v1 used during evaluation."
+        },
+        "intensityPolicyId": {
+          "type": "string",
+          "description": "ID of the bci-intensity-policy-v1 applied."
+        },
+        "channels": {
+          "type": "array",
+          "description": "Per-channel cap observations.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "channel",
+              "minCap",
+              "maxCap",
+              "maxDeltaPerSecondCap",
+              "maxValueObserved",
+              "maxDeltaPerSecondObserved"
+            ],
+            "properties": {
+              "channel": {
+                "type": "string",
+                "enum": [
+                  "tension",
+                  "sprintMul",
+                  "flashlightJitterAmp",
+                  "flashlightJitterFreq",
+                  "tunnelRadiusInner",
+                  "tunnelOpacity",
+                  "whisperIntensity",
+                  "encounterSpawnMul"
+                ]
+              },
+              "minCap": {
+                "type": "number"
+              },
+              "maxCap": {
+                "type": "number"
+              },
+              "maxDeltaPerSecondCap": {
+                "type": "number"
+              },
+              "maxValueObserved": {
+                "type": "number"
+              },
+              "maxDeltaPerSecondObserved": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "metricsSummary": {
+      "type": "object",
+      "description": "Aggregate statistics over the BciSummary metric grid.",
+      "additionalProperties": false,
+      "required": [
+        "gridPointsEvaluated",
+        "metricsEvaluated"
+      ],
+      "properties": {
+        "gridPointsEvaluated": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of (metric, invariant) grid points evaluated for this profile."
+        },
+        "metricsEvaluated": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "metric",
+              "minInput",
+              "maxInput"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string",
+                "enum": [
+                  "UEC",
+                  "EMD",
+                  "STCI",
+                  "CDL",
+                  "ARR"
+                ]
+              },
+              "minInput": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxInput": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "invariantCoverage": {
+      "type": "object",
+      "description": "Coverage summary over the invariant grid.",
+      "additionalProperties": false,
+      "required": [
+        "invariantsEvaluated"
+      ],
+      "properties": {
+        "invariantsEvaluated": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "invariant",
+              "minInput",
+              "maxInput"
+            ],
+            "properties": {
+              "invariant": {
+                "type": "string",
+                "enum": [
+                  "CIC",
+                  "DET",
+                  "SHCI",
+                  "AOS",
+                  "HVF",
+                  "LSG",
+                  "RWF"
+                ]
+              },
+              "minInput": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxInput": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "runtimeHints": {
+      "type": "object",
+      "description": "Optional hints for runtime selection and tooling.",
+      "additionalProperties": false,
+      "properties": {
+        "effectArchetype": {
+          "type": "string",
+          "description": "High-level effect category, such as sprint-inhibition or tunnel-vision."
+        },
+        "regionArchetype": {
+          "type": "string",
+          "description": "Intended region type, e.g. hub, corridor, apex, safe-room."
+        },
+        "recommendedEngineUsage": {
+          "type": "string",
+          "description": "Short guidance for HorrorDirector or tooling on where this binding is safe to apply."
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "Identifier for the tool or pipeline that produced this registry entry."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional short human-readable note about this golden binding entry."
+    }
+  }
+}
