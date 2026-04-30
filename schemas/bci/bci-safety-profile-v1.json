@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:HorrorPlace-Constellation-Contracts:bci-safety-profile-v1.json",
   "title": "BCI Safety Profile v1",
-  "description": "Neurorights-aligned caps for BCI mappings: CSI/DET limits, max intensity, rate limits, recovery windows.",
+  "description": "Neurorights-aligned caps for BCI mappings. These limits are HARD and must be enforced in Rust geometry kernels: caps on CSI, DET, per-channel intensity, rate limits, and recovery windows. Lua must not implement safety logic.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,8 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.0.0",
+      "description": "Schema version for BCI safety profiles."
     },
     "profileId": {
       "type": "string",
@@ -30,11 +31,11 @@
         "mature",
         "research"
       ],
-      "description": "Policy tier alignment."
+      "description": "Policy tier alignment. Lab profiles are experimental; standard/mature are allowed in production."
     },
     "channelCaps": {
       "type": "object",
-      "description": "Per-channel caps for intensity and rate of change.",
+      "description": "Per-channel caps for normalized intensity and rate of change. These are base caps before stress gates and safe-zone multipliers.",
       "additionalProperties": false,
       "required": [
         "visual",
@@ -55,7 +56,7 @@
     },
     "timingCaps": {
       "type": "object",
-      "description": "Global caps for CSI/DET and allowed drift over time.",
+      "description": "Global caps for CSI/DET and allowed DET drift over time.",
       "additionalProperties": false,
       "required": [
         "maxCsi",
@@ -67,25 +68,25 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "Maximum allowed CSI in this profile."
+          "description": "Maximum allowed CSI for this profile. The kernel must clamp any output that would exceed this CSI."
         },
         "maxDet": {
           "type": "number",
           "minimum": 0,
           "maximum": 10,
-          "description": "Maximum allowed DET in this profile."
+          "description": "Maximum allowed DET (Dread Exposure Time) for this profile on the canonical 0–10 scale."
         },
         "maxDetDriftPerMinute": {
           "type": "number",
           "minimum": 0,
           "maximum": 10,
-          "description": "Maximum allowed DET drift per minute."
+          "description": "Maximum allowed change in DET per minute. Used to prevent rapid escalation."
         }
       }
     },
     "recoveryPolicy": {
       "type": "object",
-      "description": "How quickly and how far mappings must back off after spikes or overload.",
+      "description": "Mandatory back-off behavior after startle spikes or overload. Implemented as a cooldown/safe-zone envelope in Rust.",
       "additionalProperties": false,
       "required": [
         "startleRecoverySeconds",
@@ -97,17 +98,17 @@
           "type": "number",
           "minimum": 0,
           "maximum": 120,
-          "description": "Minimum time to hold conservative caps after a startle spike."
+          "description": "Minimum duration (seconds) the kernel must keep conservative caps after a startle spike."
         },
         "safeZoneDurationSeconds": {
           "type": "number",
           "minimum": 0,
           "maximum": 600,
-          "description": "Duration of enforced safe-zone caps after overload."
+          "description": "Duration (seconds) of enforced safe-zone caps after an overload or extreme stress event."
         },
         "safeZoneCaps": {
           "type": "object",
-          "description": "Caps applied during safe zones per channel.",
+          "description": "Per-channel caps applied during safe zones. These override base channelCaps while recovery is active.",
           "additionalProperties": false,
           "required": [
             "visual",
@@ -130,7 +131,7 @@
     },
     "stressGates": {
       "type": "object",
-      "description": "Stress-band dependent caps and overload thresholds.",
+      "description": "Stress-band-dependent multipliers and overload thresholds. Gates are keyed to BciSummary stressBand and visualOverloadIndex.",
       "additionalProperties": false,
       "required": [
         "stressBandCaps",
@@ -139,7 +140,7 @@
       "properties": {
         "stressBandCaps": {
           "type": "object",
-          "description": "Per-stress-band multipliers applied on top of base caps.",
+          "description": "Per-stress-band multipliers applied on top of base caps. Bands must match BciSummary.stressBand values.",
           "additionalProperties": false,
           "properties": {
             "Low": {
@@ -158,7 +159,7 @@
         },
         "overloadThreshold": {
           "type": "object",
-          "description": "Thresholds at which the system must enter safe-zone behavior.",
+          "description": "Thresholds at which the kernel must enter safe-zone behavior based on visualOverloadIndex and stress band.",
           "additionalProperties": false,
           "required": [
             "visualOverloadIndex",
@@ -168,14 +169,16 @@
             "visualOverloadIndex": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1
+              "maximum": 1,
+              "description": "Visual overload threshold in [0,1] beyond which safe-zone behavior must be triggered."
             },
             "extremeStressBand": {
               "type": "string",
               "enum": [
                 "High",
                 "Extreme"
-              ]
+              ],
+              "description": "Minimum stressBand value that, combined with overload, triggers safe-zone logic."
             }
           }
         }
@@ -183,7 +186,7 @@
     },
     "bciInfluenceCaps": {
       "type": "object",
-      "description": "Caps on how much BCI can influence outputs relative to baseline.",
+      "description": "Caps on how much BCI can influence outputs relative to non-BCI baselines.",
       "additionalProperties": false,
       "required": [
         "maxBciContribution"
@@ -193,13 +196,13 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "Max fraction of output attributable to BCI vs baseline."
+          "description": "Maximum fraction of any output that may be attributable to BCI-driven adjustments instead of baseline content."
         }
       }
     },
     "meta": {
       "type": "object",
-      "description": "Optional metadata for this safety profile.",
+      "description": "Optional metadata for documentation, search, and governance.",
       "additionalProperties": false,
       "properties": {
         "notes": {
@@ -208,7 +211,7 @@
         },
         "labels": {
           "type": "array",
-          "description": "Tags or labels for search and grouping.",
+          "description": "Tags or labels for search and grouping (e.g., corridor, tutorial, low-intensity).",
           "items": {
             "type": "string",
             "minLength": 1
@@ -229,12 +232,14 @@
         "maxIntensity": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Hard cap on normalized intensity for this channel in normal operation."
         },
         "maxDeltaPerSecond": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Hard cap on normalized per-second change for this channel. Used to prevent sudden jumps."
         }
       }
     },
@@ -248,7 +253,8 @@
         "maxIntensity": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Maximum normalized intensity for this channel while in safe-zone/recovery."
         }
       }
     },
@@ -282,7 +288,8 @@
         "intensityMultiplier": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Multiplier applied to base caps for this stress band or channel. 1.0 leaves caps unchanged; lower values tighten them."
         }
       }
     }
