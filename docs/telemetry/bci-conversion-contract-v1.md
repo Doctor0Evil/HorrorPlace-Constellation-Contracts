@@ -15,8 +15,8 @@ Supported input formats (implementation-agnostic):
 ## Output Format
 
 - **Format**: NDJSON (one JSON object per line)
-- **Schema**: `bci-feature-envelope-v1.json`
-- **Filename convention**: `*.bci-features.ndjson`
+- **Schema**: `bci-feature-envelope-v1.json` (canonical schema ID: `schema:HorrorPlace-Constellation-Contracts:bci-feature-envelope-v1.json`)
+- **Filename convention**: `*.bci-features.ndjson` (non-normative; schema ID is canonical)
 - **Encoding**: UTF-8, no BOM
 
 ## Mandatory Anonymization
@@ -36,19 +36,13 @@ Converters MUST validate that:
 
 ## Feature Extraction Requirements
 
-Each feature object in the `features[]` array MUST include:
-- `featureId`: Unique identifier within the window
-- `featureType`: One of the canonical enum values
-- `channel`: Electrode/channel label (10-20 system preferred)
-- `value`: Numeric feature value (range depends on type)
-
-Optional but recommended:
-- `bandPowers`: Object with delta/theta/alpha/beta/gamma sub-values
-- `arousalScore`, `valenceScore`: Affective estimates in [0,1]
+Each feature object in the `features[]` array MUST conform to the `oneOf` schema:
+- **ScalarFeature**: `featureType` in ["arousal_score", "valence_score", "asymmetry_index", "coherence_metric"] with `value` in [-100, 100]
+- **BandPowersFeature**: `featureType` in ["bandpower_delta", "bandpower_theta", "bandpower_alpha", "bandpower_beta", "bandpower_gamma"] with `bandPowers` object containing delta/theta/alpha/beta/gamma in [0,1]
 
 ## Validation
 
-All output MUST pass JSON Schema validation against `bci-feature-envelope-v1.json` before being written to the staging area.
+All output MUST pass JSON Schema validation against `bci-feature-envelope-v1.json` before being written to the staging area. Use the `bci_schema_validator` CLI tool in CI.
 
 ## Example Flow
 
@@ -57,12 +51,17 @@ hpc-bci-convert \
   --input data/gameemo_session_042.edf \
   --output staging/session_042.bci-features.ndjson \
   --contract contracts/gameemo-converter-v1.json
+
+# Validate output
+bci-schema-validator \
+  --schema schemas/telemetry/bci-feature-envelope-v1.json \
+  --input staging/session_042.bci-features.ndjson
 ```
 
 ## Prohibited Fields
 
-The following fields are explicitly forbidden in output:
+Enforced via `additionalProperties: false` in schema:
 - `subjectId`, `playerId`, `userId`
 - `rawWaveform`, `sampleArray`, `timeSeries`
 - `demographics`, `medicalHistory`, `consentStatus`
-- Any field not defined in the schema (`additionalProperties: false`)
+- Any field not explicitly defined in the schema
