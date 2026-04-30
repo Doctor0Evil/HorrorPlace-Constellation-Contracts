@@ -109,6 +109,7 @@ fn main() -> anyhow::Result<()> {
                 continue;
             }
         };
+
         match serde_json::from_str::<RepoManifest>(&text) {
             Ok(m) => {
                 manifest_files_for_report.push(path.to_string_lossy().to_string());
@@ -159,7 +160,9 @@ fn main() -> anyhow::Result<()> {
                 );
             }
             if !report.fixes.is_empty() {
-                println!("Fix suggestions available (enable --json --emit-fixes to see full patch data).");
+                println!(
+                    "Fix suggestions available (enable --json --emit-fixes to see full patch data)."
+                );
             }
         }
     }
@@ -194,6 +197,26 @@ fn find_manifest_files(root: &Path) -> Vec<PathBuf> {
     results
 }
 
+fn wiring_repo_to_manifest_key(name: &str) -> String {
+    match name {
+        "Horror.Place" => "HorrorPlace".to_string(),
+        "HorrorPlace-Constellation-Contracts" => "HorrorPlaceConstellationContracts".to_string(),
+        "HorrorPlace-Codebase-of-Death" => "HorrorPlaceCodebaseOfDeath".to_string(),
+        "HorrorPlace-Black-Archivum" => "HorrorPlaceBlackArchivum".to_string(),
+        "HorrorPlace-Spectral-Foundry" => "HorrorPlaceSpectralFoundry".to_string(),
+        "HorrorPlace-Atrocity-Seeds" => "HorrorPlaceAtrocitySeeds".to_string(),
+        "Horror.Place-Orchestrator" => "HorrorPlaceOrchestrator".to_string(),
+        "HorrorPlace-Dead-Ledger-Network" => "HorrorPlaceDeadLedgerNetwork".to_string(),
+        "HorrorPlace-RotCave" => "HorrorPlaceRotCave".to_string(),
+        "HorrorPlace-Obscura-Nexus" => "HorrorPlaceObscuraNexus".to_string(),
+        "HorrorPlace-Liminal-Continuum" => "HorrorPlaceLiminalContinuum".to_string(),
+        "HorrorPlace-Process-Gods-Research" => "HorrorPlaceProcessGodsResearch".to_string(),
+        "HorrorPlace-Redacted-Chronicles" => "HorrorPlaceRedactedChronicles".to_string(),
+        "HorrorPlace-Neural-Resonance-Lab" => "HorrorPlaceNeuralResonanceLab".to_string(),
+        other => other.to_string()
+    }
+}
+
 fn audit(
     wiring: &WiringPlan,
     manifests: &HashMap<String, RepoManifest>,
@@ -208,26 +231,6 @@ fn audit(
         spine_object_kinds.insert(ok.name.clone());
         for route in &ok.routes {
             spine_repos.insert(format!("{:?}", route.repo));
-        }
-    }
-
-    fn wiring_repo_to_manifest_key(name: &str) -> String {
-        match name {
-            "Horror.Place" => "HorrorPlace".to_string(),
-            "HorrorPlace-Constellation-Contracts" => "HorrorPlaceConstellationContracts".to_string(),
-            "HorrorPlace-Codebase-of-Death" => "HorrorPlaceCodebaseOfDeath".to_string(),
-            "HorrorPlace-Black-Archivum" => "HorrorPlaceBlackArchivum".to_string(),
-            "HorrorPlace-Spectral-Foundry" => "HorrorPlaceSpectralFoundry".to_string(),
-            "HorrorPlace-Atrocity-Seeds" => "HorrorPlaceAtrocitySeeds".to_string(),
-            "Horror.Place-Orchestrator" => "HorrorPlaceOrchestrator".to_string(),
-            "HorrorPlace-Dead-Ledger-Network" => "HorrorPlaceDeadLedgerNetwork".to_string(),
-            "HorrorPlace-RotCave" => "HorrorPlaceRotCave".to_string(),
-            "HorrorPlace-Obscura-Nexus" => "HorrorPlaceObscuraNexus".to_string(),
-            "HorrorPlace-Liminal-Continuum" => "HorrorPlaceLiminalContinuum".to_string(),
-            "HorrorPlace-Process-Gods-Research" => "HorrorPlaceProcessGodsResearch".to_string(),
-            "HorrorPlace-Redacted-Chronicles" => "HorrorPlaceRedactedChronicles".to_string(),
-            "HorrorPlace-Neural-Resonance-Lab" => "HorrorPlaceNeuralResonanceLab".to_string(),
-            other => other.to_string()
         }
     }
 
@@ -366,9 +369,11 @@ fn generate_fixes(issues: &[AuditIssue], wiring: &WiringPlan) -> Vec<FixSuggesti
     for issue in issues {
         match issue.kind {
             AuditIssueKind::WiringObjectKindMissingInManifest => {
-                if let (Some(repo_name), Some(ref object_kind)) = (&issue.repoName, &issue.objectKind)
+                if let (Some(repo_name), Some(ref object_kind)) =
+                    (&issue.repoName, &issue.objectKind)
                 {
-                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    let manifest_file =
+                        format!("manifests/repo-manifest.hpc.{}.json", repo_name);
                     fixes.push(FixSuggestion {
                         kind: FixKind::ManifestAddAllowedObjectKind,
                         targetFile: manifest_file,
@@ -385,9 +390,11 @@ fn generate_fixes(issues: &[AuditIssue], wiring: &WiringPlan) -> Vec<FixSuggesti
                 }
             }
             AuditIssueKind::ManifestObjectKindMissingInWiring => {
-                if let (Some(repo_name), Some(ref object_kind)) = (&issue.repoName, &issue.objectKind)
+                if let (Some(repo_name), Some(ref object_kind)) =
+                    (&issue.repoName, &issue.objectKind)
                 {
-                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    let manifest_file =
+                        format!("manifests/repo-manifest.hpc.{}.json", repo_name);
                     fixes.push(FixSuggestion {
                         kind: FixKind::ManifestRemoveAllowedObjectKind,
                         targetFile: manifest_file,
@@ -405,7 +412,8 @@ fn generate_fixes(issues: &[AuditIssue], wiring: &WiringPlan) -> Vec<FixSuggesti
             }
             AuditIssueKind::WiringMissingManifest => {
                 if let Some(repo_name) = &issue.repoName {
-                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    let manifest_file =
+                        format!("manifests/repo-manifest.hpc.{}.json", repo_name);
                     let object_kinds = wiring_object_kinds_per_repo
                         .get(repo_name)
                         .cloned()
@@ -434,7 +442,8 @@ fn generate_fixes(issues: &[AuditIssue], wiring: &WiringPlan) -> Vec<FixSuggesti
             }
             AuditIssueKind::WiringTierMismatch => {
                 if let (Some(repo_name), Some(wiring_tier)) = (&issue.repoName, &issue.tier) {
-                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    let manifest_file =
+                        format!("manifests/repo-manifest.hpc.{}.json", repo_name);
                     fixes.push(FixSuggestion {
                         kind: FixKind::ManifestAdjustTier,
                         targetFile: manifest_file,
