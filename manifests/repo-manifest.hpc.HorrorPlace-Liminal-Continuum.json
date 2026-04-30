@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Liminal-Continuum",
+  "tier": "T2-vault",
+  "kind": "CONTENT_VAULT_REPO",
+  "description": "Vault for liminal structures, thresholds, border-region contracts, and LSG-heavy environment descriptors.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "liminalContractCard",
+    "thresholdEnvelope"
+  ],
+  "defaultPaths": {
+    "liminalContractCard": "liminal/",
+    "thresholdEnvelope": "thresholds/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/liminal-contract-card-v1.json",
+    "schemas/contracts/threshold-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "May encode explicit descriptions of liminal spaces; ensure access controls are enforced."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All liminal contracts and threshold envelopes must declare schemaRef to their canonical schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Contracts must declare invariant focus (LSG, CIC, AOS) and link back to regionContractCard IDs."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 524288
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All liminalContractCard authoring must be routed via the spine."
+    }
+  },
+  "ciChecks": {
+    "validateLiminalContracts": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/liminal-contract-card-v1.json",
+        "--input-glob",
+        "liminal/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this repo to encode liminal structures and threshold behaviors that overlay region cards.",
+    "aiBehavior": [
+      "Only create liminalContractCard and thresholdEnvelope artifacts here.",
+      "Always anchor liminal contracts to existing regionContractCard IDs in Black-Archivum.",
+      "Treat LSG and HVF as primary invariants; tune metrics for subtle dread rather than explicit horror."
+    ]
+  }
+}
