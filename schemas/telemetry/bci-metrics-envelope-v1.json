@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/HorrorPlace-Constellation-Contracts/bci-metrics-envelope-v1.json",
+  "title": "BCI Metrics Envelope v1",
+  "description": "BCI-derived entertainment metrics window for HorrorPlace VM-Constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "windowId",
+    "sessionId",
+    "timestamp",
+    "source",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "windowId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier for the analysis window; should match the feature envelope when paired."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Pseudonymous identifier for the recording session; must not be a dataset subject ID."
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Window start time in Unix seconds (may be fractional)."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "featureEnvelopeId": {
+          "type": "string",
+          "description": "Optional reference to the originating feature envelope or NDJSON file identifier."
+        },
+        "calibrationProfileId": {
+          "type": "string",
+          "description": "Optional identifier for the calibration profile used to derive these metrics."
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uecBand",
+        "emdBand",
+        "stciBand",
+        "cdlBand",
+        "arrBand"
+      ],
+      "properties": {
+        "uecBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Unsettling Emotional Content band, normalized to [0,1]."
+        },
+        "emdBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Emerging Malevolence Dimension band, normalized to [0,1]."
+        },
+        "stciBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Spectral Threat Concealment Index band, normalized to [0,1]."
+        },
+        "cdlBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Cognitive Dissonance Level band, normalized to [0,1]."
+        },
+        "arrBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Affective Resonance Ratio band, normalized to [0,1]."
+        }
+      }
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "ema",
+            "kalman",
+            "static",
+            "ml-classifier",
+            "other"
+          ],
+          "description": "Method used to derive metrics from features."
+        },
+        "smoothingAlpha": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Optional alpha parameter when EMA or similar smoothing is used."
+        },
+        "modelId": {
+          "type": "string",
+          "description": "Optional identifier for the model used to compute metrics."
+        },
+        "featureMappingVersion": {
+          "type": "string",
+          "description": "Optional version string for the feature-to-metrics mapping spec."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "detEstimate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Optional DET estimate for this window, aligned with invariants DET range."
+        },
+        "overload": {
+          "type": "boolean",
+          "description": "Flag indicating that BCI suggests the player is overloaded for this window."
+        },
+        "underengaged": {
+          "type": "boolean",
+          "description": "Flag indicating that BCI suggests the player is under-engaged for this window."
+        }
+      }
+    }
+  }
+}
