@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Constellation-Contracts",
+  "tier": "T1-core",
+  "kind": "SCHEMA_SPINE_REPO",
+  "description": "Central schema spine repository containing routing spine, invariants spine, metrics spine, and core contract schemas for the Horror.Place constellation.",
+  "visibility": "public",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "moodContract",
+    "eventContract",
+    "regionContractCard",
+    "seedContractCard"
+  ],
+  "defaultPaths": {
+    "moodContract": "schemas/contracts/moods/",
+    "eventContract": "schemas/contracts/events/",
+    "regionContractCard": "schemas/contracts/regions/",
+    "seedContractCard": "schemas/contracts/seeds/"
+  },
+  "schemaWhitelist": [
+    "schemas/hpc-routing-spine.schema.json",
+    "schemas/core/invariants-spine.v1.json",
+    "schemas/core/entertainment-metrics-spine.v1.json",
+    "schemas/contracts/mood-contract-v1.json",
+    "schemas/contracts/event-contract-v1.json",
+    "schemas/contracts/region-contract-card-v1.json",
+    "schemas/contracts/seed-contract-card-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "T1-core schema repos must not contain raw narrative content; contract definitions only."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "All artifacts must include target metadata for routing and registry binding."
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All authoring requests must reference the routing spine for route resolution."
+    }
+  },
+  "ciChecks": {
+    "schemaValidation": {
+      "enabled": true,
+      "tool": "ajv",
+      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+    }
+  },
+  "authoringHints": {
+    "summary": "T1-core schema spine repo. Contains routing spine, invariants/metrics spines, and core contract schemas.",
+    "aiBehavior": [
+      "Always verify schemaRef before generating schema or spine artifacts",
+      "Route all objectKind T1-core schema requests through this repo",
+      "Ensure routing spine routes match manifest allowedObjectKinds"
+    ]
+  }
+}
