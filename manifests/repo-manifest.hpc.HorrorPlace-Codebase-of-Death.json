@@ -2,12 +2,13 @@
   "schemaVersion": "1.0.0",
   "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
   "repoName": "HorrorPlace-Codebase-of-Death",
-  "tier": "T2-vault",
+  "tier": "T1-core",
   "kind": "ENGINE_RUNTIME_REPO",
-  "description": "Core engine vault for Rust/Lua implementations of Horror.Place runtime APIs, including H.* orchestration modules, engine adapters, and behavior wiring.",
+  "description": "Runtime engine repo for Rust/Lua/GD implementations of Horror.Place runtime APIs, including H.* orchestration modules, engine adapters, and behavior wiring contracts.",
   "visibility": "private",
   "implicitDeny": true,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+
   "allowedObjectKinds": [
     "behaviorContractCard",
     "policyContractCard",
@@ -16,18 +17,23 @@
     "historySelectorRule",
     "dungeonNodeContract",
     "eventContract",
-    "regionContract"
+    "regionContractCard",
+    "mapFunctionAdapter"
   ],
+
   "defaultPaths": {
-    "behaviorContractCard": "behaviors/",
-    "policyContractCard": "policies/",
-    "styleContractCard": "styles/",
-    "historySelectorPattern": "selectors/patterns/",
-    "historySelectorRule": "selectors/rules/",
-    "dungeonNodeContract": "nodes/",
-    "eventContract": "events/",
-    "regionContract": "regions/"
+    "behaviorContractCard": "contracts/behaviors/",
+    "policyContractCard": "contracts/policies/",
+    "styleContractCard": "contracts/styles/",
+    "historySelectorPattern": "contracts/selectors/patterns/",
+    "historySelectorRule": "contracts/selectors/rules/",
+    "dungeonNodeContract": "contracts/nodes/",
+    "eventContract": "contracts/events/",
+    "regionContractCard": "contracts/regions/",
+    "mapFunctionAdapter": "enginelibrary/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
   },
+
   "schemaWhitelist": [
     "schemas/contracts/behavior-contract-card-v1.json",
     "schemas/contracts/policy-envelope-v1.json",
@@ -36,49 +42,85 @@
     "schemas/contracts/history-selector-rule-v1.json",
     "schemas/contracts/dungeon-node-contract-v1.json",
     "schemas/contracts/event-contract-v1.json",
-    "schemas/contracts/region-contract-card-v1.json"
+    "schemas/contracts/region-contract-card-v1.json",
+    "schemas/hpc-routing-spine.schema.json"
   ],
+
   "policies": {
     "POL001_OneFilePerRequest": {
       "enabled": true,
       "maxFilesPerRequest": 3
     },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "Runtime repo must not store raw narrative chapters; only contracts, code, and configuration."
+    },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All JSON artifacts (contracts, envelopes) must include a valid schemaRef pointing to an approved schema in this repo or HorrorPlace-Constellation-Contracts."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "All contract artifacts must include explicit target metadata (objectKind, tier, targetRepo, targetPath) for routing and registry binding."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 1048576
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "Any authoring or tooling that reads or writes contract artifacts here must use routingSpineRef for route resolution."
     }
   },
+
   "ciChecks": {
     "schemaValidation": {
       "enabled": true,
       "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "args": [
+        "--spec",
+        "draft2020",
+        "--validate",
+        "schemas/**/*.json"
+      ]
     },
     "routingLint": {
       "enabled": true,
       "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "args": [
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     },
     "rustBuild": {
       "enabled": true,
       "tool": "cargo",
-      "args": ["build", "--workspace", "--all-targets"]
+      "args": [
+        "build",
+        "--workspace",
+        "--all-targets"
+      ]
+    },
+    "luaLint": {
+      "enabled": true,
+      "tool": "luacheck",
+      "args": [
+        "enginelibrary/**/*.lua"
+      ]
     }
   },
+
   "authoringHints": {
-    "summary": "T2-vault engine runtime repo. Contains Rust/Lua implementations of runtime APIs and behavior contracts.",
+    "summary": "T1-core engine runtime repo. Contains Rust/Lua/GD implementations of runtime APIs and behavior contracts that adapt constellation contracts into live engine behavior.",
     "aiBehavior": [
-      "Always verify schemaRef before generating behavior or policy artifacts",
-      "Route engine-related contract requests to this repo",
-      "Ensure all behavior contracts reference valid H.* namespace patterns"
+      "Prefer generating behaviorContractCard, policyContractCard, styleContractCard, historySelectorPattern, historySelectorRule, dungeonNodeContract, eventContract, or regionContractCard files only when explicitly routed here via the spine.",
+      "Do not generate vault-only narrative or seed content in this repo.",
+      "Always verify schemaRef against schemaWhitelist before proposing or modifying JSON artifacts.",
+      "When generating or modifying mapFunctionAdapter code, reference contracts and regions by ID and objectKind, not by inlining contract data.",
+      "Assume that any contract written here will be consumed by Lua/GD adapters in enginelibrary/, and keep IDs, names, and invariants consistent with the routing spine."
     ]
   }
 }
