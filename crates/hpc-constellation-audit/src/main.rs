@@ -8,28 +8,27 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 mod wiring;
-use wiring::{WiringPlan, WiringRepo};
+use wiring::WiringPlan;
 
 #[derive(Parser, Debug)]
 #[command(name = "hpc-constellation-audit")]
 #[command(version)]
 #[command(about = "Audit wiring plan, repo manifests, and routing spine for consistency.", long_about = None)]
 struct Cli {
-    /// Root directory for repo-manifest files and spine.
     #[arg(long, default_value = ".")]
     root: String,
 
-    /// Wiring plan JSON file.
     #[arg(long, default_value = "docs/constellation-repo-wiring-plan.v1.json")]
     wiring: String,
 
-    /// Routing spine instance JSON file.
     #[arg(long, default_value = "spine/hpc-routing-spine-v1.json")]
     spine: String,
 
-    /// Print JSON report to stdout.
     #[arg(long)]
-    json: bool
+    json: bool,
+
+    #[arg(long)]
+    emit_fixes: bool
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -40,7 +39,7 @@ pub enum AuditIssueKind {
     ManifestObjectKindMissingInWiring,
     WiringRepoMissingInSpine,
     WiringObjectKindMissingInSpine,
-    SpineRouteRepoMissingInWiring,
+    SpineRouteRepoMissingInWiring
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -49,7 +48,33 @@ pub struct AuditIssue {
     pub message: String,
     pub repoName: Option<String>,
     pub objectKind: Option<String>,
-    pub tier: Option<String>,
+    pub tier: Option<String>
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub enum FixKind {
+    ManifestAddAllowedObjectKind,
+    ManifestRemoveAllowedObjectKind,
+    ManifestAddMissingRepoManifest,
+    ManifestAdjustTier,
+    WiringAddObjectKindForRepo,
+    WiringRemoveObjectKindForRepo,
+    WiringAdjustTier,
+    WiringAddRepo,
+    WiringRemoveRepo,
+    SpineAddObjectKindEntry,
+    SpineRemoveObjectKindEntry,
+    SpineAddRepoReference,
+    SpineRemoveRepoReference
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FixSuggestion {
+    pub kind: FixKind,
+    pub targetFile: String,
+    pub description: String,
+    pub jsonPointer: String,
+    pub patchValue: serde_json::Value
 }
 
 #[derive(Debug, Serialize)]
@@ -59,6 +84,7 @@ pub struct AuditReport {
     pub manifest_files: Vec<String>,
     pub issue_count: usize,
     pub issues: Vec<AuditIssue>,
+    pub fixes: Vec<FixSuggestion>
 }
 
 fn main() -> anyhow::Result<()> {
@@ -68,11 +94,9 @@ fn main() -> anyhow::Result<()> {
     let wiring_path = PathBuf::from(&cli.wiring);
     let spine_path = PathBuf::from(&cli.spine);
 
-    // 1. Load wiring plan.
     let wiring_text = fs::read_to_string(&wiring_path)?;
     let wiring_plan: WiringPlan = serde_json::from_str(&wiring_text)?;
 
-    // 2. Load manifests.
     let manifest_paths = find_manifest_files(&root);
     let mut manifests: HashMap<String, RepoManifest> = HashMap::new();
     let mut manifest_files_for_report = Vec::new();
@@ -96,18 +120,23 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    // 3. Load routing spine.
     let spine_text = fs::read_to_string(&spine_path)?;
     let spine: RoutingSpine = serde_json::from_str(&spine_text)?;
 
-    // 4. Run audit.
     let issues = audit(&wiring_plan, &manifests, &spine);
+    let fixes = if cli.emit_fixes {
+        generate_fixes(&issues, &wiring_plan)
+    } else {
+        Vec::new()
+    };
+
     let report = AuditReport {
         wiring_file: wiring_path.to_string_lossy().to_string(),
         spine_file: spine_path.to_string_lossy().to_string(),
         manifest_files: manifest_files_for_report,
         issue_count: issues.len(),
         issues,
+        fixes
     };
 
     if cli.json {
@@ -128,6 +157,9 @@ fn main() -> anyhow::Result<()> {
                     "- {:?}: {} (repo={:?}, objectKind={:?}, tier={:?})",
                     issue.kind, issue.message, issue.repoName, issue.objectKind, issue.tier
                 );
+            }
+            if !report.fixes.is_empty() {
+                println!("Fix suggestions available (enable --json --emit-fixes to see full patch data).");
             }
         }
     }
@@ -161,16 +193,14 @@ fn find_manifest_files(root: &Path) -> Vec<PathBuf> {
 
     results
 }
-// crates/hpc-constellation-audit/src/main.rs (continued)
 
 fn audit(
     wiring: &WiringPlan,
     manifests: &HashMap<String, RepoManifest>,
-    spine: &RoutingSpine,
+    spine: &RoutingSpine
 ) -> Vec<AuditIssue> {
     let mut issues = Vec::new();
 
-    // Build quick lookups.
     let mut spine_repos: HashSet<String> = HashSet::new();
     let mut spine_object_kinds: HashSet<String> = HashSet::new();
 
@@ -181,10 +211,6 @@ fn audit(
         }
     }
 
-    // Map repoName strings in wiring to manifest repo key ("HorrorPlace-Atrocity-Seeds" -> "HorrorPlaceAtrocitySeeds" style).
-    let manifest_repo_keys: HashSet<String> = manifests.keys().cloned().collect();
-
-    // Helper: convert wiring repoName to manifest key via RepoName enum Debug format.
     fn wiring_repo_to_manifest_key(name: &str) -> String {
         match name {
             "Horror.Place" => "HorrorPlace".to_string(),
@@ -196,21 +222,15 @@ fn audit(
             "Horror.Place-Orchestrator" => "HorrorPlaceOrchestrator".to_string(),
             "HorrorPlace-Dead-Ledger-Network" => "HorrorPlaceDeadLedgerNetwork".to_string(),
             "HorrorPlace-RotCave" => "HorrorPlaceRotCave".to_string(),
-            other => other.to_string(),
+            "HorrorPlace-Obscura-Nexus" => "HorrorPlaceObscuraNexus".to_string(),
+            "HorrorPlace-Liminal-Continuum" => "HorrorPlaceLiminalContinuum".to_string(),
+            "HorrorPlace-Process-Gods-Research" => "HorrorPlaceProcessGodsResearch".to_string(),
+            "HorrorPlace-Redacted-Chronicles" => "HorrorPlaceRedactedChronicles".to_string(),
+            "HorrorPlace-Neural-Resonance-Lab" => "HorrorPlaceNeuralResonanceLab".to_string(),
+            other => other.to_string()
         }
     }
 
-    // Build a map of wiring->objectKinds per repo for later checks.
-    let mut wiring_object_kinds_per_repo: HashMap<String, HashSet<String>> = HashMap::new();
-    for repo in &wiring.repos {
-        let key = wiring_repo_to_manifest_key(&repo.repoName);
-        wiring_object_kinds_per_repo
-            .entry(key)
-            .or_default()
-            .extend(repo.objectKinds.iter().map(|ok| ok.name.clone()));
-    }
-
-    // 1. Wiring ↔ Manifests
     for repo in &wiring.repos {
         let manifest_key = wiring_repo_to_manifest_key(&repo.repoName);
         let manifest = match manifests.get(&manifest_key) {
@@ -224,13 +244,12 @@ fn audit(
                     ),
                     repoName: Some(repo.repoName.clone()),
                     objectKind: None,
-                    tier: Some(repo.tier.clone()),
+                    tier: Some(repo.tier.clone())
                 });
                 continue;
             }
         };
 
-        // Tier match.
         let wiring_tier = &repo.tier;
         let manifest_tier = format!("{:?}", manifest.tier);
         if !manifest_tier.contains(wiring_tier) {
@@ -242,11 +261,10 @@ fn audit(
                 ),
                 repoName: Some(repo.repoName.clone()),
                 objectKind: None,
-                tier: Some(wiring_tier.clone()),
+                tier: Some(wiring_tier.clone())
             });
         }
 
-        // ObjectKinds: each wiring objectKind must appear in manifest.allowedObjectKinds.
         let allowed: HashSet<String> = manifest.allowedObjectKinds.iter().cloned().collect();
         for ok in &repo.objectKinds {
             if !allowed.contains(&ok.name) {
@@ -258,12 +276,11 @@ fn audit(
                     ),
                     repoName: Some(repo.repoName.clone()),
                     objectKind: Some(ok.name.clone()),
-                    tier: Some(repo.tier.clone()),
+                    tier: Some(repo.tier.clone())
                 });
             }
         }
 
-        // Manifest objectKinds that are not in wiring.
         for mk in &manifest.allowedObjectKinds {
             if !repo.objectKinds.iter().any(|ok| &ok.name == mk) {
                 issues.push(AuditIssue {
@@ -274,22 +291,21 @@ fn audit(
                     ),
                     repoName: Some(repo.repoName.clone()),
                     objectKind: Some(mk.clone()),
-                    tier: Some(repo.tier.clone()),
+                    tier: Some(repo.tier.clone())
                 });
             }
         }
     }
 
-    // 2. Wiring ↔ Routing spine
-    // For now, we check: (a) each wiring repo appears as a route target if the wiring implies routing, and
-    // (b) each wiring objectKind has a spine entry.
-    let wiring_repo_names: HashSet<String> =
-        wiring.repos.iter().map(|r| wiring_repo_to_manifest_key(&r.repoName)).collect();
+    let wiring_repo_names: HashSet<String> = wiring
+        .repos
+        .iter()
+        .map(|r| wiring_repo_to_manifest_key(&r.repoName))
+        .collect();
 
     for repo in &wiring.repos {
         let key = wiring_repo_to_manifest_key(&repo.repoName);
         if !spine_repos.contains(&key) {
-            // Not all repos must appear in spine, but we flag it to keep topology explicit.
             issues.push(AuditIssue {
                 kind: AuditIssueKind::WiringRepoMissingInSpine,
                 message: format!(
@@ -298,7 +314,7 @@ fn audit(
                 ),
                 repoName: Some(repo.repoName.clone()),
                 objectKind: None,
-                tier: Some(repo.tier.clone()),
+                tier: Some(repo.tier.clone())
             });
         }
         for ok in &repo.objectKinds {
@@ -311,27 +327,132 @@ fn audit(
                     ),
                     repoName: Some(repo.repoName.clone()),
                     objectKind: Some(ok.name.clone()),
-                    tier: Some(repo.tier.clone()),
+                    tier: Some(repo.tier.clone())
                 });
             }
         }
     }
 
-    // 3. SpineRouteRepoMissingInWiring: ensure all repos in spine are in wiring.
     for spine_repo_key in spine_repos {
         if !wiring_repo_names.contains(&spine_repo_key) {
             issues.push(AuditIssue {
                 kind: AuditIssueKind::SpineRouteRepoMissingInWiring,
                 message: format!(
-                    "Routing spine references repo key {:?} that does not appear in the wiring plan.",
+                    "Routing spine references repo key {} that does not appear in the wiring plan.",
                     spine_repo_key
                 ),
                 repoName: None,
                 objectKind: None,
-                tier: None,
+                tier: None
             });
         }
     }
 
     issues
+}
+
+fn generate_fixes(issues: &[AuditIssue], wiring: &WiringPlan) -> Vec<FixSuggestion> {
+    let mut fixes = Vec::new();
+
+    let mut wiring_object_kinds_per_repo: HashMap<String, HashSet<String>> = HashMap::new();
+    for repo in &wiring.repos {
+        let mut set = HashSet::new();
+        for ok in &repo.objectKinds {
+            set.insert(ok.name.clone());
+        }
+        wiring_object_kinds_per_repo.insert(repo.repoName.clone(), set);
+    }
+
+    for issue in issues {
+        match issue.kind {
+            AuditIssueKind::WiringObjectKindMissingInManifest => {
+                if let (Some(repo_name), Some(ref object_kind)) = (&issue.repoName, &issue.objectKind)
+                {
+                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    fixes.push(FixSuggestion {
+                        kind: FixKind::ManifestAddAllowedObjectKind,
+                        targetFile: manifest_file,
+                        description: format!(
+                            "Add objectKind={} to allowedObjectKinds for repo {} so it matches the wiring plan.",
+                            object_kind, repo_name
+                        ),
+                        jsonPointer: "/allowedObjectKinds".to_string(),
+                        patchValue: serde_json::json!({
+                            "op": "add",
+                            "value": object_kind
+                        })
+                    });
+                }
+            }
+            AuditIssueKind::ManifestObjectKindMissingInWiring => {
+                if let (Some(repo_name), Some(ref object_kind)) = (&issue.repoName, &issue.objectKind)
+                {
+                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    fixes.push(FixSuggestion {
+                        kind: FixKind::ManifestRemoveAllowedObjectKind,
+                        targetFile: manifest_file,
+                        description: format!(
+                            "Remove objectKind={} from allowedObjectKinds for repo {} or add it to the wiring plan.",
+                            object_kind, repo_name
+                        ),
+                        jsonPointer: "/allowedObjectKinds".to_string(),
+                        patchValue: serde_json::json!({
+                            "op": "remove",
+                            "value": object_kind
+                        })
+                    });
+                }
+            }
+            AuditIssueKind::WiringMissingManifest => {
+                if let Some(repo_name) = &issue.repoName {
+                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    let object_kinds = wiring_object_kinds_per_repo
+                        .get(repo_name)
+                        .cloned()
+                        .unwrap_or_default();
+                    fixes.push(FixSuggestion {
+                        kind: FixKind::ManifestAddMissingRepoManifest,
+                        targetFile: manifest_file,
+                        description: format!(
+                            "Create a new manifest for repo {} based on wiring plan (allowedObjectKinds from wiring).",
+                            repo_name
+                        ),
+                        jsonPointer: "".to_string(),
+                        patchValue: serde_json::json!({
+                            "schemaVersion": "1.0.0",
+                            "schemaRef": "schemas/core/repo-manifest-v1.json",
+                            "repoName": repo_name,
+                            "tier": issue.tier.clone().unwrap_or_else(|| "T1-core".to_string()),
+                            "kind": "TODO_KIND",
+                            "description": "TODO: fill description",
+                            "visibility": "private",
+                            "implicitDeny": true,
+                            "allowedObjectKinds": object_kinds.into_iter().collect::<Vec<_>>()
+                        })
+                    });
+                }
+            }
+            AuditIssueKind::WiringTierMismatch => {
+                if let (Some(repo_name), Some(wiring_tier)) = (&issue.repoName, &issue.tier) {
+                    let manifest_file = format!("manifests/repo-manifest.hpc.{}.json", repo_name);
+                    fixes.push(FixSuggestion {
+                        kind: FixKind::ManifestAdjustTier,
+                        targetFile: manifest_file,
+                        description: format!(
+                            "Align manifest tier with wiring plan for repo {}. Consider changing manifest.tier to {} or updating wiring.",
+                            repo_name, wiring_tier
+                        ),
+                        jsonPointer: "/tier".to_string(),
+                        patchValue: serde_json::json!({
+                            "op": "replace",
+                            "value": wiring_tier
+                        })
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fixes
 }
