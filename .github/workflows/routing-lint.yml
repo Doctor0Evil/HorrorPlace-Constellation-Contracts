@@ -35,13 +35,47 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Build hpc-routing-lint
-        run: |
-          cargo build --workspace --bin hpc-routing-lint
+        run: cargo build --workspace --bin hpc-routing-lint
 
       - name: Run routing lint
         run: |
-          # Adjust --root and --spine if your layout differs.
           cargo run --bin hpc-routing-lint -- \
             --root . \
+            --spine spine/hpc-routing-spine-v1.json \
+            --json
+
+  constellation-audit:
+    name: Constellation wiring audit
+    runs-on: ubuntu-latest
+    needs: routing-lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build audit tool
+        run: cargo build --workspace --bin hpc-constellation-audit
+
+      - name: Run constellation wiring audit
+        run: |
+          ./target/debug/hpc-constellation-audit \
+            --root . \
+            --wiring docs/constellation-repo-wiring-plan.v1.json \
             --spine spine/hpc-routing-spine-v1.json \
             --json
