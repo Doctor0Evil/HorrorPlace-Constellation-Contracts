@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Obscura-Nexus",
+  "tier": "T2-vault",
+  "kind": "CONTENT_VAULT_REPO",
+  "description": "Vault for cross-repo linkages, obscure connections, and experimental nexus contracts binding regions, personas, and events.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "nexusContractCard",
+    "linkageEnvelope"
+  ],
+  "defaultPaths": {
+    "nexusContractCard": "nexus/",
+    "linkageEnvelope": "linkage/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/nexus-contract-card-v1.json",
+    "schemas/contracts/linkage-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "May contain explicit cross-repo narrative motifs; restrict access via governance."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All nexus and linkage artifacts must use their canonical schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Nexus contracts must explicitly reference source and target artifacts by ID, not embedded content."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 524288
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Any AI-generated nexusContractCard must be routed via the spine to this repo."
+    }
+  },
+  "ciChecks": {
+    "validateNexusContracts": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/nexus-contract-card-v1.json",
+        "--input-glob",
+        "nexus/*.json"
+      ]
+    },
+    "validateLinkageEnvelopes": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/linkage-envelope-v1.json",
+        "--input-glob",
+        "linkage/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this vault for contracts that represent obscure, cross-repo connections rather than primary content.",
+    "aiBehavior": [
+      "Do not create primary moods, regions, seeds, or events here; only nexus and linkage structures.",
+      "Always reference artifacts in other repos via stable IDs and routing metadata.",
+      "Assume higher sensitivity than normal vaults; avoid using this repo for simple relationships."
+    ]
+  }
+}
