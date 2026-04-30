@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Codebase-of-Death",
+  "tier": "T2-vault",
+  "kind": "ENGINE_RUNTIME_REPO",
+  "description": "Core engine vault for Rust/Lua implementations of Horror.Place runtime APIs, including H.* orchestration modules, engine adapters, and behavior wiring.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "behaviorContractCard",
+    "policyContractCard",
+    "styleContractCard",
+    "historySelectorPattern",
+    "historySelectorRule",
+    "dungeonNodeContract",
+    "eventContract",
+    "regionContract"
+  ],
+  "defaultPaths": {
+    "behaviorContractCard": "behaviors/",
+    "policyContractCard": "policies/",
+    "styleContractCard": "styles/",
+    "historySelectorPattern": "selectors/patterns/",
+    "historySelectorRule": "selectors/rules/",
+    "dungeonNodeContract": "nodes/",
+    "eventContract": "events/",
+    "regionContract": "regions/"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/behavior-contract-card-v1.json",
+    "schemas/contracts/policy-envelope-v1.json",
+    "schemas/contracts/style-contract-card-v1.json",
+    "schemas/contracts/history-selector-pattern-v1.json",
+    "schemas/contracts/history-selector-rule-v1.json",
+    "schemas/contracts/dungeon-node-contract-v1.json",
+    "schemas/contracts/event-contract-v1.json",
+    "schemas/contracts/region-contract-card-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 3
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "All artifacts must include target metadata for routing and registry binding."
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All authoring requests must reference the routing spine for route resolution."
+    }
+  },
+  "ciChecks": {
+    "schemaValidation": {
+      "enabled": true,
+      "tool": "ajv",
+      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+    },
+    "rustBuild": {
+      "enabled": true,
+      "tool": "cargo",
+      "args": ["build", "--workspace", "--all-targets"]
+    }
+  },
+  "authoringHints": {
+    "summary": "T2-vault engine runtime repo. Contains Rust/Lua implementations of runtime APIs and behavior contracts.",
+    "aiBehavior": [
+      "Always verify schemaRef before generating behavior or policy artifacts",
+      "Route engine-related contract requests to this repo",
+      "Ensure all behavior contracts reference valid H.* namespace patterns"
+    ]
+  }
+}

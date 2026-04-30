@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Atrocity-Seeds",
+  "tier": "T2-vault",
+  "kind": "CONTENT_VAULT_REPO",
+  "description": "Dedicated repository for high-intensity seedContractCard entries and eventContract instances. Vault content repo for procedural horror seeds and encounter-level events.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "seedContractCard",
+    "eventContract"
+  ],
+  "defaultPaths": {
+    "seedContractCard": "seeds/",
+    "eventContract": "events/",
+    "policyContractCard": "policies/"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/seed-contract-card-v1.json",
+    "schemas/contracts/event-contract-v1.json",
+    "schemas/contracts/policy-envelope-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "All artifacts must include target metadata for routing and registry binding."
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All authoring requests must reference the routing spine for route resolution."
+    }
+  },
+  "ciChecks": {
+    "schemaValidation": {
+      "enabled": true,
+      "tool": "ajv",
+      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+    }
+  },
+  "authoringHints": {
+    "summary": "T2-vault content repo for seed and event contract instances. Schemas are defined in Horror.Place; instances live here.",
+    "aiBehavior": [
+      "Always verify schemaRef before generating seed or event artifacts",
+      "Route seedContractCard and eventContract T2-vault requests to this repo",
+      "Ensure all seeds reference valid regionContractCard and personaContractCard dependencies"
+    ]
+  }
+}

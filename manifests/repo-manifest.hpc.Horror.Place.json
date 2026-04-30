@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "Horror.Place",
+  "tier": "T1-core",
+  "kind": "SCHEMA_SPINE_REPO",
+  "description": "Primary constellation contracts repository for regions, moods, events, personas, and policies. Schema authority for T1-core object kinds.",
+  "visibility": "public",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "moodContract",
+    "regionContractCard"
+  ],
+  "defaultPaths": {
+    "moodContract": "schemas/contracts/moods/",
+    "regionContractCard": "schemas/contracts/regions/",
+    "eventContract": "schemas/contracts/events/",
+    "personaContractCard": "schemas/contracts/personas/",
+    "policyContractCard": "schemas/contracts/policies/"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/mood-contract-v1.json",
+    "schemas/contracts/region-contract-card-v1.json",
+    "schemas/contracts/event-contract-v1.json",
+    "schemas/contracts/persona-contract-v1.json",
+    "schemas/contracts/policy-envelope-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "T1-core schema repos must not contain raw narrative content; contract definitions only."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "All artifacts must include target metadata for routing and registry binding."
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All authoring requests must reference the routing spine for route resolution."
+    }
+  },
+  "ciChecks": {
+    "schemaValidation": {
+      "enabled": true,
+      "tool": "ajv",
+      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+    }
+  },
+  "authoringHints": {
+    "summary": "T1-core schema authority repo. Define contract schemas and examples here; instances live in vault repos.",
+    "aiBehavior": [
+      "Always verify schemaRef before generating contract artifacts",
+      "Route moodContract and regionContractCard T1-core requests to this repo",
+      "Do not generate raw narrative content; focus on schema structure and constraints"
+    ]
+  }
+}

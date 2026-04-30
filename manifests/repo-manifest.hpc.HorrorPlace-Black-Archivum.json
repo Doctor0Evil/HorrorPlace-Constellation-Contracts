@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Black-Archivum",
+  "tier": "T2-vault",
+  "kind": "CONTENT_VAULT_REPO",
+  "description": "Historical archive vault for regionContractCard instances tied to real geographic and archival data. Contains concrete region cards with invariant bands derived from historical records.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "regionContractCard"
+  ],
+  "defaultPaths": {
+    "regionContractCard": "regions/"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/region-contract-card-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "All artifacts must include target metadata for routing and registry binding."
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All authoring requests must reference the routing spine for route resolution."
+    }
+  },
+  "ciChecks": {
+    "schemaValidation": {
+      "enabled": true,
+      "tool": "ajv",
+      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+    },
+    "routingLint": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+    }
+  },
+  "authoringHints": {
+    "summary": "T2-vault content repo for historical region contract instances. Focus on geographically and archivally grounded regions.",
+    "aiBehavior": [
+      "Always verify schemaRef before generating region contract artifacts",
+      "Route regionContractCard T2-vault requests to this repo",
+      "Ensure all region cards reference appropriate historical data sources"
+    ]
+  }
+}
