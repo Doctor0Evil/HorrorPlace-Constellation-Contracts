@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "schema.HorrorPlace-Constellation-Contracts.ide.IterationFooter.v1.json",
+  "title": "World-of-Darkwood Iteration Footer v1",
+  "description": "Machine-parsable iteration footer for World-of-Darkwood IDE sessions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "agentId",
+    "iterationIndex",
+    "laneId",
+    "taskId",
+    "filesTouched",
+    "invariantsInvolved",
+    "summary",
+    "missingComponents",
+    "tests",
+    "invariantDrift",
+    "sovereignObject"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "schema.HorrorPlace-Constellation-Contracts.ide.IterationFooter.v1.json"
+    },
+
+    "agentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Logical agent identity or profile id that authored this iteration."
+    },
+
+    "iterationIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotone iteration index within the progress markdown stream."
+    },
+
+    "laneId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Lane identifier, e.g., SANITY_CORE, DIRECTOR_CORE, DUNGEON_RUNTIME."
+    },
+
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Work item or research object id this iteration advanced."
+    },
+
+    "filesTouched": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "uniqueItems": true,
+      "description": "Repo-relative file paths materially changed in this iteration."
+    },
+
+    "invariantsInvolved": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF",
+          "DET", "HVF", "LSG", "SHCI",
+          "UEC", "EMD", "STCI", "CDL", "ARR"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Canonical invariants and metrics that this iteration touched or constrained."
+    },
+
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "One-sentence description of what this iteration did."
+    },
+
+    "missingComponents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "description": "Outstanding sub-tasks or missing components discovered during this iteration."
+    },
+
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unitCount",
+        "integrationCount",
+        "harnessId",
+        "status"
+      ],
+      "properties": {
+        "unitCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "integrationCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "harnessId": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "fail", "skipped"]
+        }
+      }
+    },
+
+    "invariantDrift": {
+      "type": "array",
+      "description": "Per-invariant drift for this lane and iteration, derived from harness before/after vectors.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "delta", "contractStatus"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF",
+              "DET", "HVF", "LSG", "SHCI",
+              "UEC", "EMD", "STCI", "CDL", "ARR"
+            ]
+          },
+          "delta": {
+            "type": "number"
+          },
+          "contractStatus": {
+            "type": "string",
+            "enum": ["within", "breach", "unknown"]
+          }
+        }
+      }
+    },
+
+    "coverageScore": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Optional scalar test coverage score for this iteration, computed from unit/integration/harness counts."
+    },
+
+    "horrorTrend": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional slow-drift warnings over a recent window.",
+      "properties": {
+        "windowSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "drift": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "meanDelta", "trendStatus"],
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "CIC", "MDI", "AOS", "RRM", "FCF", "SPR", "RWF",
+                  "DET", "HVF", "LSG", "SHCI",
+                  "UEC", "EMD", "STCI", "CDL", "ARR"
+                ]
+              },
+              "meanDelta": {
+                "type": "number"
+              },
+              "trendStatus": {
+                "type": "string",
+                "enum": ["ok", "warming", "cooling", "attention"]
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "sovereignObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sovereignId",
+        "sovereignKind",
+        "sovereignTier",
+        "sovereignVersion"
+      ],
+      "properties": {
+        "sovereignId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128",
+          "description": "Stable identity for the sovereign object this iteration primarily modified (contractCard, runContract, persona, etc.)."
+        },
+        "sovereignKind": {
+          "type": "string",
+          "enum": [
+            "contractCard",
+            "runContract",
+            "directorPersonaContract",
+            "experienceContract",
+            "dungeonRunContract",
+            "dungeonNodeContract",
+            "historySelectorPattern",
+            "spectralSeed",
+            "atrocitySeed",
+            "other"
+          ]
+        },
+        "sovereignTier": {
+          "type": "string",
+          "enum": ["public", "vault", "lab", "research", "internal"]
+        },
+        "sovereignVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Semantic version or short hash of the sovereign object at this iteration."
+        },
+        "deadLedgerRef": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Optional Dead-Ledger attestation handle for this sovereign object."
+        }
+      }
+    }
+  }
+}
