@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/HorrorPlace-Constellation-Contracts/bci-feature-envelope-v1.json",
+  "title": "BCI Feature Envelope v1",
+  "description": "Minimally processed BCI feature window for HorrorPlace VM-Constellation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "windowId",
+    "sessionId",
+    "timestamp",
+    "samplingRateHz",
+    "windowDurationSec",
+    "channelLayout",
+    "features"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "windowId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for this analysis window within a session."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Pseudonymous identifier for the recording session; must not be a dataset subject ID."
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Window start time in Unix seconds (may be fractional)."
+    },
+    "samplingRateHz": {
+      "type": "number",
+      "minimum": 1.0,
+      "description": "Sampling rate of the original recording in Hertz."
+    },
+    "windowDurationSec": {
+      "type": "number",
+      "minimum": 0.1,
+      "description": "Duration of this analysis window in seconds."
+    },
+    "channelLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channels",
+        "montage"
+      ],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "List of channel labels used for this recording (e.g., Fz, Cz)."
+        },
+        "montage": {
+          "type": "string",
+          "enum": [
+            "10-20",
+            "10-10",
+            "custom"
+          ],
+          "description": "EEG montage naming convention."
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Array of feature objects for this window.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "featureId",
+          "featureType",
+          "value"
+        ],
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable identifier for this feature within the envelope."
+          },
+          "featureType": {
+            "type": "string",
+            "enum": [
+              "bandpower",
+              "differential_entropy",
+              "arousal",
+              "valence",
+              "custom"
+            ],
+            "description": "Classification of the feature."
+          },
+          "channel": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Channel label or aggregate region name for this feature."
+          },
+          "value": {
+            "type": "number",
+            "description": "Primary scalar value of the feature (e.g., band power, entropy, score)."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unit of the value field (e.g., 'log_uV2')."
+          },
+          "bandPowers": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Optional per-band power breakdown.",
+            "properties": {
+              "delta": { "type": "number" },
+              "theta": { "type": "number" },
+              "alpha": { "type": "number" },
+              "beta":  { "type": "number" },
+              "gamma": { "type": "number" }
+            }
+          },
+          "arousalScore": {
+            "type": "number",
+            "minimum": -1.0,
+            "maximum": 1.0,
+            "description": "Optional continuous arousal score in [-1, 1]."
+          },
+          "valenceScore": {
+            "type": "number",
+            "minimum": -1.0,
+            "maximum": 1.0,
+            "description": "Optional continuous valence score in [-1, 1]."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Optional feature-level metadata.",
+            "properties": {
+              "algorithm": {
+                "type": "string",
+                "description": "Name or ID of the algorithm used to compute this feature."
+              },
+              "version": {
+                "type": "string",
+                "description": "Version string for the feature extraction algorithm."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
