@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::Config;
 use crate::errors::ChatDirectorError;
 use crate::model::spine_types::{DefaultBands, ObjectKindProfile, SchemaSpine};
 
@@ -78,11 +77,6 @@ impl SpineIndex {
         })
     }
 
-    /// Load using the configured constellation root.
-    pub fn load(config: &Config) -> Result<Self, ChatDirectorError> {
-        Self::load_from_root(config.spine_root())
-    }
-
     pub fn root(&self) -> &Path {
         &self.root
     }
@@ -91,15 +85,15 @@ impl SpineIndex {
         &self.schema_spine.version
     }
 
+    pub fn inner(&self) -> &SchemaSpine {
+        &self.schema_spine
+    }
+
     pub fn describe_object_kind(&self, kind: &str) -> Option<ObjectKindProfile> {
         self.schema_spine.describe_object_kind(kind)
     }
 
     pub fn safe_defaults(&self, object_kind: &str, tier: &str) -> DefaultBands {
         self.schema_spine.safe_defaults(object_kind, tier)
-    }
-
-    pub fn inner(&self) -> &SchemaSpine {
-        &self.schema_spine
     }
 }
