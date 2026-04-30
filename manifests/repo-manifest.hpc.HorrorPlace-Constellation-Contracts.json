@@ -4,7 +4,7 @@
   "repoName": "HorrorPlace-Constellation-Contracts",
   "tier": "T1-core",
   "kind": "SCHEMA_SPINE_REPO",
-  "description": "Central schema spine repository containing routing spine, invariants spine, metrics spine, repo manifests, AI authoring contracts, and core contract schemas for the Horror.Place constellation.",
+  "description": "T1-core schema spine repository containing the routing spine, invariants and metrics spines, repo manifest schema, AI authoring contracts, and core contract schemas for the Horror.Place constellation.",
   "visibility": "public",
   "implicitDeny": false,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
@@ -57,11 +57,11 @@
     },
     "POL002_NoRawNarrativeInTier": {
       "enabled": true,
-      "description": "This T1-core repo hosts only schemas, routing indices, and specs; no raw horror narrative content."
+      "description": "This T1-core repo hosts only schemas, routing indices, and governance specs; no raw horror narrative content."
     },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All JSON artifacts must include schemaRef pointing to an approved schema in this repo."
+      "description": "All JSON artifacts must include schemaRef pointing to an approved schema in this repo or a referenced T1-core schema."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
@@ -127,9 +127,9 @@
     "summary": "T1-core schema spine repo. Contains routing spine, invariants/metrics spines, repo manifest schema, AI authoring schemas, and core contract schemas.",
     "aiBehavior": [
       "Always resolve objectKind and tier against the routing spine before generating schemas or routing entries.",
-      "Generate only schemas, spine instances, and manifest-like governance documents here; never generate seeds, events, or runtime Lua.",
+      "Generate only schemas, spine instances, and manifest-level governance documents here; never generate seeds, events, or runtime Lua.",
       "Ensure schemaRef is valid and matches schemaWhitelist before emitting any artifact.",
-      "Keep allowedObjectKinds in sync with the routing spine by using hpc-routing-lint and hpc-constellation-audit."
+      "Keep allowedObjectKinds and defaultPaths in sync with the routing spine and invariants/metrics spines, using hpc-routing-lint and hpc-constellation-audit."
     ]
   }
 }
