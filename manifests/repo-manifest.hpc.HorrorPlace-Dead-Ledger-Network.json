@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Dead-Ledger-Network",
+  "tier": "T1-core",
+  "kind": "GOVERNANCE_REPO",
+  "description": "Entitlement, attestation, and safety governance layer for tilesets, contracts, and exposure caps.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "deadLedgerProfile",
+    "attestationBundle",
+    "policyEnvelope"
+  ],
+  "defaultPaths": {
+    "deadLedgerProfile": "profiles/",
+    "attestationBundle": "attestations/",
+    "policyEnvelope": "policies/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/dead-ledger/dead-ledger-profile-v1.json",
+    "schemas/dead-ledger/attestation-bundle-v1.json",
+    "schemas/contracts/policy-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": false,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "Dead-Ledger artifacts must not embed narrative content; they govern contracts rather than encode them."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All profiles, attestations, and policy envelopes must use Dead-Ledger schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Attestations must reference target contract families and tilesets by ID and version."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 1048576
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Any system applying Dead-Ledger decisions must bind them to routing spine entries."
+    }
+  },
+  "ciChecks": {
+    "validateDeadLedgerProfiles": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/dead-ledger/dead-ledger-profile-v1.json",
+        "--input-glob",
+        "profiles/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Governance and attestation only. Do not store content contracts here; only their safety envelopes and profiles.",
+    "aiBehavior": [
+      "Never generate mood, region, seed, or event contracts here.",
+      "Only create deadLedgerProfile, attestationBundle, or policyEnvelope artifacts pointing at contracts in other repos.",
+      "Treat this repo as the ultimate source of truth for DET caps, OVERWHELMED dwell limits, and entitlement tiers."
+    ]
+  }
+}
