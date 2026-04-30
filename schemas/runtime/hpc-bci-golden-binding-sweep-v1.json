@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HpcBciGoldenBindingSweepConfig.v1",
+  "description": "Configuration contract for brute-force simulation of HorrorMappingConfig.BCI.v1 profiles across BciSummary and invariant ranges to discover and validate golden bindings that never breach safety caps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "inputGrid",
+    "invariantGrid",
+    "sessionEnvelope",
+    "bindingRegistryRef",
+    "policyRefs",
+    "outputRegistry"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "const": "hpc-bci-golden-binding-sweep-v1"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "inputGrid": {
+      "type": "object",
+      "description": "Sampling strategy over BciSummary metrics, aligned to bci-metrics-envelope-v2 and any canonical BciSummary struct.",
+      "additionalProperties": false,
+      "required": [
+        "metrics",
+        "resolutionPerMetric"
+      ],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "resolutionPerMetric": {
+          "type": "object",
+          "description": "Number of grid points per metric dimension in [0,1]. For example, 11 gives steps of 0.1.",
+          "additionalProperties": false,
+          "properties": {
+            "UEC": { "type": "integer", "minimum": 2, "maximum": 33 },
+            "EMD": { "type": "integer", "minimum": 2, "maximum": 33 },
+            "STCI": { "type": "integer", "minimum": 2, "maximum": 33 },
+            "CDL": { "type": "integer", "minimum": 2, "maximum": 33 },
+            "ARR": { "type": "integer", "minimum": 2, "maximum": 33 }
+          }
+        }
+      }
+    },
+    "invariantGrid": {
+      "type": "object",
+      "description": "Sampling strategy for contextual invariants such as CIC, DET, SHCI that modulate mappings.",
+      "additionalProperties": false,
+      "required": [
+        "invariants",
+        "resolutionPerInvariant"
+      ],
+      "properties": {
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "DET",
+              "SHCI",
+              "AOS",
+              "HVF",
+              "LSG",
+              "RWF"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "resolutionPerInvariant": {
+          "type": "object",
+          "properties": {
+            "CIC": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "DET": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "SHCI": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "AOS": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "HVF": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "LSG": { "type": "integer", "minimum": 2, "maximum": 17 },
+            "RWF": { "type": "integer", "minimum": 2, "maximum": 17 }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "sessionEnvelope": {
+      "type": "object",
+      "description": "Session-horizon envelope parameters for worst-case trajectory checks, aligned to the tension/exposure envelope doctrine.",
+      "additionalProperties": false,
+      "required": [
+        "TsessionSeconds",
+        "tensionCap",
+        "maxExposureAboveCapSeconds"
+      ],
+      "properties": {
+        "TsessionSeconds": {
+          "type": "number",
+          "minimum": 60
+        },
+        "tensionCap": {
+          "type": "number",
+          "description": "Global cap on the derived tension envelope for this sweep."
+        },
+        "maxExposureAboveCapSeconds": {
+          "type": "number",
+          "description": "Optional soft budget for time spent near the cap in derived trajectories."
+        }
+      }
+    },
+    "bindingRegistryRef": {
+      "type": "object",
+      "description": "Reference to the registry of candidate HorrorMappingConfig.BCI.v1 profiles to be tested.",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "schemaRef"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Constellation repository that owns the registry."
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to an NDJSON or JSON registry of mapping profiles."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Canonical schema ID for HorrorMappingConfig.BCI.v1."
+        }
+      }
+    },
+    "policyRefs": {
+      "type": "object",
+      "description": "References to safety policy objects that define hard caps and per-channel bounds.",
+      "additionalProperties": false,
+      "required": [
+        "bindingClampPolicyId",
+        "intensityPolicyId"
+      ],
+      "properties": {
+        "bindingClampPolicyId": {
+          "type": "string",
+          "description": "ID of the HpcBciBindingClampPolicy.v1 object to use while testing."
+        },
+        "intensityPolicyId": {
+          "type": "string",
+          "description": "ID of the bci-intensity-policy-v1 profile used for Dead-Ledger gating."
+        }
+      }
+    },
+    "outputRegistry": {
+      "type": "object",
+      "description": "Where to write the golden-binding registry once the sweep has completed.",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "path",
+        "schemaRef"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "description": "Canonical location for the golden binding registry NDJSON file."
+        },
+        "schemaRef": {
+          "type": "string",
+          "description": "Schema ID for the golden-binding registry entries."
+        }
+      }
+    },
+    "sweepStrategy": {
+      "type": "object",
+      "description": "Strategy hints for the brute-force simulation engines.",
+      "additionalProperties": false,
+      "properties": {
+        "familySubset": {
+          "type": "array",
+          "description": "Optional restriction to specific mapping families.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "0xPKLIN",
+              "0xPKSIG",
+              "0xPKHYS",
+              "0xPKGEN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "maxProfilesPerBatch": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Allows batching sweeps for large registries."
+        },
+        "maxGridPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Upper bound on the total number of (metric, invariant) grid points. Engines may adaptively downsample if the combinatorics exceed this number."
+        }
+      }
+    }
+  }
+}
