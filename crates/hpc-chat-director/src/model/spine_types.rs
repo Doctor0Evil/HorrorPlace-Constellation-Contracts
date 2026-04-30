@@ -1,5 +1,4 @@
 //! Typed representations of the schema spine index.
-//!
 //! The spine is the single source of truth for invariants, metrics,
 //! and contract families. All numeric ranges and governance rules
 //! are defined here, never hardcoded in Rust.
@@ -45,6 +44,63 @@ impl SchemaBacked for SchemaSpine {
     }
 }
 
+impl SchemaSpine {
+    pub fn find_invariant(&self, name: &str) -> Option<&InvariantSpec> {
+        self.invariants.get(name)
+    }
+
+    pub fn find_metric(&self, name: &str) -> Option<&MetricSpec> {
+        self.metrics.get(name)
+    }
+
+    pub fn describe_object_kind(&self, kind: &str) -> Option<ObjectKindProfile> {
+        let families: Vec<&ContractFamily> = self
+            .contract_families
+            .iter()
+            .filter(|f| f.kinds.iter().any(|k| k == kind))
+            .collect();
+
+        if families.is_empty() {
+            return None;
+        }
+
+        let mut required_invariants = Vec::new();
+        let mut required_metrics = Vec::new();
+        let mut phases = Vec::new();
+
+        for fam in families {
+            for inv in &fam.required_invariants {
+                if !required_invariants.contains(inv) {
+                    required_invariants.push(inv.clone());
+                }
+            }
+            for met in &fam.required_metrics {
+                if !required_metrics.contains(met) {
+                    required_metrics.push(met.clone());
+                }
+            }
+            for phase in &fam.allowed_phases {
+                if !phases.contains(phase) {
+                    phases.push(*phase);
+                }
+            }
+        }
+
+        Some(ObjectKindProfile {
+            object_kind: kind.to_string(),
+            required_invariants,
+            required_metrics,
+            allowed_phases: phases,
+        })
+    }
+
+    pub fn safe_defaults_for(&self, object_kind: &str, tier: Tier) -> Option<DefaultBands> {
+        let key = object_kind.to_string();
+        let by_tier = self.safe_defaults.get(&key)?;
+        by_tier.by_tier.get(&tier).cloned()
+    }
+}
+
 /// Definition of a single invariant.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -81,13 +137,9 @@ pub struct NumericRange {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DriftMode {
-    /// Invariant is static; never changes.
     Static,
-    /// Invariant may shift slowly over time.
     SlowlyVarying,
-    /// Invariant responds to player telemetry.
     PlayerReactive,
-    /// Invariant is derived from other values.
     Derived,
 }
 
@@ -116,9 +168,7 @@ pub struct MetricSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MetricAdjustment {
-    /// Optional min adjustment.
     pub min_delta: Option<f64>,
-    /// Optional max adjustment.
     pub max_delta: Option<f64>,
 }
 
@@ -147,21 +197,25 @@ pub struct ContractFamily {
     pub tier_restrictions: HashMap<String, TierRestriction>,
 }
 
+impl ContractFamily {
+    pub fn required_invariants(&self) -> Vec<String> {
+        self.required_invariants.clone()
+    }
+
+    pub fn required_metrics(&self) -> Vec<String> {
+        self.required_metrics.clone()
+    }
+}
+
 /// Cross-metric interaction rule (XMIT).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InteractionRule {
-    /// Rule ID (e.g., "XMIT_001").
     pub id: String,
-    /// Source metric name.
     pub source_metric: String,
-    /// Target metric name.
     pub target_metric: String,
-    /// Effect type: amplify, suppress, or gate.
     pub effect_type: EffectType,
-    /// Condition for applying this rule.
     pub condition: InteractionCondition,
-    /// Effect description.
     pub description: String,
 }
 
@@ -169,11 +223,8 @@ pub struct InteractionRule {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EffectType {
-    /// Amplify: increase target metric band.
     Amplify,
-    /// Suppress: decrease target metric band.
     Suppress,
-    /// Gate: enforce minimum/maximum threshold.
     Gate,
 }
 
@@ -181,14 +232,10 @@ pub enum EffectType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InteractionCondition {
-    /// Source metric must exceed this value.
     pub source_threshold: Option<f64>,
-    /// Source metric must be below this value.
     pub source_max: Option<f64>,
-    /// Target archetype must match one of these.
     #[serde(default)]
     pub archetypes: Vec<String>,
-    /// Target tile class must match one of these.
     #[serde(default)]
     pub tile_classes: Vec<String>,
 }
@@ -197,7 +244,6 @@ pub struct InteractionCondition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TierDefaultBands {
-    /// Defaults per tier.
     pub by_tier: HashMap<Tier, DefaultBands>,
 }
 
@@ -205,9 +251,7 @@ pub struct TierDefaultBands {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DefaultBands {
-    /// Invariant defaults.
     pub invariants: HashMap<String, NumericRange>,
-    /// Metric defaults.
     pub metrics: HashMap<String, NumericRange>,
 }
 
@@ -215,9 +259,7 @@ pub struct DefaultBands {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TierRestriction {
-    /// Whether this tier is allowed.
     pub allowed: bool,
-    /// Optional notes explaining restrictions.
     pub notes: Option<String>,
 }
 
@@ -225,11 +267,8 @@ pub struct TierRestriction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Tier {
-    /// Tier 1: Public, contract-only surfaces.
     T1,
-    /// Tier 2: Private vaults for seeds and bundles.
     T2,
-    /// Tier 3: Private labs for experimental work.
     T3,
 }
 
@@ -237,14 +276,18 @@ pub enum Tier {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum Phase {
-    /// Phase 0: Schema definitions only.
     Schema0,
-    /// Phase 1: Registry entries.
     Registry1,
-    /// Phase 2: Full contract cards (bundles).
     Bundles2,
-    /// Phase 3: Lua policy bindings.
     LuaPolicy3,
-    /// Phase 4: Engine adapters.
     Adapters4,
+}
+
+/// Compact profile for one object kind.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ObjectKindProfile {
+    pub object_kind: String,
+    pub required_invariants: Vec<String>,
+    pub required_metrics: Vec<String>,
+    pub allowed_phases: Vec<Phase>,
 }
