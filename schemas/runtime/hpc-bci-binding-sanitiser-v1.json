@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HpcBciBindingSanitiserConfig.v1",
+  "description": "Strict sanitisation configuration for AI-authored BCI bindings before storage. Removes PII, external dataset references, source-specific IDs, and proprietary annotations and enforces a canonical HorrorPlace-only metadata surface.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "mode",
+    "allowedMetadataKeys",
+    "forbiddenKeyPatterns",
+    "forbiddenValuePatterns",
+    "externalReferenceGuards"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "const": "hpc-bci-binding-sanitiser-v1"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "strict",
+        "audit-only"
+      ],
+      "description": "strict: blocking + redaction is enforced at CI and runtime. audit-only: violations are logged but not blocked."
+    },
+    "allowedMetadataKeys": {
+      "type": "array",
+      "description": "Explicit allow-list for metadata keys that may be preserved on bindings.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "profileId",
+          "profileVersion",
+          "authoringTool",
+          "authoringPersonaId",
+          "creationTimestamp",
+          "lastUpdatedTimestamp",
+          "policyTier",
+          "policyRef",
+          "regionId",
+          "sceneId",
+          "effectArchetype",
+          "notes.summary",
+          "notes.reviewStatus"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "forbiddenKeyPatterns": {
+      "type": "array",
+      "description": "Key-name patterns that MUST be removed or rejected when encountered within a binding payload.",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.*-]+$"
+      },
+      "default": [
+        "user.*",
+        "subject.*",
+        "participant.*",
+        "device.serial",
+        "device.mac",
+        "eeg.vendorId",
+        "rawDatasetId",
+        "externalDatasetRef",
+        "sourceSessionId",
+        "sourceUserId",
+        "sourceStudyId",
+        "hospitalId",
+        "mrn",
+        "hipaa.*"
+      ]
+    },
+    "forbiddenValuePatterns": {
+      "type": "array",
+      "description": "Regular expressions that MUST NOT appear in any string field of a binding. Violations trigger redaction or blocking depending on mode.",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "^[0-9]{3}-[0-9]{2}-[0-9]{4}$",
+        "^[0-9]{16}$",
+        "^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$",
+        "^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$",
+        "^MRN:[A-Za-z0-9]+$",
+        "^(Subject|Participant)[ _-]?[0-9]{3,}$"
+      ]
+    },
+    "externalReferenceGuards": {
+      "type": "object",
+      "description": "Guards for detecting and purging external dataset references and non-constellation identifiers.",
+      "additionalProperties": false,
+      "required": [
+        "allowedPrefixList",
+        "forbiddenPrefixList",
+        "stripUnknownUris",
+        "stripComments"
+      ],
+      "properties": {
+        "allowedPrefixList": {
+          "type": "array",
+          "description": "Prefixes for URIs and IDs that are allowed to remain in bindings.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "hpc://",
+              "ledger://",
+              "dl://",
+              "region://",
+              "seed://"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "forbiddenPrefixList": {
+          "type": "array",
+          "description": "Prefixes that must be removed or rejected.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "bids://",
+              "s3://",
+              "gs://",
+              "http://",
+              "https://",
+              "file://",
+              "local://",
+              "azure://",
+              "smb://"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "stripUnknownUris": {
+          "type": "boolean",
+          "description": "If true, any URI-like string without an allowed prefix is removed or redacted."
+        },
+        "stripComments": {
+          "type": "boolean",
+          "description": "If true, free-form comments and annotations on bindings are stripped unless they appear under allowedMetadataKeys."
+        }
+      }
+    },
+    "bindingKeyScopes": {
+      "type": "object",
+      "description": "Scope-level sanitisation rules for the core HorrorMappingConfig.BCI.v1 binding fields.",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "description": "Input-side constraints. Only canonical BCI metrics and invariants are allowed.",
+          "additionalProperties": false,
+          "properties": {
+            "allowMetrics": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "UEC",
+                  "EMD",
+                  "STCI",
+                  "CDL",
+                  "ARR",
+                  "fearIndex",
+                  "stressScore",
+                  "calmScore",
+                  "attentionFocus"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "allowInvariants": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "CIC",
+                  "DET",
+                  "SHCI",
+                  "AOS",
+                  "HVF",
+                  "LSG",
+                  "RWF"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "rejectRawSignalRefs": {
+              "type": "boolean",
+              "description": "If true, any attempt to reference raw channels, sensor IDs, or non-envelope features is treated as a violation."
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Output-side constraints. Only contract-governed control channels may be named.",
+          "additionalProperties": false,
+          "properties": {
+            "allowChannels": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "tension",
+                  "sprintMul",
+                  "flashlightJitterAmp",
+                  "flashlightJitterFreq",
+                  "tunnelRadiusInner",
+                  "tunnelOpacity",
+                  "whisperIntensity",
+                  "encounterSpawnMul"
+                ]
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "sanitiserRuntimePolicy": {
+      "type": "object",
+      "description": "How sanitisation should behave in CI vs runtime.",
+      "additionalProperties": false,
+      "properties": {
+        "ciBehavior": {
+          "type": "string",
+          "enum": [
+            "block-on-violation",
+            "block-on-violation-and-redact-preview"
+          ]
+        },
+        "runtimeBehavior": {
+          "type": "string",
+          "enum": [
+            "redact-and-log",
+            "block-and-log"
+          ]
+        },
+        "redactionToken": {
+          "type": "string",
+          "description": "Token used to replace redacted values.",
+          "default": "<redacted>"
+        }
+      }
+    }
+  }
+}
