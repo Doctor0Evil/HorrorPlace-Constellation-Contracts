@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-summary-v1.json",
+  "title": "BCI Summary v1",
+  "description": "Lossy, high-level BCI state derived from bci-metrics-envelope-v1 by Rust bci_summary crate. Lua sees only this BCI surface. Computed from metrics, never directly from features.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "windowId", "sessionId", "timestamp", "stressScore", "stressBand", "attentionBand", "visualOverloadIndex", "startleSpike", "signalQuality"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "windowId": { "type": "string" },
+    "sessionId": { "type": "string" },
+    "timestamp": { "type": "integer" },
+    "stressScore": { "type": "number", "minimum": 0, "maximum": 1 },
+    "stressBand": { "type": "string", "enum": ["Low", "Medium", "High", "Extreme"] },
+    "attentionBand": { "type": "string", "enum": ["Distracted", "Neutral", "Focused", "HyperFocused"] },
+    "visualOverloadIndex": { "type": "number", "minimum": 0, "maximum": 1 },
+    "startleSpike": { "type": "boolean" },
+    "signalQuality": { "type": "string", "enum": ["Good", "Degraded", "Unavailable"] },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "derivationMethod": { "type": "string" },
+        "confidenceScore": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
