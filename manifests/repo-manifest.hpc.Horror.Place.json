@@ -4,27 +4,36 @@
   "repoName": "Horror.Place",
   "tier": "T1-core",
   "kind": "SCHEMA_SPINE_REPO",
-  "description": "Primary constellation contracts repository for regions, moods, events, personas, and policies. Schema authority for T1-core object kinds.",
+  "description": "Public Tier-1 contract and example library for moods, regions, personas, policies, and BCI-safe tilesets. Schema authority and safe example host for T1-core object kinds.",
   "visibility": "public",
   "implicitDeny": true,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
   "allowedObjectKinds": [
     "moodContract",
-    "regionContractCard"
+    "regionContractCard",
+    "eventContract",
+    "personaContractCard",
+    "policyContractCard",
+    "bci-geometry-tileset"
   ],
   "defaultPaths": {
-    "moodContract": "schemas/contracts/moods/",
-    "regionContractCard": "schemas/contracts/regions/",
-    "eventContract": "schemas/contracts/events/",
-    "personaContractCard": "schemas/contracts/personas/",
-    "policyContractCard": "schemas/contracts/policies/"
+    "moodContract": "contracts/moods/",
+    "regionContractCard": "contracts/regions/",
+    "eventContract": "contracts/events/",
+    "personaContractCard": "contracts/personas/",
+    "policyContractCard": "contracts/policies/",
+    "bci-geometry-tileset": "contracts/bci-tilesets/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
   },
   "schemaWhitelist": [
     "schemas/contracts/mood-contract-v1.json",
     "schemas/contracts/region-contract-card-v1.json",
     "schemas/contracts/event-contract-v1.json",
     "schemas/contracts/persona-contract-v1.json",
-    "schemas/contracts/policy-envelope-v1.json"
+    "schemas/contracts/policy-envelope-v1.json",
+    "schemas/bci/bci-geometry-tileset-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "schemas/core/repo-manifest-v1.json"
   ],
   "policies": {
     "POL001_OneFilePerRequest": {
@@ -33,39 +42,80 @@
     },
     "POL002_NoRawNarrativeInTier": {
       "enabled": true,
-      "description": "T1-core schema repos must not contain raw narrative content; contract definitions only."
+      "description": "Contracts and schemas must not embed explicit narrative content; use references to vault content instead."
     },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All JSON artifacts in this repo must include a schemaRef pointing to an approved schema in this repo or HorrorPlace-Constellation-Contracts."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "AI-authored artifacts must declare objectKind, tier, targetRepo, targetPath, and schemaRef for deterministic routing and registry binding."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 262144
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "Authoring tools must consult routingSpineRef for route resolution before writing any artifact into this repo."
     }
   },
   "ciChecks": {
-    "schemaValidation": {
+    "validateContracts": {
       "enabled": true,
-      "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema-glob",
+        "schemas/contracts/*.json",
+        "--input-glob",
+        "contracts/**/*.json"
+      ]
     },
-    "routingLint": {
+    "validateBciTilesets": {
       "enabled": true,
-      "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/bci/bci-geometry-tileset-v1.json",
+        "--input-glob",
+        "contracts/bci-tilesets/*.json"
+      ]
+    },
+    "validateManifest": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/core/repo-manifest-v1.json",
+        "--input",
+        "repo-manifest.hpc.Horror.Place.json"
+      ]
+    },
+    "runRoutingLint": {
+      "enabled": true,
+      "tool": "cargo",
+      "args": [
+        "run",
+        "--bin",
+        "hpc-routing-lint",
+        "--",
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     }
   },
   "authoringHints": {
-    "summary": "T1-core schema authority repo. Define contract schemas and examples here; instances live in vault repos.",
+    "summary": "Use this repo for public Tier-1 contracts and safe examples: moods, regions, personas, policies, and BCI tilesets. Schemas and example instances live here; high-intensity content lives in vault repos.",
     "aiBehavior": [
-      "Always verify schemaRef before generating contract artifacts",
-      "Route moodContract and regionContractCard T1-core requests to this repo",
-      "Do not generate raw narrative content; focus on schema structure and constraints"
+      "Only generate artifacts for moodContract, regionContractCard, eventContract, personaContractCard, policyContractCard, or bci-geometry-tileset in this repo.",
+      "Always resolve objectKind and tier through the routing spine before choosing Horror.Place as the targetRepo.",
+      "Do not generate raw narrative or deep-history region cards; reference vault IDs and invariant bands instead.",
+      "Ensure every artifact includes schemaRef, targetRepo, targetPath, tier, and objectKind before proposing a filename.",
+      "Respect implicitDeny=true: do not introduce new objectKinds without explicit changes to allowedObjectKinds."
     ]
   }
 }
