@@ -1,6 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://horror.place/schemas/hpc-routing-spine.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/hpc-routing-spine.schema.json",
   "title": "HpcRoutingSpine",
   "description": "Routing spine index that binds (objectKind, tier, repo) triples to schemas, invariants, metrics, math constraints, and CHAT_DIRECTOR phases.",
   "type": "object",
@@ -55,7 +55,7 @@
       "type": "array",
       "description": "Catalog of named math constraints (formulas, inequalities, derived ranges) that can be referenced from routes.",
       "items": {
-        "$ref": "#/definitions/mathConstraint"
+        "$ref": "#/$defs/mathConstraint"
       },
       "minItems": 0
     },
@@ -63,12 +63,12 @@
       "type": "array",
       "description": "Entries describing routing rules per objectKind.",
       "items": {
-        "$ref": "#/definitions/objectKindEntry"
+        "$ref": "#/$defs/objectKindEntry"
       },
       "minItems": 1
     }
   },
-  "definitions": {
+  "$defs": {
     "tier": {
       "type": "string",
       "description": "Canonical tier identifier used across the constellation.",
@@ -225,10 +225,10 @@
           "pattern": "^[a-z0-9_.-]+$"
         },
         "tier": {
-          "$ref": "#/definitions/tier"
+          "$ref": "#/$defs/tier"
         },
         "repo": {
-          "$ref": "#/definitions/repoName"
+          "$ref": "#/$defs/repoName"
         },
         "schemaRef": {
           "type": "string",
@@ -252,7 +252,7 @@
           "type": "array",
           "description": "Invariant codes this route requires as bands.",
           "items": {
-            "$ref": "#/definitions/invariantCode"
+            "$ref": "#/$defs/invariantCode"
           },
           "minItems": 0,
           "uniqueItems": true
@@ -261,7 +261,7 @@
           "type": "array",
           "description": "Entertainment metrics this route expects as targets/bands.",
           "items": {
-            "$ref": "#/definitions/metricCode"
+            "$ref": "#/$defs/metricCode"
           },
           "minItems": 0,
           "uniqueItems": true
@@ -276,7 +276,7 @@
           "uniqueItems": true
         },
         "phase": {
-          "$ref": "#/definitions/phase"
+          "$ref": "#/$defs/phase"
         },
         "additionalPropertiesRequired": {
           "type": "boolean",
@@ -323,7 +323,7 @@
           "type": "array",
           "description": "List of tiers where this objectKind is legal.",
           "items": {
-            "$ref": "#/definitions/tier"
+            "$ref": "#/$defs/tier"
           },
           "minItems": 1,
           "uniqueItems": true
@@ -332,7 +332,7 @@
           "type": "array",
           "description": "Per-(tier, repo) routing rules. CI enforces uniqueness of (tier, repo) pairs within this array.",
           "items": {
-            "$ref": "#/definitions/routeEntry"
+            "$ref": "#/$defs/routeEntry"
           },
           "minItems": 1
         }
