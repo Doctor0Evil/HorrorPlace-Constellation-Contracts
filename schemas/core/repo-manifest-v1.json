@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "title": "HPC Repo Manifest v1",
+  "description": "Per-repository manifest defining jurisdiction identity, allowed object kinds, policy flags, and CI checks for Horror.Place constellation repos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "schemaRef",
+    "repoName",
+    "tier",
+    "kind",
+    "description",
+    "visibility",
+    "implicitDeny",
+    "allowedObjectKinds",
+    "defaultPaths",
+    "schemaWhitelist",
+    "policies",
+    "ciChecks",
+    "authoringHints"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Semantic version of the manifest schema implementation, e.g. 1.0.0.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema reference for this manifest, typically this schema's $id."
+    },
+    "repoName": {
+      "type": "string",
+      "description": "Canonical repository name within the Horror.Place constellation.",
+      "enum": [
+        "Horror.Place",
+        "Horror.Place-Orchestrator",
+        "HorrorPlace-Constellation-Contracts",
+        "HorrorPlace-Codebase-of-Death",
+        "HorrorPlace-Black-Archivum",
+        "HorrorPlace-Spectral-Foundry",
+        "HorrorPlace-Atrocity-Seeds",
+        "HorrorPlace-Obscura-Nexus",
+        "HorrorPlace-Liminal-Continuum",
+        "HorrorPlace-Process-Gods-Research",
+        "HorrorPlace-Redacted-Chronicles",
+        "HorrorPlace-Neural-Resonance-Lab",
+        "HorrorPlace-Dead-Ledger-Network"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "description": "Visibility and governance tier for this repo.",
+      "enum": [
+        "T1-core",
+        "T2-vault",
+        "T3-lab"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "description": "High-level role of the repo within the constellation.",
+      "enum": [
+        "SCHEMA_SPINE_REPO",
+        "ENGINE_RUNTIME_REPO",
+        "CONTENT_VAULT_REPO",
+        "GOVERNANCE_REPO",
+        "ORCHESTRATOR_REPO",
+        "EXPERIMENT_REPO"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this repository's purpose and constraints."
+    },
+    "visibility": {
+      "type": "string",
+      "description": "Public or private visibility classification for this repo.",
+      "enum": [
+        "public",
+        "private"
+      ]
+    },
+    "implicitDeny": {
+      "type": "boolean",
+      "description": "If true, objectKinds and tiers are denied by default unless explicitly allowed."
+    },
+    "routingSpineRef": {
+      "type": "string",
+      "description": "Optional path to the routing spine instance used by this repo for routing decisions."
+    },
+    "allowedObjectKinds": {
+      "type": "array",
+      "description": "List of objectKinds this repo is allowed to own or accept as primary artifacts.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "defaultPaths": {
+      "type": "object",
+      "description": "Suggested default paths for each objectKind or schema family in this repo.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "schemaWhitelist": {
+      "type": "array",
+      "description": "Allowed schemaRef patterns that artifacts in this repo may reference.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "policies": {
+      "type": "object",
+      "description": "Policy flags that encode repo-local law for AI authoring and CI.",
+      "additionalProperties": false,
+      "properties": {
+        "POL001_OneFilePerRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "maxFilesPerRequest"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxFilesPerRequest": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "POL002_NoRawNarrativeInTier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "POL003_RequireSchemaRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "POL004_RequireTargetMetadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "POL005_MaxFileSizeBytes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "maxFileSizeBytes"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxFileSizeBytes": {
+              "type": "integer",
+              "minimum": 1024
+            }
+          }
+        },
+        "POL006_RequireRoutingSpineRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ciChecks": {
+      "type": "object",
+      "description": "Named CI checks and the tools/arguments used to enforce this manifest.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled", "tool", "args"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string",
+            "minLength": 1
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0
+          }
+        }
+      }
+    },
+    "authoringHints": {
+      "type": "object",
+      "description": "Optional human-facing hints for AI-Chat and editor tooling.",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "aiBehavior": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        }
+      }
+    }
+  }
+}
