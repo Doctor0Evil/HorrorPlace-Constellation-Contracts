@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:prism-activation-v1.json",
+  "title": "Prism Activation Event v1",
+  "description": "Telemetry for prism connector evaluations (pacing, visual, haptics). Correlates prism outputs with comfort outcomes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventType", "timestamp", "playerId", "prismType", "outputs"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "eventType": { "type": "string", "const": "prism-activation" },
+    "timestamp": { "type": "integer" },
+    "playerId": { "type": "string" },
+    "regionId": { "type": "string" },
+    "tileId": { "type": "string" },
+    "prismType": { "enum": ["horror-pacing", "visual", "haptics"] },
+    "outputs": {
+      "oneOf": [
+        { "$ref": "schema:HorrorPlace-Constellation-Contracts:horror-pacing-prism-v1.json" },
+        { "$ref": "schema:HorrorPlace-Constellation-Contracts:visual-prism-v1.json" },
+        { "$ref": "schema:HorrorPlace-Constellation-Contracts:haptics-prism-v1.json" }
+      ]
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stressBand": { "enum": ["Low", "Medium", "High", "Extreme"] },
+        "csi": { "type": "number", "minimum": 0, "maximum": 1 },
+        "det": { "type": "number", "minimum": 0, "maximum": 10 }
+      }
+    },
+    "comfortOutcome": {
+      "type": "string",
+      "enum": ["withinBand", "tooIntense", "tooFlat", "signalUnavailable"],
+      "description": "Post-hoc comfort classification from player feedback or heuristic analysis"
+    }
+  }
+}
