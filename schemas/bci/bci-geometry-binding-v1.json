@@ -2,29 +2,37 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:HorrorPlace-Constellation-Contracts:bci-geometry-binding-v1.json",
   "title": "BCI Geometry Binding v1",
-  "description": "Defines mapping from BciSummary + invariants + metrics + CSI to visual/audio/haptic parameters via curve families.",
+  "description": "Defines how BciSummary bands, invariants, entertainment metrics, and CSI select curve families and safety profiles to drive visual, audio, and haptic parameters. Bindings are configuration objects, not runtime envelopes.",
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "schemaId",
     "schemaVersion",
     "bindingId",
     "regionClass",
+    "tier",
     "invariantFilter",
     "bciFilter",
     "metricsFilter",
-    "curves",
     "safetyProfile",
-    "tier",
-    "targets"
+    "targets",
+    "curves"
   ],
   "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "hpnrl-bci-geometry-binding-v1"
+    },
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of this binding schema (MAJOR.MINOR.PATCH), e.g. 1.0.0."
     },
     "bindingId": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Stable, human-readable identifier for this binding, e.g. corridor-highCIC-medStress-sigmoidTunnel."
     },
     "regionClass": {
       "type": "string",
@@ -35,18 +43,30 @@
         "open",
         "liminal",
         "sanctuary"
-      ]
+      ],
+      "description": "Coarse environmental classification; specific invariant ranges are defined in invariantFilter."
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "lab",
+        "standard",
+        "mature",
+        "research"
+      ],
+      "description": "Promotion tier for this binding. Runtime should only allow standard/mature in production sessions."
     },
     "priority": {
       "type": "number",
       "minimum": 0,
       "maximum": 10,
       "default": 5,
-      "description": "Explicit priority for resolver scoring."
+      "description": "Optional explicit priority for resolver tie-breaking. Higher means preferred when multiple bindings match."
     },
     "invariantFilter": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Optional min/max ranges for invariants; unspecified fields are unconstrained.",
       "properties": {
         "cic": {
           "$ref": "#/$defs/range01"
@@ -77,6 +97,7 @@
     "bciFilter": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Filters expressed only in terms of BciSummary fields. All fields are optional; unspecified fields are unconstrained.",
       "properties": {
         "stressScoreMin": {
           "type": "number",
@@ -114,61 +135,38 @@
           },
           "uniqueItems": true
         },
+        "visualOverloadMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
         "visualOverloadMax": {
           "type": "number",
           "minimum": 0,
           "maximum": 1
         },
         "allowStartleSpike": {
-          "type": "boolean"
-        },
-        "signacy": {
-          "type": "number",
-          "minimum": 0
-        },
-        "amplitude": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
-      }
-    },
-    "safetyProfile": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Reference to bci-safety-profile-v1 profileId."
-    },
-    "tier": {
-      "type": "string",
-      "enum": [
-        "lab",
-        "standard",
-        "mature",
-        "research"
-      ],
-      "description": "Promotion tier; runtime only allows standard/mature."
-    },
-    "targets": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "visual": {
           "type": "boolean",
-          "default": true
+          "description": "If false, this binding must not activate when BciSummary.startleSpike is true."
         },
-        "audio": {
-          "type": "boolean",
-          "default": true
-        },
-        "haptics": {
-          "type": "boolean",
-          "default": true
+        "signalQuality": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Good",
+              "Degraded",
+              "Unavailable"
+            ]
+          },
+          "uniqueItems": true
         }
       }
     },
     "metricsFilter": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Optional gating on entertainment metrics; metrics are an extra observation channel, not a new metric system.",
       "properties": {
         "uecBand": {
           "$ref": "#/$defs/range01"
@@ -187,43 +185,113 @@
         }
       }
     },
+    "inputWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional scalar weights for resolver scoring; sum is not enforced but recommended to be near 1.0.",
+      "properties": {
+        "stressScore": {
+          "type": "number",
+          "default": 0.4
+        },
+        "visualOverloadIndex": {
+          "type": "number",
+          "default": 0.2
+        },
+        "attentionBand": {
+          "type": "number",
+          "default": 0.1
+        },
+        "uec": {
+          "type": "number",
+          "default": 0.1
+        },
+        "arr": {
+          "type": "number",
+          "default": 0.1
+        },
+        "cic": {
+          "type": "number",
+          "default": 0.05
+        },
+        "lsg": {
+          "type": "number",
+          "default": 0.05
+        }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Declares which output channels this binding intends to drive.",
+      "properties": {
+        "visual": {
+          "type": "boolean",
+          "default": true
+        },
+        "audio": {
+          "type": "boolean",
+          "default": true
+        },
+        "haptics": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
     "curves": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "target",
-          "familyCode",
-          "params"
-        ],
-        "properties": {
-          "target": {
-            "type": "string",
-            "enum": [
-              "visual",
-              "audio",
-              "haptics"
-            ]
-          },
-          "familyCode": {
-            "type": "string",
-            "enum": [
-              "PKLIN",
-              "PKSIG",
-              "PKHYS",
-              "PKRHY",
-              "PKAMB",
-              "PKSTC"
-            ]
-          },
-          "params": {
-            "type": "object",
-            "additionalProperties": true
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Curve family assignments per output channel.",
+      "required": [
+        "visual",
+        "audio",
+        "haptics"
+      ],
+      "properties": {
+        "visual": {
+          "$ref": "#/$defs/curveAssignment"
+        },
+        "audio": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pressureLf": {
+              "$ref": "#/$defs/curveAssignment"
+            },
+            "whisperSend": {
+              "$ref": "#/$defs/curveAssignment"
+            },
+            "stereoWidth": {
+              "$ref": "#/$defs/curveAssignment"
+            },
+            "noiseGrain": {
+              "$ref": "#/$defs/curveAssignment"
+            }
+          }
+        },
+        "haptics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "intensity": {
+              "$ref": "#/$defs/curveAssignment"
+            },
+            "pulseHz": {
+              "$ref": "#/$defs/curveAssignment"
+            }
           }
         }
       }
+    },
+    "safetyProfile": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to bci-safety-profile-v1 profileId that defines CSI/DET and intensity caps for this binding."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable description of this binding's intent and expected effect."
     }
   },
   "$defs": {
@@ -256,6 +324,37 @@
           "type": "number",
           "minimum": 0,
           "maximum": 10
+        }
+      }
+    },
+    "curveAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "familyCode",
+        "params"
+      ],
+      "properties": {
+        "familyCode": {
+          "type": "string",
+          "enum": [
+            "PKLIN",
+            "PKSIG",
+            "PKHYS",
+            "PKRHY",
+            "PKAMB",
+            "PKSTC"
+          ],
+          "description": "Curve family identifier. PKLIN=linear, PKSIG=sigmoid, PKHYS=hysteresis, PKRHY=oscillatory/rhythmic, PKAMB=ambient, PKSTC=step/stepped."
+        },
+        "params": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number"
+          },
+          "description": "Exactly four numeric parameters for the chosen curve family. Interpretation is defined by the Rust kernel."
         }
       }
     }
