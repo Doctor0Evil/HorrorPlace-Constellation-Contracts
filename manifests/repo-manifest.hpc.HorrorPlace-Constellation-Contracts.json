@@ -1,33 +1,54 @@
 {
   "schemaVersion": "1.0.0",
-  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "schemaRef": "schemas/core/repo-manifest-v1.json",
   "repoName": "HorrorPlace-Constellation-Contracts",
   "tier": "T1-core",
   "kind": "SCHEMA_SPINE_REPO",
-  "description": "Central schema spine repository containing routing spine, invariants spine, metrics spine, and core contract schemas for the Horror.Place constellation.",
+  "description": "Central schema spine repository containing routing spine, invariants spine, metrics spine, repo manifests, AI authoring contracts, and core contract schemas for the Horror.Place constellation.",
   "visibility": "public",
-  "implicitDeny": true,
+  "implicitDeny": false,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
   "allowedObjectKinds": [
     "moodContract",
     "eventContract",
     "regionContractCard",
-    "seedContractCard"
+    "seedContractCard",
+    "bci-geometry-tileset",
+    "aiAuthoringPlanSchema",
+    "aiAuthoringProfileSchema",
+    "aiAuthoringContractSchema",
+    "repoManifestSchema",
+    "routingSpineSchema",
+    "routingSpineInstance",
+    "invariantsSpineSchema",
+    "metricsSpineSchema"
   ],
   "defaultPaths": {
-    "moodContract": "schemas/contracts/moods/",
-    "eventContract": "schemas/contracts/events/",
-    "regionContractCard": "schemas/contracts/regions/",
-    "seedContractCard": "schemas/contracts/seeds/"
+    "moodContract": "schemas/contracts/mood-contract-v1.json",
+    "eventContract": "schemas/contracts/event-contract-v1.json",
+    "regionContractCard": "schemas/contracts/region-contract-card-v1.json",
+    "seedContractCard": "schemas/contracts/seed-contract-card-v1.json",
+    "bci-geometry-tileset": "schemas/bci/bci-geometry-tileset-v1.json",
+    "routingSpineSchema": "schemas/hpc-routing-spine.schema.json",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json",
+    "repoManifestSchema": "schemas/core/repo-manifest-v1.json",
+    "aiAuthoringPlanSchema": "schemas/tooling/ai-authoring-plan-v1.json",
+    "aiAuthoringProfileSchema": "schemas/tooling/ai-safe-authoring-profile-v1.json",
+    "aiAuthoringContractSchema": "schemas/tooling/ai-authoring-contract-v1.json",
+    "invariantsSpineSchema": "schemas/core/invariants-spine.v1.json",
+    "metricsSpineSchema": "schemas/core/entertainment-metrics-spine.v1.json"
   },
   "schemaWhitelist": [
     "schemas/hpc-routing-spine.schema.json",
+    "schemas/core/repo-manifest-v1.json",
     "schemas/core/invariants-spine.v1.json",
     "schemas/core/entertainment-metrics-spine.v1.json",
     "schemas/contracts/mood-contract-v1.json",
     "schemas/contracts/event-contract-v1.json",
     "schemas/contracts/region-contract-card-v1.json",
-    "schemas/contracts/seed-contract-card-v1.json"
+    "schemas/contracts/seed-contract-card-v1.json",
+    "schemas/bci/*.json",
+    "schemas/tooling/*.json"
   ],
   "policies": {
     "POL001_OneFilePerRequest": {
@@ -36,39 +57,79 @@
     },
     "POL002_NoRawNarrativeInTier": {
       "enabled": true,
-      "description": "T1-core schema repos must not contain raw narrative content; contract definitions only."
+      "description": "This T1-core repo hosts only schemas, routing indices, and specs; no raw horror narrative content."
     },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All JSON artifacts must include schemaRef pointing to an approved schema in this repo."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "AI-authored artifacts must declare objectKind, targetRepo, targetPath, schemaRef, and tier for routing and registry binding."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 131072
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "All authoring and routing tools must reference routingSpineRef for route resolution."
     }
   },
   "ciChecks": {
-    "schemaValidation": {
+    "validateRepoManifestSchema": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/core/repo-manifest-v1.json",
+        "--input",
+        "repo-manifest.hpc.HorrorPlace-Constellation-Contracts.json"
+      ]
+    },
+    "validateRoutingSpine": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/hpc-routing-spine.schema.json",
+        "--input",
+        "spine/hpc-routing-spine-v1.json"
+      ]
+    },
+    "validateCoreSchemas": {
       "enabled": true,
       "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "args": [
+        "--spec",
+        "draft2020",
+        "--validate",
+        "schemas/**/*.json"
+      ]
     },
-    "routingLint": {
+    "runRoutingLint": {
       "enabled": true,
-      "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "tool": "cargo",
+      "args": [
+        "run",
+        "--bin",
+        "hpc-routing-lint",
+        "--",
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     }
   },
   "authoringHints": {
-    "summary": "T1-core schema spine repo. Contains routing spine, invariants/metrics spines, and core contract schemas.",
+    "summary": "T1-core schema spine repo. Contains routing spine, invariants/metrics spines, repo manifest schema, AI authoring schemas, and core contract schemas.",
     "aiBehavior": [
-      "Always verify schemaRef before generating schema or spine artifacts",
-      "Route all objectKind T1-core schema requests through this repo",
-      "Ensure routing spine routes match manifest allowedObjectKinds"
+      "Always resolve objectKind and tier against the routing spine before generating schemas or routing entries.",
+      "Generate only schemas, spine instances, and manifest-like governance documents here; never generate seeds, events, or runtime Lua.",
+      "Ensure schemaRef is valid and matches schemaWhitelist before emitting any artifact.",
+      "Keep allowedObjectKinds in sync with the routing spine by using hpc-routing-lint and hpc-constellation-audit."
     ]
   }
 }
