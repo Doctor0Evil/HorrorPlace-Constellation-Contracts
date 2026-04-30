@@ -1,0 +1,16 @@
+[package]
+name = "hpc-constellation-audit"
+version = "0.1.0"
+edition = "2021"
+description = "Audit wiring plan, repo manifests, and routing spine for consistency."
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+walkdir = "2.5"
+thiserror = "1.0"
+
+# Existing crates in this workspace
+hpc-routing-validator = { path = "../hpc-routing-validator" }
