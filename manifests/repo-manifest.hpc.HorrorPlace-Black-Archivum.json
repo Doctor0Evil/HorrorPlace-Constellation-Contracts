@@ -4,7 +4,7 @@
   "repoName": "HorrorPlace-Black-Archivum",
   "tier": "T2-vault",
   "kind": "CONTENT_VAULT_REPO",
-  "description": "Historical archive vault for regionContractCard instances tied to real geographic and archival data. Contains concrete region cards with invariant bands derived from historical records.",
+  "description": "Deep history and regionContractCard instances tied to real geographic and archival data, with high CIC/MDI and dense archival opacity. Used as a history substrate for PCG and spectral queries.",
   "visibility": "private",
   "implicitDeny": true,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
@@ -12,47 +12,69 @@
     "regionContractCard"
   ],
   "defaultPaths": {
-    "regionContractCard": "regions/"
+    "regionContractCard": "regions/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
   },
   "schemaWhitelist": [
-    "schemas/contracts/region-contract-card-v1.json"
+    "schemas/contracts/region-contract-card-v1.json",
+    "schemas/hpc-routing-spine.schema.json"
   ],
   "policies": {
     "POL001_OneFilePerRequest": {
       "enabled": true,
       "maxFilesPerRequest": 1
     },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "Vault may contain explicit historical and horror narratives; enforce access controls and Dead-Ledger governance externally."
+    },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All regionContractCard artifacts must include a schemaRef pointing to schemas/contracts/region-contract-card-v1.json."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "All artifacts must include objectKind, tier, targetRepo, targetPath, and routingSpineRef for deterministic routing and registry binding."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 524288
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "All authoring requests targeting this repo must resolve routes via spine/hpc-routing-spine-v1.json."
     }
   },
   "ciChecks": {
-    "schemaValidation": {
+    "validateRegionContracts": {
       "enabled": true,
-      "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/region-contract-card-v1.json",
+        "--input-glob",
+        "regions/*.json"
+      ]
     },
     "routingLint": {
       "enabled": true,
       "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "args": [
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     }
   },
   "authoringHints": {
-    "summary": "T2-vault content repo for historical region contract instances. Focus on geographically and archivally grounded regions.",
+    "summary": "Use this T2-vault for deep region history and invariant bands. Seeds and events in other repos should reference these region cards via IDs.",
     "aiBehavior": [
-      "Always verify schemaRef before generating region contract artifacts",
-      "Route regionContractCard T2-vault requests to this repo",
-      "Ensure all region cards reference appropriate historical data sources"
+      "Only generate regionContractCard artifacts in this repo.",
+      "Never generate seeds or events here; route those to Atrocity-Seeds or Spectral-Foundry as defined by the routing spine.",
+      "Always include schemaRef=schemas/contracts/region-contract-card-v1.json and routingSpineRef=spine/hpc-routing-spine-v1.json.",
+      "Assume high CIC and AOS; treat all content as sensitive and non-public."
     ]
   }
 }
