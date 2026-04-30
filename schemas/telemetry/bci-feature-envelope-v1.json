@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:HorrorPlace-Constellation-Contracts:bci-feature-envelope-v1.json",
   "title": "BCI Feature Envelope v1",
-  "description": "Minimally processed, NDJSON-safe BCI feature container for HorrorPlace VM-Constellation. No EMA, no derived metrics, no PII, no raw EEG.",
+  "description": "Minimally processed, NDJSON-safe BCI feature container for HorrorPlace VM-Constellation. No EMA, no derived metrics, no PII, no raw EEG. This schema must never include PII or raw waveforms; converters enforce anonymization and schema validation.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -87,134 +87,189 @@
       "minItems": 1,
       "description": "Array of minimally processed feature objects for this window.",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "featureId",
-          "featureType",
-          "channel",
-          "value"
-        ],
-        "properties": {
-          "featureId": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Stable identifier for this feature within the envelope."
-          },
-          "featureType": {
-            "type": "string",
-            "enum": [
-              "bandpower_delta",
-              "bandpower_theta",
-              "bandpower_alpha",
-              "bandpower_beta",
-              "bandpower_gamma",
-              "arousal_score",
-              "valence_score",
-              "asymmetry_index",
-              "coherence_metric"
-            ],
-            "description": "Concrete feature type label aligned with upstream BCI extraction."
-          },
-          "featureClass": {
-            "type": "string",
-            "enum": [
-              "bandpower",
-              "differential_entropy",
-              "arousal",
-              "valence",
-              "custom"
-            ],
-            "description": "High-level classification of the feature for offline analysis and tooling."
-          },
-          "channel": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Channel label or aggregate region name for this feature."
-          },
-          "value": {
-            "type": "number",
-            "minimum": -100,
-            "maximum": 100,
-            "description": "Primary scalar value of the feature (e.g., band power, entropy, score) in a normalized or log-scaled range."
-          },
-          "unit": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Unit of the value field when applicable (e.g., log_uV2)."
-          },
-          "bandPowers": {
+        "oneOf": [
+          {
+            "title": "ScalarFeature",
             "type": "object",
             "additionalProperties": false,
-            "description": "Optional per-band power breakdown normalized to [0, 1].",
+            "required": [
+              "featureId",
+              "featureType",
+              "channel",
+              "value"
+            ],
             "properties": {
-              "delta": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
+              "featureId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Stable identifier for this feature within the envelope."
               },
-              "theta": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
+              "featureType": {
+                "type": "string",
+                "enum": [
+                  "arousal_score",
+                  "valence_score",
+                  "asymmetry_index",
+                  "coherence_metric"
+                ],
+                "description": "Concrete scalar feature type label aligned with upstream BCI extraction."
               },
-              "alpha": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
+              "featureClass": {
+                "type": "string",
+                "enum": [
+                  "arousal",
+                  "valence",
+                  "custom"
+                ],
+                "description": "High-level classification of the scalar feature for offline analysis and tooling."
               },
-              "beta": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
+              "channel": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Channel label or aggregate region name for this feature."
               },
-              "gamma": {
+              "value": {
                 "type": "number",
-                "minimum": 0,
-                "maximum": 1
+                "minimum": -100,
+                "maximum": 100,
+                "description": "Primary scalar value of the feature (e.g., score) in a normalized or log-scaled range."
+              },
+              "unit": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Unit of the value field when applicable (e.g., log_uV2)."
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Optional feature-level metadata.",
+                "properties": {
+                  "algorithm": {
+                    "type": "string",
+                    "description": "Name or identifier of the algorithm used to compute this feature."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "Version string for the feature extraction algorithm."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Optional upstream system or pipeline identifier."
+                  }
+                }
               }
             }
           },
-          "arousalScore": {
-            "type": "number",
-            "minimum": -1.0,
-            "maximum": 1.0,
-            "description": "Optional continuous arousal score in [-1, 1]."
-          },
-          "valenceScore": {
-            "type": "number",
-            "minimum": -1.0,
-            "maximum": 1.0,
-            "description": "Optional continuous valence score in [-1, 1]."
-          },
-          "metadata": {
+          {
+            "title": "BandPowersFeature",
             "type": "object",
             "additionalProperties": false,
-            "description": "Optional feature-level metadata.",
+            "required": [
+              "featureId",
+              "featureType",
+              "channel",
+              "bandPowers"
+            ],
             "properties": {
-              "algorithm": {
+              "featureId": {
                 "type": "string",
-                "description": "Name or identifier of the algorithm used to compute this feature."
+                "minLength": 1,
+                "description": "Stable identifier for this feature within the envelope."
               },
-              "version": {
+              "featureType": {
                 "type": "string",
-                "description": "Version string for the feature extraction algorithm."
+                "enum": [
+                  "bandpower_delta",
+                  "bandpower_theta",
+                  "bandpower_alpha",
+                  "bandpower_beta",
+                  "bandpower_gamma"
+                ],
+                "description": "Bandpower feature type label for a specific canonical band."
               },
-              "source": {
+              "featureClass": {
                 "type": "string",
-                "description": "Optional upstream system or pipeline identifier."
+                "enum": [
+                  "bandpower"
+                ],
+                "description": "High-level classification of the feature indicating band power."
+              },
+              "channel": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Channel label or aggregate region name for this feature."
+              },
+              "bandPowers": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "delta",
+                  "theta",
+                  "alpha",
+                  "beta",
+                  "gamma"
+                ],
+                "description": "Per-band power breakdown normalized to [0, 1].",
+                "properties": {
+                  "delta": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "theta": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "alpha": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "beta": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "gamma": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Optional feature-level metadata.",
+                "properties": {
+                  "algorithm": {
+                    "type": "string",
+                    "description": "Name or identifier of the algorithm used to compute this feature."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "Version string for the feature extraction algorithm."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Optional upstream system or pipeline identifier."
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     }
   },
   "forbiddenFields": [
     "subjectId",
     "playerId",
+    "userId",
     "rawWaveform",
     "sampleArray",
+    "timeSeries",
     "demographics",
     "medicalHistory",
     "consentStatus"
