@@ -7,8 +7,10 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::ChatDirectorError;
-use crate::model::manifest_types::{RepoManifest, Tier};
-use crate::model::{CapabilityCatalog, InvariantSummary, MetricSummary, PhaseSummary, RepoSummary};
+use crate::model::manifest_types::RepoManifest;
+use crate::model::{
+    CapabilityCatalog, InvariantSummary, MetricSummary, PhaseSummary, RepoSummary,
+};
 use crate::spine::SpineIndex;
 
 /// Execution context that adjusts validation strictness.
@@ -219,8 +221,8 @@ fn load_manifests(root: &Path) -> Result<Vec<RepoManifest>, ChatDirectorError> {
             .map(|n| n.starts_with("repo-manifest.hpc.") && n.ends_with(".json"))
             .unwrap_or(false)
         {
-            let data = fs::read_to_string(&path)
-                .map_err(|e| ChatDirectorError::Io(path.clone(), e))?;
+            let data =
+                fs::read_to_string(&path).map_err(|e| ChatDirectorError::Io(path.clone(), e))?;
             let manifest: RepoManifest =
                 serde_json::from_str(&data).map_err(ChatDirectorError::InvalidSpine)?;
             manifests.push(manifest);
