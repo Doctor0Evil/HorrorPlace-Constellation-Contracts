@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-summary-v1.json",
+  "title": "BCI Summary v1",
+  "description": "Lossy, high-level BCI state derived from metrics envelope. Stable runtime API surface.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Semantic version of the BCI summary schema."
+    },
+    "windowId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Logical window identifier within a session (e.g., rolling or fixed window UUID)."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the BCI session, matching metrics envelope sessionId."
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Unix timestamp in milliseconds indicating the end of the aggregation window."
+    },
+    "stressScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Continuous stress intensity in the range [0,1]."
+    },
+    "stressBand": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Extreme"
+      ],
+      "description": "Banded stress category derived from stressScore for runtime filtering."
+    },
+    "attentionBand": {
+      "type": "string",
+      "enum": [
+        "Distracted",
+        "Neutral",
+        "Focused",
+        "HyperFocused"
+      ],
+      "description": "Player attention state category derived from attention-related metrics."
+    },
+    "visualOverloadIndex": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Estimated visual processing overload in the range [0,1]."
+    },
+    "startleSpike": {
+      "type": "boolean",
+      "description": "True if an acute startle response was detected within this window."
+    },
+    "signalQuality": {
+      "type": "string",
+      "enum": [
+        "Good",
+        "Degraded",
+        "Unavailable"
+      ],
+      "description": "BCI signal reliability status for this window."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional metadata describing derivation details for this summary.",
+      "properties": {
+        "derivationMethod": {
+          "type": "string",
+          "description": "Implementation-defined description or identifier for the derivation pipeline."
+        },
+        "confidenceScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence in this summary in the range [0,1]."
+        }
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "windowId",
+    "sessionId",
+    "timestamp",
+    "stressScore",
+    "stressBand",
+    "attentionBand",
+    "visualOverloadIndex",
+    "startleSpike",
+    "signalQuality"
+  ],
+  "additionalProperties": false
+}
