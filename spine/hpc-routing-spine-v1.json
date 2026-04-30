@@ -1,0 +1,312 @@
+{
+  "routingSpineVersion": "1.0.0",
+  "schemaRef": "schemas/hpc-routing-spine.schema.json",
+  "updatedAt": "2026-04-30T03:53:00Z",
+  "docHints": {
+    "overview": "Routing spine for the Horror.Place VM-constellation. Binds objectKind + tier + repo triples to schemas, invariants, metrics, and CHATDIRECTOR phases. This instance is intentionally minimal and GitHub-safe.",
+    "objectKindNotes": {
+      "moodContract": {
+        "summary": "Atmosphere and tone contracts that set target invariant and entertainment metric bands for a region or sequence.",
+        "usage": "Authored early in design to define how a space should feel. Consumed by engine selectors and geometry/lighting controllers."
+      },
+      "eventContract": {
+        "summary": "Region-bound horror event contracts defining triggers, pacing, and invariant/metric effects.",
+        "usage": "Used primarily in Atrocity-Seeds and Spectral-Foundry as Tier 2 vault content. Schemas live here; instances live in private repos."
+      },
+      "regionContractCard": {
+        "summary": "Canonical region cards defining CIC, MDI, AOS, RRM, FCF, SPR, RWF, DET, HVF, LSG, SHCI bands plus target entertainment metrics.",
+        "usage": "Anchor for history-aware horror; referenced by seeds, styles, and runtime selectors."
+      },
+      "seedContractCard": {
+        "summary": "Procedural story seeds that glue regions, personas, events, and invariants together.",
+        "usage": "Authored in Atrocity-Seeds as Tier 2 vault content using schemas defined here."
+      }
+    }
+  },
+  "mathConstraints": [
+    {
+      "id": "sprFromInvariants.v1",
+      "description": "Derived SPR band must be consistent with declared CIC, MDI, AOS, and FCF bands.",
+      "appliesTo": [
+        "moodContract",
+        "regionContractCard"
+      ]
+    },
+    {
+      "id": "metricBandsByTier.mood.v1",
+      "description": "Tier-specific allowed bands for UEC, EMD, STCI, CDL, ARR for moodContract.",
+      "appliesTo": [
+        "moodContract"
+      ]
+    },
+    {
+      "id": "regionDetCapsByTier.v1",
+      "description": "Maximum DET band per tier for regionContractCard, with stricter caps in T1-core than T2-vault.",
+      "appliesTo": [
+        "regionContractCard"
+      ]
+    }
+  ],
+  "objectKinds": [
+    {
+      "name": "moodContract",
+      "description": "Atmospheric mood contract that specifies invariant and entertainment metric targets for a region or sequence.",
+      "allowedTiers": [
+        "T1-core",
+        "T2-vault"
+      ],
+      "routes": [
+        {
+          "id": "moodContract_T1_core_Horror.Place",
+          "tier": "T1-core",
+          "repo": "Horror.Place",
+          "schemaRef": "schemas/contracts/mood-contract-v1.json",
+          "aiAuthoringKind": "moodContract",
+          "defaultTargetPath": "schemas/contracts/moods/",
+          "registryRef": "registry/registry-moods.ndjson",
+          "invariants": [
+            "CIC",
+            "AOS",
+            "RRM",
+            "LSG",
+            "DET",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1",
+            "metricBandsByTier.mood.v1"
+          ],
+          "phase": "Phase0Schema",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Canonical Tier 1 schema authority for mood contracts. No raw horror; contract-only.",
+            "usage": "Define or evolve schemas and examples for mood contracts here. Instances of moods live in private repos."
+          }
+        },
+        {
+          "id": "moodContract_T2_vault_HorrorPlace-Spectral-Foundry",
+          "tier": "T2-vault",
+          "repo": "HorrorPlace-Spectral-Foundry",
+          "schemaRef": "schemas/contracts/mood-contract-v1.json",
+          "aiAuthoringKind": "moodContract",
+          "defaultTargetPath": "moods/",
+          "registryRef": "registry/registry-moods.ndjson",
+          "invariants": [
+            "CIC",
+            "AOS",
+            "RRM",
+            "LSG",
+            "DET",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1",
+            "metricBandsByTier.mood.v1"
+          ],
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Vault implementation of concrete mood contracts.",
+            "usage": "Use this route when authoring actual mood instances bound to regions and styles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "eventContract",
+      "description": "Region-bound event contract capturing triggers, pacing, and invariant/metric adjustments.",
+      "allowedTiers": [
+        "T2-vault"
+      ],
+      "routes": [
+        {
+          "id": "eventContract_T2_vault_HorrorPlace-Atrocity-Seeds",
+          "tier": "T2-vault",
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "schemaRef": "schemas/contracts/event-contract-v1.json",
+          "aiAuthoringKind": "eventContract",
+          "defaultTargetPath": "events/",
+          "registryRef": "registry/registry-events.ndjson",
+          "invariants": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "RRM",
+            "FCF",
+            "SPR",
+            "RWF",
+            "DET",
+            "HVF",
+            "LSG",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1"
+          ],
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Vault route for concrete horror events bound to regions and seeds.",
+            "usage": "Use when authoring encounter-level events that reference region cards and seeds. Schemas remain in Constellation-Contracts."
+          }
+        }
+      ]
+    },
+    {
+      "name": "regionContractCard",
+      "description": "Canonical region card defining invariant bands and target entertainment metrics for a geographical or conceptual region.",
+      "allowedTiers": [
+        "T1-core",
+        "T2-vault"
+      ],
+      "routes": [
+        {
+          "id": "regionContractCard_T1_core_Horror.Place",
+          "tier": "T1-core",
+          "repo": "Horror.Place",
+          "schemaRef": "schemas/contracts/region-contract-card-v1.json",
+          "aiAuthoringKind": "regionContractCard",
+          "defaultTargetPath": "schemas/contracts/regions/",
+          "registryRef": "registry/registry-regions.ndjson",
+          "invariants": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "RRM",
+            "FCF",
+            "SPR",
+            "RWF",
+            "DET",
+            "HVF",
+            "LSG",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1",
+            "regionDetCapsByTier.v1"
+          ],
+          "phase": "Phase0Schema",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Tier 1 schema authority for region cards and example contracts.",
+            "usage": "Define invariant and metric structures for regions here. Concrete region rows live in private repos."
+          }
+        },
+        {
+          "id": "regionContractCard_T2_vault_HorrorPlace-Black-Archivum",
+          "tier": "T2-vault",
+          "repo": "HorrorPlace-Black-Archivum",
+          "schemaRef": "schemas/contracts/region-contract-card-v1.json",
+          "aiAuthoringKind": "regionContractCard",
+          "defaultTargetPath": "regions/",
+          "registryRef": "registry/registry-regions.ndjson",
+          "invariants": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "RRM",
+            "FCF",
+            "SPR",
+            "RWF",
+            "DET",
+            "HVF",
+            "LSG",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1",
+            "regionDetCapsByTier.v1"
+          ],
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Vault route for concrete region cards tied to historical data.",
+            "usage": "Use when encoding actual geographic or archive-backed regions with real invariant bands."
+          }
+        }
+      ]
+    },
+    {
+      "name": "seedContractCard",
+      "description": "Procedural story seed that binds regions, personas, events, and invariants into reusable encounter patterns.",
+      "allowedTiers": [
+        "T2-vault"
+      ],
+      "routes": [
+        {
+          "id": "seedContractCard_T2_vault_HorrorPlace-Atrocity-Seeds",
+          "tier": "T2-vault",
+          "repo": "HorrorPlace-Atrocity-Seeds",
+          "schemaRef": "schemas/contracts/seed-contract-card-v1.json",
+          "aiAuthoringKind": "seedContractCard",
+          "defaultTargetPath": "seeds/",
+          "registryRef": "registry/registry-seeds.ndjson",
+          "invariants": [
+            "CIC",
+            "MDI",
+            "AOS",
+            "RRM",
+            "FCF",
+            "SPR",
+            "RWF",
+            "DET",
+            "HVF",
+            "LSG",
+            "SHCI"
+          ],
+          "metrics": [
+            "UEC",
+            "EMD",
+            "STCI",
+            "CDL",
+            "ARR"
+          ],
+          "constraints": [
+            "sprFromInvariants.v1"
+          ],
+          "phase": "Phase2Contracts",
+          "additionalPropertiesRequired": true,
+          "docHints": {
+            "summary": "Vault route for procedural horror seeds.",
+            "usage": "Use when authoring PCG seeds that will be realized by Codebase-of-Death and governed by Dead-Ledger."
+          }
+        }
+      ]
+    }
+  ]
+}
