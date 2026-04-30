@@ -1,0 +1,311 @@
+{
+  "$id": "https://schemas.horror.place/bci/bci-geometry-binding.monster-mode-v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BciGeometryBinding.MonsterMode.V1",
+  "description": "Specialized binding pack for BCI-driven monster-mode infection perspectives, built on top of bci-summary-v1 and bci-geometry-binding-v1 without introducing new core BCI metrics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bindingProfileId",
+    "bindings",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "bci-geometry-binding.monster-mode-v1"
+    },
+    "bindingProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_.-]+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "experienceType": {
+      "type": "string",
+      "enum": [
+        "monster-mode"
+      ]
+    },
+    "infectionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style"
+      ],
+      "properties": {
+        "style": {
+          "type": "string",
+          "enum": [
+            "shambler",
+            "runner",
+            "seer"
+          ]
+        },
+        "durationHintSec": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 600.0
+        },
+        "coopEmphasis": {
+          "type": "string",
+          "enum": [
+            "squad-first",
+            "self-first"
+          ]
+        }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bindingId",
+          "regionClass",
+          "bciFilter",
+          "outputCurves",
+          "safetyProfileId"
+        ],
+        "properties": {
+          "bindingId": {
+            "type": "string",
+            "pattern": "^monster-mode\\.[a-z0-9_.-]+$"
+          },
+          "regionClass": {
+            "type": "string",
+            "enum": [
+              "corridor-highCIC-highAOS-build",
+              "threshold-highDET-apex",
+              "safe-lowDET-cooldown",
+              "infection-hub",
+              "infection-approach",
+              "infection-retreat"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "bciFilter": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stressBandAllowed",
+              "attentionBandAllowed",
+              "visualOverloadMin",
+              "visualOverloadMax",
+              "signalQualityAllowed"
+            ],
+            "properties": {
+              "stressBandAllowed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Low",
+                    "Medium",
+                    "High",
+                    "Extreme"
+                  ]
+                },
+                "minItems": 1
+              },
+              "attentionBandAllowed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Diffuse",
+                    "Normal",
+                    "Focused",
+                    "HyperFocused"
+                  ]
+                },
+                "minItems": 1
+              },
+              "visualOverloadMin": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "visualOverloadMax": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "signalQualityAllowed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Good",
+                    "Degraded",
+                    "Unavailable"
+                  ]
+                },
+                "minItems": 1
+              }
+            }
+          },
+          "invariantsFilter": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "CICMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "CICMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "DETMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "DETMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "AOSMin": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "AOSMax": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            }
+          },
+          "safetyProfileId": {
+            "type": "string",
+            "enum": [
+              "monster-mode-standard",
+              "monster-mode-safe-room"
+            ]
+          },
+          "outputCurves": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "visual": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "maskRadius": { "$ref": "#/definitions/CurveRef" },
+                  "maskFeather": { "$ref": "#/definitions/CurveRef" },
+                  "decayGrain": { "$ref": "#/definitions/CurveRef" },
+                  "colorDesat": { "$ref": "#/definitions/CurveRef" },
+                  "veinOverlay": { "$ref": "#/definitions/CurveRef" },
+                  "motionSmear": { "$ref": "#/definitions/CurveRef" }
+                }
+              },
+              "audio": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "infectedChannelGain": { "$ref": "#/definitions/CurveRef" },
+                  "squadMuffle": { "$ref": "#/definitions/CurveRef" },
+                  "heartbeatGain": { "$ref": "#/definitions/CurveRef" },
+                  "breathGain": { "$ref": "#/definitions/CurveRef" },
+                  "ringingLevel": { "$ref": "#/definitions/CurveRef" },
+                  "directionBias": { "$ref": "#/definitions/CurveRef" }
+                }
+              },
+              "haptics": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "chestPressure": { "$ref": "#/definitions/CurveRef" },
+                  "spineCrawl": { "$ref": "#/definitions/CurveRef" },
+                  "tremorRate": { "$ref": "#/definitions/CurveRef" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxVisualIntensity",
+        "maxAudioDeltaPerSecond",
+        "maxHapticIntensity",
+        "maxDet",
+        "maxCsi"
+      ],
+      "properties": {
+        "maxVisualIntensity": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxAudioDeltaPerSecond": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxHapticIntensity": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxDet": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxCsi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CurveRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "input",
+        "params",
+        "outputRange"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "enum": [
+            "linear",
+            "sigmoid",
+            "hysteresis",
+            "noise"
+          ]
+        },
+        "input": {
+          "type": "string",
+          "enum": [
+            "stressScore",
+            "stressBand",
+            "attentionBand",
+            "visualOverloadIndex",
+            "startleSpike"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "outputRange": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    }
+  }
+}
