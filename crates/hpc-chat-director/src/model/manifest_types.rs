@@ -1,11 +1,67 @@
 //! Typed representations of repository manifests.
-//!
 //! Manifests define per-repo policies: allowed schemas, default paths,
 //! tier classifications, and AI-specific authoring rules.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::model::spine_types::{Phase, Tier};
+
+use crate::model::spine_types::Phase;
+
+/// Tier classification shared across manifests.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum Tier {
+    Tier1,
+    Tier2,
+    Tier3,
+}
+
+impl Tier {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Tier::Tier1 => "Tier1",
+            Tier::Tier2 => "Tier2",
+            Tier::Tier3 => "Tier3",
+        }
+    }
+
+    pub fn describe(&self) -> TierDescription {
+        let (name, description) = match self {
+            Tier::Tier1 => (
+                "Tier1",
+                "Public contract-only surfaces and orchestrator logic; no raw horror payloads.",
+            ),
+            Tier::Tier2 => (
+                "Tier2",
+                "Vault-style repos for styles, seeds, personas, and experimental logic.",
+            ),
+            Tier::Tier3 => (
+                "Tier3",
+                "Research tier for BCI, neural resonance, and redacted chronicles.",
+            ),
+        };
+
+        TierDescription {
+            name: name.to_string(),
+            description: description.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TierDescription {
+    pub name: String,
+    pub description: String,
+}
+
+/// AI agent role for permission gating.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum AiRole {
+    Architect,
+    Implementer,
+    Auditor,
+}
 
 /// Per-repo manifest structure.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,12 +72,16 @@ pub struct RepoManifest {
     /// Tier classification for this repo.
     pub tier: Tier,
     /// Allowed object kinds for this repo.
+    #[serde(default)]
     pub allowed_object_kinds: Vec<String>,
     /// Allowed schema URIs.
+    #[serde(default)]
     pub allowed_schemas: Vec<String>,
     /// Default target path template for each object kind.
+    #[serde(default)]
     pub default_target_paths: HashMap<String, String>,
     /// Policy rules for this repo.
+    #[serde(default)]
     pub rules: RepoRules,
     /// AI-specific authoring hints.
     #[serde(default)]
@@ -32,12 +92,24 @@ pub struct RepoManifest {
     /// Minimum RWF for production-tier acceptance.
     #[serde(default)]
     pub min_rwf_for_tier: Option<f64>,
+    /// Detailed target rules keyed by object kind.
+    #[serde(default)]
+    pub target_rules: Vec<TargetRule>,
+    /// If true, object kinds not listed in allowed_object_kinds are denied.
+    #[serde(default)]
+    pub implicit_deny: bool,
 }
 
 impl RepoManifest {
     /// Check if this manifest allows the given object kind.
     pub fn allows_object_kind(&self, kind: &str) -> bool {
-        self.allowed_object_kinds.contains(&kind.to_string())
+        if self.allowed_object_kinds.contains(&kind.to_string()) {
+            return true;
+        }
+        if self.implicit_deny {
+            return false;
+        }
+        !self.allowed_object_kinds.is_empty()
     }
 
     /// Get the default path template for an object kind.
@@ -45,11 +117,53 @@ impl RepoManifest {
         self.default_target_paths.get(kind).map(|s| s.as_str())
     }
 
-    /// Get charter rationale for tier violations.
-    pub fn tier_violation_hints_for(&self, kind: &str) -> (Option<String>, Option<String>) {
+    /// Get charter rationale and suggested staging repo for tier violations.
+    pub fn tier_violation_hints_for(&self) -> (Option<String>, Option<String>) {
         let charter = self.authoring_hints.tier_rationale.clone();
         let suggestion = self.authoring_hints.default_staging_repo.clone();
         (charter, suggestion)
+    }
+
+    /// Find a routing rule for a specific object kind.
+    pub fn find_rule_for(&self, object_kind: &str) -> Option<&TargetRule> {
+        self.target_rules
+            .iter()
+            .find(|r| r.object_kind == object_kind)
+    }
+
+    /// Build a policy checklist for this repo and tier.
+    pub fn to_policy_checklist(&self) -> PolicyChecklist {
+        let mut checklist = PolicyChecklist::new(&self.repo, &self.tier);
+
+        if self.rules.one_file_per_request {
+            checklist.add_item(
+                "ONE_FILE_PER_REQUEST",
+                "Enforce exactly one file per authoring request.",
+            );
+        }
+
+        if self.rules.require_deadledger_ref {
+            checklist.add_item(
+                "DEAD_LEDGER_REF",
+                "Require deadLedgerRef for historical or high-impact content.",
+            );
+        }
+
+        if let Some(max_bytes) = self.rules.max_file_size_bytes {
+            checklist.add_item(
+                "MAX_FILE_SIZE",
+                &format!("Maximum file size is {} bytes.", max_bytes),
+            );
+        }
+
+        if self.min_rwf_for_tier.is_some() {
+            checklist.add_item(
+                "MIN_RWF_FOR_TIER",
+                "Enforce minimum RWF score for production-tier acceptance.",
+            );
+        }
+
+        checklist
     }
 }
 
@@ -79,14 +193,19 @@ pub struct RepoRules {
 #[serde(rename_all = "camelCase")]
 pub struct AuthoringHints {
     /// Rationale for tier restrictions.
+    #[serde(default)]
     pub tier_rationale: Option<String>,
     /// Rationale for one-file-per-request.
+    #[serde(default)]
     pub one_file_per_request_rationale: Option<String>,
     /// Rationale for Dead-Ledger requirements.
+    #[serde(default)]
     pub deadledger_rationale: Option<String>,
     /// Rationale for cross-repo reference rules.
+    #[serde(default)]
     pub cross_repo_rationale: Option<String>,
     /// Suggested staging repo for low-RWF artifacts.
+    #[serde(default)]
     pub default_staging_repo: Option<String>,
 }
 
@@ -112,17 +231,19 @@ pub struct CrossRefPolicy {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TierIsolation {
-    /// No isolation; any tier may reference.
     None,
-    /// Only same or lower tiers may reference.
     SameOrLower,
-    /// Only same tier may reference.
     SameOnly,
-    /// Strict: no cross-tier references allowed.
     Strict,
 }
 
-/// Routing rule mapping object kind to path patterns.
+impl Default for TierIsolation {
+    fn default() -> Self {
+        TierIsolation::SameOrLower
+    }
+}
+
+/// Routing rule mapping object kind to path and role patterns.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TargetRule {
@@ -136,16 +257,37 @@ pub struct TargetRule {
     /// Phase restrictions for this rule.
     #[serde(default)]
     pub allowed_phases: Vec<Phase>,
+    /// Optional human/AI-readable notes for routing decisions.
+    #[serde(default)]
+    pub notes: Vec<String>,
 }
 
-/// AI agent role for permission gating.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AiRole {
-    /// Architect: schemas and checklists only.
-    Architect,
-    /// Implementer: full contract generation.
-    Implementer,
-    /// Auditor: validation and review only.
-    Auditor,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PolicyChecklistItem {
+    pub code: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PolicyChecklist {
+    pub repo_name: String,
+    pub tier: String,
+    pub items: Vec<PolicyChecklistItem>,
+}
+
+impl PolicyChecklist {
+    pub fn new(repo_name: &str, tier: &Tier) -> Self {
+        PolicyChecklist {
+            repo_name: repo_name.to_string(),
+            tier: tier.as_str().to_string(),
+            items: Vec::new(),
+        }
+    }
+
+    pub fn add_item(&mut self, code: &str, description: &str) {
+        self.items.push(PolicyChecklistItem {
+            code: code.to_string(),
+            description: description.to_string(),
+        });
+    }
 }
