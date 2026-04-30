@@ -1,0 +1,328 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/docs/constellation-repo-wiring-plan-v1.json",
+  "description": "High-level wiring plan for all Horror.Place constellation repositories, describing roles, allowed objectKinds, and supported implementation languages.",
+  "repos": [
+    {
+      "repoName": "HorrorPlace-Constellation-Contracts",
+      "tier": "T1-core",
+      "kind": "SCHEMA_SPINE_REPO",
+      "primaryRole": "Canonical authority for JSON Schemas, routing spine, repo manifests, and AI authoring contracts.",
+      "objectKinds": [
+        {
+          "name": "moodContract",
+          "role": "Defines invariant and entertainment metric targets for regions/sequences; schemas and examples only.",
+          "phases": ["Phase0Schema"],
+          "languages": ["JSON Schema", "Markdown (specs)", "Rust (validator)"],
+          "wiring": {
+            "schemas": ["schemas/contracts/mood-contract-v1.json"],
+            "routingSpine": ["spine/hpc-routing-spine-v1.json"],
+            "manifests": ["schemas/core/repo-manifest-v1.json"],
+            "validators": ["crates/hpc-routing-validator", "crates/hpc-routing-lint"]
+          }
+        },
+        {
+          "name": "eventContract",
+          "role": "Defines horror events structure and invariant/metric effects; schemas only.",
+          "phases": ["Phase0Schema"],
+          "languages": ["JSON Schema", "Markdown"],
+          "wiring": {
+            "schemas": ["schemas/contracts/event-contract-v1.json"],
+            "routingSpine": ["spine/hpc-routing-spine-v1.json"]
+          }
+        },
+        {
+          "name": "regionContractCard",
+          "role": "Canonical region card structure (CIC, MDI, AOS, RRM, FCF, SPR, RWF, DET, HVF, LSG, SHCI + metrics).",
+          "phases": ["Phase0Schema"],
+          "languages": ["JSON Schema", "Markdown"],
+          "wiring": {
+            "schemas": ["schemas/contracts/region-contract-card-v1.json"],
+            "routingSpine": ["spine/hpc-routing-spine-v1.json"]
+          }
+        },
+        {
+          "name": "seedContractCard",
+          "role": "Procedural seed structure connecting regions, personas, events, invariants.",
+          "phases": ["Phase0Schema"],
+          "languages": ["JSON Schema", "Markdown"],
+          "wiring": {
+            "schemas": ["schemas/contracts/seed-contract-card-v1.json"],
+            "routingSpine": ["spine/hpc-routing-spine-v1.json"]
+          }
+        },
+        {
+          "name": "bci-geometry-tileset",
+          "role": "BCI-aware geometry tileset schema binding invariants, metrics, and Dead-Ledger caps to geometry profiles.",
+          "phases": ["Phase0Schema"],
+          "languages": ["JSON Schema", "Markdown"],
+          "wiring": {
+            "schemas": ["schemas/bci/bci-geometry-tileset-v1.json"],
+            "routingSpine": ["spine/hpc-routing-spine-v1.json"]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "contracts": ["JSON", "JSON Schema"],
+        "tooling": ["Rust"],
+        "docs": ["Markdown"]
+      }
+    },
+    {
+      "repoName": "Horror.Place",
+      "tier": "T1-core",
+      "kind": "SCHEMA_SPINE_REPO",
+      "primaryRole": "Player-facing public layer: Tier-1 contracts, mood libraries, public region cards, and high-level orchestration specs.",
+      "objectKinds": [
+        {
+          "name": "moodContract",
+          "role": "Public Tier-1 mood contracts (no raw horror), used as examples and starter packs.",
+          "phases": ["Phase0Schema", "Phase2Contracts"],
+          "languages": ["JSON", "JSON Schema", "Markdown"],
+          "wiring": {
+            "contracts": ["contracts/moods/*.json"],
+            "registries": ["registry/registry-moods.ndjson"],
+            "docs": ["docs/moods/*.md"]
+          }
+        },
+        {
+          "name": "regionContractCard",
+          "role": "Public example region cards with lightly redacted history, for tutorials and public tooling.",
+          "phases": ["Phase0Schema", "Phase2Contracts"],
+          "languages": ["JSON", "JSON Schema", "Markdown"],
+          "wiring": {
+            "contracts": ["contracts/regions/*.json"],
+            "registries": ["registry/registry-regions.ndjson"],
+            "docs": ["docs/regions/*.md"]
+          }
+        },
+        {
+          "name": "bci-geometry-tileset",
+          "role": "Tier-1 BCI-aware tileset contracts safe for public demonstration and dev tooling.",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON", "JSON Schema"],
+          "wiring": {
+            "contracts": ["contracts/bci-tilesets/*.json"],
+            "registries": ["registry/registry-bci-tilesets.ndjson"]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "contracts": ["JSON"],
+        "orchestrationSpecs": ["Markdown", "JSON"],
+        "demoCode": ["Lua", "Rust (examples)"]
+      }
+    },
+    {
+      "repoName": "Horror.Place-Orchestrator",
+      "tier": "T1-core",
+      "kind": "ORCHESTRATOR_REPO",
+      "primaryRole": "CHATDIRECTOR and plan compiler; routes AiAuthoringRequests into the correct repos using the routing spine.",
+      "objectKinds": [
+        {
+          "name": "aiAuthoringPlan",
+          "role": "High-level authoring plans describing sequences of artifact generations across repos.",
+          "phases": ["Phase1Plan"],
+          "languages": ["JSON", "YAML", "Rust"],
+          "wiring": {
+            "schemas": ["schemas/tooling/ai-authoring-plan-v1.json"],
+            "runtime": ["src/chatdirector/*.rs"],
+            "routing": ["depends_on: HorrorPlace-Constellation-Contracts.crates/hpc-routing-validator"]
+          }
+        },
+        {
+          "name": "aiAuthoringRequest",
+          "role": "Per-request envelope carrying objectKind, tier, targetRepo, schemaRef, invariants, metrics.",
+          "phases": ["Phase1Plan"],
+          "languages": ["JSON"],
+          "wiring": {
+            "schemas": ["schemas/tooling/ai-authoring-request-v1.json"],
+            "runtime": ["src/chatdirector/api/*.rs"]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "core": ["Rust"],
+        "config": ["YAML", "JSON"],
+        "scripting": ["Lua (integration bindings when needed)"]
+      }
+    },
+    {
+      "repoName": "HorrorPlace-Atrocity-Seeds",
+      "tier": "T2-vault",
+      "kind": "CONTENT_VAULT_REPO",
+      "primaryRole": "Vault of high-intensity procedural seeds and event contracts, bound to sensitive history data.",
+      "objectKinds": [
+        {
+          "name": "seedContractCard",
+          "role": "Concrete Atrocity seeds intertwining regions, personas, and event chains (vault-only).",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON"],
+          "wiring": {
+            "contracts": ["seeds/*.json"],
+            "registries": ["registry/registry-seeds.ndjson"],
+            "schemas": [
+              "depends_on: HorrorPlace-Constellation-Contracts.schemas/contracts/seed-contract-card-v1.json"
+            ]
+          }
+        },
+        {
+          "name": "eventContract",
+          "role": "High-impact horror events tied to specific regions and seed arcs.",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON"],
+          "wiring": {
+            "contracts": ["events/*.json"],
+            "registries": ["registry/registry-events.ndjson"],
+            "schemas": [
+              "depends_on: HorrorPlace-Constellation-Contracts.schemas/contracts/event-contract-v1.json"
+            ]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "contracts": ["JSON"],
+        "internalDocs": ["Markdown"],
+        "noRuntimeCode": []
+      }
+    },
+    {
+      "repoName": "HorrorPlace-Black-Archivum",
+      "tier": "T2-vault",
+      "kind": "CONTENT_VAULT_REPO",
+      "primaryRole": "Deep history and region cards with thick AOS/MDI; used as the archive layer for high-CIC regions.",
+      "objectKinds": [
+        {
+          "name": "regionContractCard",
+          "role": "Vault region cards backed by geo-historical data and archival gaps, used for PCG and spectral queries.",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON"],
+          "wiring": {
+            "contracts": ["regions/*.json"],
+            "registries": ["registry/registry-regions.ndjson"],
+            "schemas": [
+              "depends_on: HorrorPlace-Constellation-Contracts.schemas/contracts/region-contract-card-v1.json"
+            ]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "contracts": ["JSON"],
+        "analysis": ["Python (offline tools)"],
+        "docs": ["Markdown"]
+      }
+    },
+    {
+      "repoName": "HorrorPlace-Spectral-Foundry",
+      "tier": "T2-vault",
+      "kind": "CONTENT_VAULT_REPO",
+      "primaryRole": "Spectral entity templates and haunt pattern contracts; builds on region cards and seeds.",
+      "objectKinds": [
+        {
+          "name": "moodContract",
+          "role": "Vault-only spectral moods and ambience tailored to specific haunt types.",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON"],
+          "wiring": {
+            "contracts": ["moods/*.json"],
+            "registries": ["registry/registry-moods.ndjson"],
+            "schemas": [
+              "depends_on: HorrorPlace-Constellation-Contracts.schemas/contracts/mood-contract-v1.json"
+            ]
+          }
+        },
+        {
+          "name": "eventContract",
+          "role": "Spectral manifestation events driven by invariant bands and SHCI.",
+          "phases": ["Phase2Contracts"],
+          "languages": ["JSON"],
+          "wiring": {
+            "contracts": ["events/*.json"],
+            "registries": ["registry/registry-events.ndjson"]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "contracts": ["JSON"],
+        "runtimeHints": ["Lua snippets embedded in contracts as IDs, not code"],
+        "docs": ["Markdown"]
+      }
+    },
+    {
+      "repoName": "HorrorPlace-Codebase-of-Death",
+      "tier": "T1-core",
+      "kind": "ENGINE_RUNTIME_REPO",
+      "primaryRole": "Runtime engine adapters: Lua surface, Godot/unreal integration, invariant sampling, and geometry controllers.",
+      "objectKinds": [
+        {
+          "name": "mapFunctionAdapter",
+          "role": "Adapter modules that realize contract families into runtime behavior (e.g., bci-geometry-tileset -> map functions).",
+          "phases": ["Phase3LuaPolicy", "Phase4Adapter"],
+          "languages": ["Lua", "GDScript", "C++/Rust (engine plugin)"],
+          "wiring": {
+            "luaModules": ["enginelibrary/**/*.lua"],
+            "godotScripts": ["godot/**/*.gd"],
+            "bindings": [
+              "depends_on: HorrorPlace-Constellation-Contracts.schemas/bci/bci-geometry-tileset-v1.json",
+              "depends_on: HorrorPlace-Constellation-Contracts.spine/hpc-routing-spine-v1.json"
+            ]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "runtime": ["Lua", "GDScript", "C++", "Rust"],
+        "config": ["JSON", "TOML"],
+        "noContracts": []
+      }
+    },
+    {
+      "repoName": "HorrorPlace-Dead-Ledger-Network",
+      "tier": "T1-core",
+      "kind": "GOVERNANCE_REPO",
+      "primaryRole": "Entitlement and safety governance; holds profiles and proof envelopes for tilesets, seeds, and BCI.",
+      "objectKinds": [
+        {
+          "name": "deadLedgerProfile",
+          "role": "Profiles describing DET caps, OVERWHELMED dwell limits, and band constraints for asset families.",
+          "phases": ["Phase3LuaPolicy", "Phase4Adapter"],
+          "languages": ["JSON", "YAML"],
+          "wiring": {
+            "profiles": ["profiles/*.json"],
+            "schemas": ["schemas/dead-ledger-profile-v1.json"]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "profiles": ["JSON", "YAML"],
+        "contracts": ["JSON Schema"],
+        "runtimeIntegrations": ["Rust", "Lua"]
+      }
+    },
+    {
+      "repoName": "HorrorPlace-RotCave",
+      "tier": "T2-vault",
+      "kind": "ENGINE_RUNTIME_REPO",
+      "primaryRole": "Internal orchestrator and Reaper-entity experiments (e.g., ReaperWanderingEntity) consuming the spine index.",
+      "objectKinds": [
+        {
+          "name": "reaperContractsRequest",
+          "role": "Internal request envelopes describing what the Reaper wants to generate (objectKind, tier, invariant bands).",
+          "phases": ["Phase2Contracts", "Phase3LuaPolicy"],
+          "languages": ["JSON", "Rust"],
+          "wiring": {
+            "schemas": ["schemas/rotcave/reaper-contracts-request-v1.json"],
+            "runtime": ["wandering-entity-archive/crates/wandering-entity-spine-resolver/src/*.rs"],
+            "dependsOn": [
+              "HorrorPlace-Constellation-Contracts.spine/hpc-routing-spine-v1.json"
+            ]
+          }
+        }
+      ],
+      "preferredLanguages": {
+        "runtime": ["Rust", "Lua"],
+        "contracts": ["JSON"],
+        "tools": ["Rust"]
+      }
+    }
+  ]
+}
