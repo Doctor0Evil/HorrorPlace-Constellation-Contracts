@@ -1,0 +1,65 @@
+{
+  "id": "lane.SANITY_CORE.stability.v1",
+  "schemaVersion": "laneStabilityContract.v1",
+  "laneId": "SANITY_CORE",
+  "laneKind": "FOUNDATION",
+  "requiresDirectorCore": true,
+  "dependsOn": [
+    "DIRECTOR_CORE"
+  ],
+  "stabilityContractRef": "schema.HorrorPlace.lane.laneStabilityContract.v1.json#lane.SANITY_CORE",
+  "watchedSignals": [
+    {
+      "key": "0xUEC",
+      "role": "engagement",
+      "band": [0.55, 0.82],
+      "bandRef": "UEC_FUN_WINDOW_V1",
+      "maxDeltaPerCommit": 0.03
+    },
+    {
+      "key": "0xSPR",
+      "role": "spectralPlausibility",
+      "band": [0.40, 0.85],
+      "bandRef": "SPR_PLAUSIBILITY_BAND_V1",
+      "maxDeltaPerCommit": 0.05
+    },
+    {
+      "key": "ARR",
+      "role": "retention",
+      "band": [0.70, 0.90],
+      "bandRef": "ARR_TARGET_WINDOW_V1",
+      "maxDeltaPerCommit": 0.03
+    },
+    {
+      "key": "STCI",
+      "role": "threatConfidence",
+      "band": [0.10, 0.35],
+      "bandRef": "STCI_SANE_RANGE_V1",
+      "maxDeltaPerCommit": 0.03
+    },
+    {
+      "key": "CDL",
+      "role": "cognitiveDissonance",
+      "band": [0.25, 0.55],
+      "bandRef": "CDL_TARGET_WINDOW_V1",
+      "maxDeltaPerCommit": 0.03
+    }
+  ],
+  "harnessIds": [
+    "SceneHarness.SanityCore.NightLoop",
+    "SceneHarness.SanityCore.SafehouseSiege",
+    "SceneHarness.SanityCore.HallucinationAB"
+  ],
+  "softAlarm": {
+    "windowCommits": 5,
+    "trendThreshold": -0.02
+  },
+  "flags": {
+    "enforceBands": true,
+    "enforceDeltas": true,
+    "allowOptOutForLaneKinds": [
+      "TOOLING",
+      "TUTORIAL"
+    ]
+  }
+}
