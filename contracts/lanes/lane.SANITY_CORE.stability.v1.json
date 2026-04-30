@@ -1,0 +1,62 @@
+{
+  "objectKind": "laneStabilityContract.v1",
+  "id": "lane-stability.aral-basin.safehouse-alpha-bravo.v1",
+  "version": "1.0.0",
+  "phase": 2,
+  "tier": "standard",
+  "regionRef": "region.aral-basin.v3",
+  "laneRef": "lane.safehouse-alpha.bravo.watched",
+  "schemaref": "laneStabilityContract.schema.v1",
+
+  "prismMeta": {
+    "author": "design-team-core",
+    "createdAt": "2026-04-30T03:00:00Z",
+    "updatedAt": "2026-04-30T03:00:00Z",
+    "routeStage": "RoomGraph",
+    "experienceMode": "MapDesignWizard"
+  },
+
+  "invariantBands": {
+    "CIC": [0.40, 0.55],
+    "MDI": [0.35, 0.55],
+    "AOS": [0.55, 0.75],
+    "RRM": [0.30, 0.45],
+    "FCF": [0.40, 0.60],
+    "SPR": [0.45, 0.65],
+    "RWF": [0.60, 0.85],
+    "DET": [2.0, 4.0],
+    "HVF": [0.50, 0.75],
+    "LSG": [0.70, 0.90],
+    "SHCI": [0.55, 0.70]
+  },
+
+  "sanityBands": {
+    "UEC": [0.55, 0.80],
+    "EMD": [0.35, 0.60],
+    "STCI": [0.40, 0.70],
+    "CDL": [0.30, 0.55],
+    "ARR": [0.75, 1.00]
+  },
+
+  "sanityPolicy": {
+    "stabilityClass": "liminal-fragile",
+    "maxDetDeltaPerTraversal": 1.5,
+    "maxCdlDeltaPerTraversal": 0.15,
+    "allowedExcursionRatio": 0.25,
+    "sanityFailureMode": "cooldown-required"
+  },
+
+  "safetyEnvelope": {
+    "maxDetPerSessionOnLane": 4.0,
+    "maxTraversalsPerSession": 3
+  },
+
+  "telemetryHints": {
+    "logBucketId": "lanes.aral-basin.safehouse-watch",
+    "expectedTraversalCount": 2
+  },
+
+  "deadLedgerRef": "deadledger:region/aral-basin:lane-watch-v1",
+
+  "notes": "Short transition lane between safehouses that should feel watched, not attacked. Lane-level DET must remain below the region's hard cap, ARR stays high to preserve unresolved questions. SANITY_CORE should request cooldown or reroute if repeated traversals push DET/CDL beyond these bands."
+}
