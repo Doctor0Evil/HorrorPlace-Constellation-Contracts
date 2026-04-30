@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-converter-contract-v1.json",
+  "title": "BCI Converter Contract v1",
+  "description": "Formal contract for tools converting external EEG datasets to bci-feature-envelope-v1 NDJSON.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Version of the converter contract schema."
+    },
+    "contractId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for this converter contract configuration."
+    },
+    "inputFormats": {
+      "type": "array",
+      "description": "List of supported raw EEG container formats for this converter.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EDF",
+          "BDF",
+          "FIF",
+          "XDF",
+          "CSV"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "outputFormat": {
+      "type": "string",
+      "const": "NDJSON:bci-feature-envelope-v1",
+      "description": "Output format; must be NDJSON lines matching bci-feature-envelope-v1."
+    },
+    "featureSet": {
+      "type": "array",
+      "description": "Declared feature keys the converter will emit into bci-feature-envelope-v1 envelopes.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "bandpower_delta",
+          "bandpower_theta",
+          "bandpower_alpha",
+          "bandpower_beta",
+          "bandpower_gamma",
+          "arousal_score",
+          "valence_score",
+          "asymmetry_index",
+          "coherence_metric"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "anonymizationPolicy": {
+      "type": "object",
+      "description": "Requirements for data anonymization enforced by this converter.",
+      "additionalProperties": false,
+      "required": [
+        "dropsSubjectIds",
+        "dropsRawWaveforms",
+        "dropsDemographics",
+        "dropsMedicalHistory"
+      ],
+      "properties": {
+        "dropsSubjectIds": {
+          "type": "boolean",
+          "const": true,
+          "description": "Converter must never emit any subject identifiers."
+        },
+        "dropsRawWaveforms": {
+          "type": "boolean",
+          "const": true,
+          "description": "Converter must not emit raw waveforms; only derived features are allowed."
+        },
+        "dropsDemographics": {
+          "type": "boolean",
+          "const": true,
+          "description": "Converter must not emit demographic attributes."
+        },
+        "dropsMedicalHistory": {
+          "type": "boolean",
+          "const": true,
+          "description": "Converter must not emit medical history details."
+        }
+      }
+    },
+    "licenseCompliance": {
+      "type": "object",
+      "description": "Dataset license metadata and compliance switches for this conversion pipeline.",
+      "additionalProperties": false,
+      "required": [
+        "datasetName",
+        "licenseId",
+        "allowsDerivedFeatures"
+      ],
+      "properties": {
+        "datasetName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable dataset name."
+        },
+        "licenseId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX-like license identifier or dataset license tag."
+        },
+        "allowsDerivedFeatures": {
+          "type": "boolean",
+          "description": "Indicates if the license allows computing and storing derived EEG features."
+        },
+        "attributionRequired": {
+          "type": "boolean",
+          "description": "Whether downstream usages must include dataset attribution."
+        }
+      }
+    },
+    "tooling": {
+      "type": "object",
+      "description": "Implementation details for the converter tool.",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "type": "string",
+          "enum": [
+            "Rust",
+            "Python-MNE",
+            "C-BrainFlow",
+            "Hybrid"
+          ],
+          "description": "Primary implementation stack for the converter."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the converter implementation, independent of schemaVersion."
+        }
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "contractId",
+    "inputFormats",
+    "outputFormat",
+    "featureSet",
+    "anonymizationPolicy",
+    "licenseCompliance"
+  ]
+}
