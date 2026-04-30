@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:binding-selection-v1.json",
+  "title": "Binding Selection Event v1",
+  "description": "Logged when Rust BindingResolver selects a binding. Enables analysis of resolver behavior and AI-chat binding quality.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventType", "timestamp", "playerId", "regionId", "resolution"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "eventType": { "type": "string", "const": "binding-selection" },
+    "timestamp": { "type": "integer" },
+    "playerId": { "type": "string" },
+    "regionId": { "type": "string" },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chosenBindingId", "score", "candidates"],
+      "properties": {
+        "chosenBindingId": { "type": "string" },
+        "score": { "type": "number" },
+        "hintBindingId": { "type": "string" },
+        "hintRejected": { "type": "boolean" },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bindingId", "score", "priority", "tier"],
+            "properties": {
+              "bindingId": { "type": "string" },
+              "score": { "type": "number" },
+              "priority": { "type": "number", "minimum": 0, "maximum": 10 },
+              "tier": { "enum": ["lab", "standard", "mature", "research"] },
+              "specificity": { "type": "number", "minimum": 0, "maximum": 1 },
+              "distanceScore": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "filterReasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Why other candidates were filtered out"
+        }
+      }
+    }
+  }
+}
