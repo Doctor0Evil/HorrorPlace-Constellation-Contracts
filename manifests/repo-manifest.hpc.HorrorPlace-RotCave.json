@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-RotCave",
+  "tier": "T2-vault",
+  "kind": "ENGINE_RUNTIME_REPO",
+  "description": "Internal orchestrator and Reaper-entity experiments, consuming the routing spine and emitting internal request envelopes.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "reaperContractsRequest",
+    "routingDecisionCache"
+  ],
+  "defaultPaths": {
+    "reaperContractsRequest": "reaper/requests/",
+    "routingDecisionCache": "reaper/cache/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/rotcave/reaper-contracts-request-v1.json",
+    "schemas/rotcave/routing-decision-cache-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "RotCave artifacts are envelopes and requests, not narrative content."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All reaperContractsRequest artifacts must conform to their schema and carry schemaRef."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Requests must include objectKind, tier, and desired invariant bands to drive routing decisions."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 262144
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "All Reaper routing must resolve against the routing spine and never guess repo destinations."
+    }
+  },
+  "ciChecks": {
+    "validateReaperRequests": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/rotcave/reaper-contracts-request-v1.json",
+        "--input-glob",
+        "reaper/requests/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this repo for internal Reaper routing and request envelopes that interface with the routing spine.",
+    "aiBehavior": [
+      "Do not generate content contracts here; only reaperContractsRequest and internal routing artifacts.",
+      "Use the routing spine to turn objectKind and tier into repo and schemaRef before writing any request.",
+      "Treat this repo as an internal engine bridge between Reaper logic and the constellation routing layer."
+    ]
+  }
+}
