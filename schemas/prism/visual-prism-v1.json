@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:visual-prism-v1.json",
+  "title": "Visual Prism Output v1",
+  "description": "Derived visual control indices for DeadLantern and VFX systems. Computed from LSG, HVF, visualOverloadIndex, CDL, AOS.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "timestamp", "visualPressure", "visualCap", "visualInstability"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "timestamp": { "type": "integer" },
+    "visualPressure": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How oppressive visuals should feel. Weighted blend of LSG, HVF, visualOverloadIndex."
+    },
+    "visualCap": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Instantaneous ceiling for visual intensity. Computed as 1 - visualOverloadIndex."
+    },
+    "visualInstability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Glitch/unstable VFX intensity. Driven by CDL (cognitive dissonance) and AOS (archival noise)."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pressureWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lsg": { "type": "number", "default": 0.4 },
+            "hvf": { "type": "number", "default": 0.3 },
+            "overload": { "type": "number", "default": 0.3 }
+          }
+        },
+        "instabilityWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cdl": { "type": "number", "default": 0.6 },
+            "aos": { "type": "number", "default": 0.4 }
+          }
+        }
+      }
+    }
+  }
+}
