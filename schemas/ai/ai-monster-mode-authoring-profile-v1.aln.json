@@ -1,0 +1,477 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/ai/ai-monster-mode-authoring-profile-v1.aln.json",
+  "title": "AI Authoring Profile - Monster Mode v1",
+  "description": "Contract for AI-generated monster-mode artifacts: visual/audio profiles, Lua policy modules, and C++ adapters. Constrains invariants, BCI envelopes, safety caps, and allowed target repos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "version",
+    "tier",
+    "objectKinds",
+    "allowedRepos",
+    "invariantSpine",
+    "bciEnvelopeSpine",
+    "safetyProfiles",
+    "constraints"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "pattern": "ai-profile\\.monster-mode\\.v[0-9]+",
+      "description": "Logical ID for this authoring profile."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this profile.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault"],
+      "description": "Governance tier for this profile."
+    },
+    "objectKinds": {
+      "type": "array",
+      "description": "Allowed artifact kinds that AI may generate under monster-mode.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "monster_visual_profile",
+          "monster_audio_profile",
+          "monster_mode_lua_module",
+          "monster_mode_cpp_adapter"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "allowedRepos": {
+      "type": "object",
+      "description": "Repos and paths where monster-mode artifacts may be written.",
+      "additionalProperties": false,
+      "required": ["visual", "audio", "lua", "cpp"],
+      "properties": {
+        "visual": {
+          "type": "array",
+          "description": "Target locations for visual monster-mode contracts.",
+          "items": {
+            "type": "object",
+            "required": ["repo", "pathPrefix"],
+            "additionalProperties": false,
+            "properties": {
+              "repo": {
+                "type": "string",
+                "enum": [
+                  "Horror.Place",
+                  "HorrorPlace-Codebase-of-Death"
+                ]
+              },
+              "pathPrefix": {
+                "type": "string",
+                "description": "Path prefix within the repo, e.g. schemas/runtime/monster/",
+                "pattern": "^[a-zA-Z0-9_\\-/]+$"
+              }
+            }
+          }
+        },
+        "audio": {
+          "type": "array",
+          "description": "Target locations for monster-mode audio style and RTPC mapping contracts.",
+          "items": {
+            "type": "object",
+            "required": ["repo", "pathPrefix"],
+            "additionalProperties": false,
+            "properties": {
+              "repo": {
+                "type": "string",
+                "enum": [
+                  "Horror.Place",
+                  "HorrorPlace-Constellation-Contracts",
+                  "HorrorPlace-Spectral-Foundry"
+                ]
+              },
+              "pathPrefix": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_\\-/]+$"
+              }
+            }
+          }
+        },
+        "lua": {
+          "type": "array",
+          "description": "Target locations for monster-mode Lua policy modules.",
+          "items": {
+            "type": "object",
+            "required": ["repo", "pathPrefix"],
+            "additionalProperties": false,
+            "properties": {
+              "repo": {
+                "type": "string",
+                "enum": [
+                  "Horror.Place",
+                  "HorrorPlace-Codebase-of-Death"
+                ]
+              },
+              "pathPrefix": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_\\-/]+$"
+              }
+            }
+          }
+        },
+        "cpp": {
+          "type": "array",
+          "description": "Target locations for C++ headers/adapters consuming monster-mode frames.",
+          "items": {
+            "type": "object",
+            "required": ["repo", "pathPrefix"],
+            "additionalProperties": false,
+            "properties": {
+              "repo": {
+                "type": "string",
+                "enum": [
+                  "Horror.Place",
+                  "HorrorPlace-Codebase-of-Death"
+                ]
+              },
+              "pathPrefix": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_\\-/]+$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "invariantSpine": {
+      "type": "object",
+      "description": "Invariant and entertainment metric fields that monster-mode is allowed to reference.",
+      "additionalProperties": false,
+      "required": ["invariants", "metrics", "apiModule"],
+      "properties": {
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "MDI",
+              "AOS",
+              "RRM",
+              "SPR",
+              "RWF",
+              "HVF",
+              "LSG",
+              "SHCI",
+              "DET"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "apiModule": {
+          "type": "string",
+          "enum": [
+            "engine.library.horrorinvariants",
+            "H"
+          ],
+          "description": "Canonical Lua module / facade that exposes invariant APIs such as H.sampleAll."
+        }
+      }
+    },
+    "bciEnvelopeSpine": {
+      "type": "object",
+      "description": "BCI envelope schemas that monster-mode artifacts are allowed to use.",
+      "additionalProperties": false,
+      "required": [
+        "featureEnvelopeSchemaId",
+        "metricsEnvelopeSchemaId",
+        "coreIntensityEnvelopeSchemaId",
+        "luaFacadeModule"
+      ],
+      "properties": {
+        "featureEnvelopeSchemaId": {
+          "type": "string",
+          "const": "https://horror.place/schemas/bci-feature-envelope-v2.json"
+        },
+        "metricsEnvelopeSchemaId": {
+          "type": "string",
+          "const": "https://horror.place/schemas/bci-metrics-envelope-v2.json"
+        },
+        "coreIntensityEnvelopeSchemaId": {
+          "type": "string",
+          "const": "https://horror.place/schemas/bci-core-intensity-envelope-v1.json"
+        },
+        "luaFacadeModule": {
+          "type": "string",
+          "enum": [
+            "H.BCI",
+            "engine.library.hpcbci"
+          ],
+          "description": "Canonical Lua facade for BCI state; engine scripts must not touch devices directly."
+        }
+      }
+    },
+    "safetyProfiles": {
+      "type": "object",
+      "description": "Monster-mode specific references to BCI safety and intensity policies.",
+      "additionalProperties": false,
+      "required": [
+        "bciIntensityPolicySchemaId",
+        "allowedIntensityModes",
+        "maxDetBand",
+        "maxExposureDose"
+      ],
+      "properties": {
+        "bciIntensityPolicySchemaId": {
+          "type": "string",
+          "const": "https://horror.place/schemas/bci-intensity-policy-v1.json"
+        },
+        "allowedIntensityModes": {
+          "type": "array",
+          "description": "BCICore intensity modes where monster-mode may be activated.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CALM",
+              "FOCUSED",
+              "TENSE"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxDetBand": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Upper bound on DET for monster-mode activation; above this, mode must decay or remain off."
+        },
+        "maxExposureDose": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Maximum normalized exposureDose that monster-mode mappings may accumulate per session."
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Per-objectKind constraints on fields, schemas, and APIs.",
+      "additionalProperties": false,
+      "required": [
+        "monster_visual_profile",
+        "monster_audio_profile",
+        "monster_mode_lua_module",
+        "monster_mode_cpp_adapter"
+      ],
+      "properties": {
+        "monster_visual_profile": {
+          "type": "object",
+          "description": "Constraints for JSON visual profiles (infection geometry, distortion curves).",
+          "additionalProperties": false,
+          "required": [
+            "schemaId",
+            "requiredFields",
+            "forbiddenFields"
+          ],
+          "properties": {
+            "schemaId": {
+              "type": "string",
+              "const": "https://horror.place/schemas/runtime/monster/monster-mode-visual-profile-v1.json"
+            },
+            "requiredFields": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "profileId",
+                  "version",
+                  "invariantBands",
+                  "bciBands",
+                  "visualChannels",
+                  "safetyCaps"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "forbiddenFields": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "rawEEG",
+                  "deviceSerial",
+                  "pii",
+                  "unboundedIntensity"
+                ]
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "monster_audio_profile": {
+          "type": "object",
+          "description": "Constraints for audio style and RTPC mapping contracts used by monster-mode.",
+          "additionalProperties": false,
+          "required": [
+            "styleSchemaId",
+            "mappingFamilySchemaId",
+            "allowedFamilyCodes"
+          ],
+          "properties": {
+            "styleSchemaId": {
+              "type": "string",
+              "const": "https://horror.place/schemas/audio-landscape-style-v1.json"
+            },
+            "mappingFamilySchemaId": {
+              "type": "string",
+              "const": "https://horror.place/schemas/audio-rtpc-mapping-family-v1.json"
+            },
+            "allowedFamilyCodes": {
+              "type": "array",
+              "description": "Allowed mapping family codes for monster-mode channels.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "0xPKLIN",
+                  "0xPKSIG",
+                  "0xPKHYS",
+                  "0xPKOSC"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        },
+        "monster_mode_lua_module": {
+          "type": "object",
+          "description": "Constraints for Lua policy modules implementing monster-mode.",
+          "additionalProperties": false,
+          "required": [
+            "modulePattern",
+            "requiredFunctions",
+            "allowedImports",
+            "forbiddenApis"
+          ],
+          "properties": {
+            "modulePattern": {
+              "type": "string",
+              "description": "Lua module path pattern for monster-mode policy.",
+              "const": "engine.monster.mode"
+            },
+            "requiredFunctions": {
+              "type": "array",
+              "description": "Lua functions that must be exported by the module.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "MonsterMode.sample",
+                  "MonsterMode.reset"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "allowedImports": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "engine.library.horrorinvariants",
+                  "H",
+                  "H.BCI",
+                  "engine.library.hpcbci"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "forbiddenApis": {
+              "type": "array",
+              "description": "Lua globals and modules that monster-mode policy may not call.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "BrainFlow",
+                  "LSL",
+                  "os.execute",
+                  "io.popen",
+                  "engine.rawEEG",
+                  "engine.rawBCI"
+                ]
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "monster_mode_cpp_adapter": {
+          "type": "object",
+          "description": "Constraints for C++ headers/adapters that consume monster-mode frames.",
+          "additionalProperties": false,
+          "required": [
+            "headerNamePattern",
+            "structName",
+            "applyFunctionName",
+            "allowedIncludes",
+            "forbiddenIncludes"
+          ],
+          "properties": {
+            "headerNamePattern": {
+              "type": "string",
+              "description": "File name pattern for monster-mode adapter headers.",
+              "const": "HMonsterMode.h"
+            },
+            "structName": {
+              "type": "string",
+              "const": "HMonsterModeFrame"
+            },
+            "applyFunctionName": {
+              "type": "string",
+              "const": "ApplyMonsterMode"
+            },
+            "allowedIncludes": {
+              "type": "array",
+              "description": "Allowed engine/framework headers.",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "forbiddenIncludes": {
+              "type": "array",
+              "description": "Forbidden dependencies (e.g. device SDKs) in adapter headers.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "brainflow.h",
+                  "lsl_cpp.h"
+                ]
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
