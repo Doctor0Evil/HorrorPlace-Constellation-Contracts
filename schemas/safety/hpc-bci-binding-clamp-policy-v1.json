@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HpcBciBindingClampPolicy.v1",
+  "description": "Tiered clamping and violation logging policy for BCI binding evaluations. Defines how to clamp outputs that exceed safety caps, how to classify violations, and how to surface them for immediate review while still returning safe values to the engine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "tiers"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "const": "hpc-bci-binding-clamp-policy-v1"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Per-tier clamping and logging rules aligned with BCI intensity and Dead-Ledger policy tiers.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tierId",
+          "description",
+          "outputCaps",
+          "logging",
+          "deadLedgerBinding"
+        ],
+        "properties": {
+          "tierId": {
+            "type": "string",
+            "enum": [
+              "BCI_TIER_1",
+              "BCI_TIER_2",
+              "BCI_TIER_3"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "outputCaps": {
+            "type": "array",
+            "description": "Per-channel caps that binding evaluations MUST respect after clamping. The raw evaluation may exceed these, but the final output that reaches HorrorDirector cannot.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "channel",
+                "min",
+                "max",
+                "maxDeltaPerSecond"
+              ],
+              "properties": {
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "tension",
+                    "sprintMul",
+                    "flashlightJitterAmp",
+                    "flashlightJitterFreq",
+                    "tunnelRadiusInner",
+                    "tunnelOpacity",
+                    "whisperIntensity",
+                    "encounterSpawnMul"
+                  ]
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "maxDeltaPerSecond": {
+                  "type": "number",
+                  "description": "Slope cap for this control channel, used to classify rate-of-change violations."
+                }
+              }
+            }
+          },
+          "logging": {
+            "type": "object",
+            "description": "How to log and classify violations when a raw binding evaluation falls outside caps.",
+            "additionalProperties": false,
+            "required": [
+              "violationClasses",
+              "emitTelemetry",
+              "telemetryChannel",
+              "escalationThresholds"
+            ],
+            "properties": {
+              "violationClasses": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "HARD_CAP_EXCEEDED",
+                    "SLOPE_CAP_EXCEEDED",
+                    "INCONSISTENT_SIGN",
+                    "UNKNOWN_CHANNEL",
+                    "UNSANITISED_METADATA"
+                  ]
+                }
+              },
+              "emitTelemetry": {
+                "type": "boolean"
+              },
+              "telemetryChannel": {
+                "type": "string",
+                "description": "Logical telemetry stream for BCI clamp events, e.g. bci-binding-clamp-events-v1."
+              },
+              "escalationThresholds": {
+                "type": "object",
+                "description": "Thresholds for promoting violations to immediate review. Counts are per-session unless otherwise noted.",
+                "additionalProperties": false,
+                "properties": {
+                  "maxHardCapViolationsPerSession": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxSlopeCapViolationsPerSession": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "maxTotalViolationsPerSession": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "escalateOnUnknownChannel": {
+                    "type": "boolean"
+                  },
+                  "escalateOnUnsanitisedMetadata": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "deadLedgerBinding": {
+            "type": "object",
+            "description": "Binding to the Dead-Ledger BCI policy and proof layer.",
+            "additionalProperties": false,
+            "required": [
+              "policyId",
+              "intensityCapStrategy"
+            ],
+            "properties": {
+              "policyId": {
+                "type": "string",
+                "description": "Reference to the bci-intensity-policy-v1 profile that governs this tier."
+              },
+              "intensityCapStrategy": {
+                "type": "string",
+                "enum": [
+                  "MIN_OF_BINDING_AND_LEDGER_CAP",
+                  "LEDGER_CAP_STRICT"
+                ],
+                "description": "How to combine binding-level caps with Dead-Ledger intensityCap decisions."
+              }
+            }
+          }
+        }
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}
