@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-safety-profile-v1.json",
+  "title": "BCI Safety Profile v1",
+  "description": "Neurorights-aligned caps for BCI mappings: CSI/DET limits, max intensity, rate limits, recovery windows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "channelCaps",
+    "timingCaps",
+    "stressGates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable profile ID (e.g., standard, corridor_med, safe_mode)."
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "lab",
+        "standard",
+        "mature",
+        "research"
+      ],
+      "description": "Policy tier alignment."
+    },
+    "channelCaps": {
+      "type": "object",
+      "description": "Per-channel caps for intensity and rate of change.",
+      "additionalProperties": false,
+      "required": [
+        "visual",
+        "audio",
+        "haptics"
+      ],
+      "properties": {
+        "visual": {
+          "$ref": "#/$defs/channelCaps"
+        },
+        "audio": {
+          "$ref": "#/$defs/channelCaps"
+        },
+        "haptics": {
+          "$ref": "#/$defs/channelCaps"
+        }
+      }
+    },
+    "timingCaps": {
+      "type": "object",
+      "description": "Global caps for CSI/DET and allowed drift over time.",
+      "additionalProperties": false,
+      "required": [
+        "maxCsi",
+        "maxDet",
+        "maxDetDriftPerMinute"
+      ],
+      "properties": {
+        "maxCsi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Maximum allowed CSI in this profile."
+        },
+        "maxDet": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum allowed DET in this profile."
+        },
+        "maxDetDriftPerMinute": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum allowed DET drift per minute."
+        }
+      }
+    },
+    "recoveryPolicy": {
+      "type": "object",
+      "description": "How quickly and how far mappings must back off after spikes or overload.",
+      "additionalProperties": false,
+      "required": [
+        "startleRecoverySeconds",
+        "safeZoneDurationSeconds",
+        "safeZoneCaps"
+      ],
+      "properties": {
+        "startleRecoverySeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "Minimum time to hold conservative caps after a startle spike."
+        },
+        "safeZoneDurationSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600,
+          "description": "Duration of enforced safe-zone caps after overload."
+        },
+        "safeZoneCaps": {
+          "type": "object",
+          "description": "Caps applied during safe zones per channel.",
+          "additionalProperties": false,
+          "required": [
+            "visual",
+            "audio",
+            "haptics"
+          ],
+          "properties": {
+            "visual": {
+              "$ref": "#/$defs/safeZoneCap"
+            },
+            "audio": {
+              "$ref": "#/$defs/safeZoneCap"
+            },
+            "haptics": {
+              "$ref": "#/$defs/safeZoneCap"
+            }
+          }
+        }
+      }
+    },
+    "stressGates": {
+      "type": "object",
+      "description": "Stress-band dependent caps and overload thresholds.",
+      "additionalProperties": false,
+      "required": [
+        "stressBandCaps",
+        "overloadThreshold"
+      ],
+      "properties": {
+        "stressBandCaps": {
+          "type": "object",
+          "description": "Per-stress-band multipliers applied on top of base caps.",
+          "additionalProperties": false,
+          "properties": {
+            "Low": {
+              "$ref": "#/$defs/bandCaps"
+            },
+            "Medium": {
+              "$ref": "#/$defs/bandCaps"
+            },
+            "High": {
+              "$ref": "#/$defs/bandCaps"
+            },
+            "Extreme": {
+              "$ref": "#/$defs/bandCaps"
+            }
+          }
+        },
+        "overloadThreshold": {
+          "type": "object",
+          "description": "Thresholds at which the system must enter safe-zone behavior.",
+          "additionalProperties": false,
+          "required": [
+            "visualOverloadIndex",
+            "extremeStressBand"
+          ],
+          "properties": {
+            "visualOverloadIndex": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "extremeStressBand": {
+              "type": "string",
+              "enum": [
+                "High",
+                "Extreme"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "bciInfluenceCaps": {
+      "type": "object",
+      "description": "Caps on how much BCI can influence outputs relative to baseline.",
+      "additionalProperties": false,
+      "required": [
+        "maxBciContribution"
+      ],
+      "properties": {
+        "maxBciContribution": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Max fraction of output attributable to BCI vs baseline."
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Optional metadata for this safety profile.",
+      "additionalProperties": false,
+      "properties": {
+        "notes": {
+          "type": "string",
+          "description": "Free-form notes about this safety profile."
+        },
+        "labels": {
+          "type": "array",
+          "description": "Tags or labels for search and grouping.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "channelCaps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxIntensity",
+        "maxDeltaPerSecond"
+      ],
+      "properties": {
+        "maxIntensity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maxDeltaPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "safeZoneCap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxIntensity"
+      ],
+      "properties": {
+        "maxIntensity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "bandCaps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visual",
+        "audio",
+        "haptics"
+      ],
+      "properties": {
+        "visual": {
+          "$ref": "#/$defs/multiplier"
+        },
+        "audio": {
+          "$ref": "#/$defs/multiplier"
+        },
+        "haptics": {
+          "$ref": "#/$defs/multiplier"
+        }
+      }
+    },
+    "multiplier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intensityMultiplier"
+      ],
+      "properties": {
+        "intensityMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}
