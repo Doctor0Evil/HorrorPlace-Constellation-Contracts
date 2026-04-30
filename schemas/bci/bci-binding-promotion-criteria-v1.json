@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci-binding-promotion-criteria-v1.json",
+  "title": "BCI Binding Promotion Criteria v1",
+  "description": "Schema for artifacts that define quantitative criteria and evidence thresholds for promoting HorrorMappingConfig.BCI bindings across lifecycle tiers (lab → standard → mature).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "schemaref",
+    "appliesToSchemaVersion",
+    "tiers"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier for this promotion criteria artifact, e.g. bci-binding-promotion-criteria-default-v1."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this criteria set, e.g. 1.0.0."
+    },
+    "schemaref": {
+      "type": "string",
+      "const": "schemas/bci/bci-binding-promotion-criteria-v1.json",
+      "description": "Local schema ref for CI and tooling."
+    },
+    "appliesToSchemaVersion": {
+      "type": "string",
+      "description": "HorrorMappingConfig.BCI schema version this criteria set applies to, e.g. HorrorMappingConfig.BCI.v1."
+    },
+    "descriptionLong": {
+      "type": "string",
+      "description": "Optional longform description of the promotion philosophy, for human reviewers."
+    },
+    "tiers": {
+      "type": "object",
+      "description": "Criteria per lifecycle tier, including thresholds and admissible evidence sources.",
+      "additionalProperties": false,
+      "required": [
+        "lab",
+        "standard",
+        "mature"
+      ],
+      "properties": {
+        "lab": {
+          "type": "object",
+          "description": "Criteria for lab bindings; typically minimal and focused on structural checks.",
+          "additionalProperties": false,
+          "properties": {
+            "allowedSources": {
+              "type": "array",
+              "description": "Allowed authorship sources for lab-tier bindings.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "human-reviewed",
+                  "ai-assisted",
+                  "batch-tooling"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "requiredCiGates": {
+              "type": "array",
+              "description": "List of CI gates that must pass even for lab-tier bindings.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "schema",
+                  "invariants",
+                  "numerical",
+                  "policy",
+                  "governance"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "maxIntensityTier": {
+              "type": "string",
+              "enum": [ "research", "standard" ],
+              "description": "Maximum intensity policy tier a lab binding may target."
+            },
+            "sessionUsageLimits": {
+              "type": "object",
+              "description": "Constraints on usage of lab bindings in live or replay sessions.",
+              "additionalProperties": false,
+              "properties": {
+                "allowLiveSessions": {
+                  "type": "boolean",
+                  "description": "Whether lab bindings may be used in live sessions at all."
+                },
+                "maxParticipantsPerCohort": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Maximum participants per cohort that may be exposed to this binding."
+                },
+                "requireDeadLedgerExperimentFlag": {
+                  "type": "boolean",
+                  "description": "Whether an explicit Dead-Ledger experiment flag is required."
+                }
+              }
+            }
+          }
+        },
+        "standard": {
+          "type": "object",
+          "description": "Criteria to promote bindings from lab to standard and maintain them at standard tier.",
+          "additionalProperties": false,
+          "required": [
+            "promotionFromLab",
+            "maintenance"
+          ],
+          "properties": {
+            "promotionFromLab": {
+              "type": "object",
+              "description": "Quantitative thresholds for lab → standard promotion.",
+              "additionalProperties": false,
+              "required": [
+                "minLiveSessions",
+                "minUniqueParticipants",
+                "minTotalExposureHours",
+                "maxAllowedIncidents",
+                "requiredCiGates"
+              ],
+              "properties": {
+                "minLiveSessions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Minimum count of live sessions using the lab binding under Dead-Ledger policies."
+                },
+                "minUniqueParticipants": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Minimum number of unique participants included across sessions."
+                },
+                "minTotalExposureHours": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "description": "Minimum cumulative exposure time (in hours) across all sessions."
+                },
+                "maxAllowedIncidents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Maximum number of safety incidents, overrides, or policy-triggered shutdowns permitted."
+                },
+                "requiredCiGates": {
+                  "type": "array",
+                  "description": "CI gates that must pass for promotion to standard.",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "schema",
+                      "invariants",
+                      "numerical",
+                      "policy",
+                      "governance"
+                    ]
+                  },
+                  "minItems": 3,
+                  "uniqueItems": true
+                },
+                "telemetryEvidence": {
+                  "type": "object",
+                  "description": "Expected telemetry summaries supporting promotion.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "minDetOverloadRate": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "maximum": 1.0,
+                      "description": "Maximum fraction of time in DET-defined overload states tolerated."
+                    },
+                    "maxOverloadEventsPerHour": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "description": "Upper bound on the rate of overloadFlag events per hour."
+                    },
+                    "minTargetBandHitRate": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "maximum": 1.0,
+                      "description": "Minimum proportion of time key entertainment metrics stay in their target bands."
+                    }
+                  }
+                },
+                "evidenceSources": {
+                  "type": "array",
+                  "description": "Permitted evidence artifact types for promotion, e.g. telemetry summaries or Dead-Ledger attestations.",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "bci-telemetry-summary-v1",
+                      "bcistate-proof",
+                      "spectral-seed-attestation",
+                      "governance-review-record"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              }
+            },
+            "maintenance": {
+              "type": "object",
+              "description": "Ongoing health and rollback rules for standard bindings.",
+              "additionalProperties": false,
+              "properties": {
+                "maxRegressionWindowDays": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Size of the rolling window (days) in which regressions are evaluated."
+                },
+                "rollbackOnIncidentCount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Number of safety incidents in the regression window that triggers rollback to lab."
+                },
+                "requirePeriodicReviewDays": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum interval between human governance reviews for this binding."
+                }
+              }
+            }
+          }
+        },
+        "mature": {
+          "type": "object",
+          "description": "Criteria to promote bindings from standard to mature and maintain them at mature tier.",
+          "additionalProperties": false,
+          "required": [
+            "promotionFromStandard",
+            "maintenance"
+          ],
+          "properties": {
+            "promotionFromStandard": {
+              "type": "object",
+              "description": "Quantitative thresholds for standard → mature promotion.",
+              "additionalProperties": false,
+              "required": [
+                "minLiveSessions",
+                "minUniqueParticipants",
+                "minTotalExposureHours",
+                "maxAllowedIncidents",
+                "requiredCiGates"
+              ],
+              "properties": {
+                "minLiveSessions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Minimum additional live sessions beyond standard-tier requirements."
+                },
+                "minUniqueParticipants": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Minimum total unique participants across the full lifetime of the binding."
+                },
+                "minTotalExposureHours": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "description": "Minimum cumulative exposure hours at standard tier before mature promotion."
+                },
+                "maxAllowedIncidents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Maximum incidents allowed over the entire evidence window for mature promotion."
+                },
+                "requiredCiGates": {
+                  "type": "array",
+                  "description": "CI gates that must pass for mature promotion; typically all gates.",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "schema",
+                      "invariants",
+                      "numerical",
+                      "policy",
+                      "governance"
+                    ]
+                  },
+                  "minItems": 4,
+                  "uniqueItems": true
+                },
+                "telemetryEvidence": {
+                  "type": "object",
+                  "description": "Stable-behavior metrics expected for mature bindings.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "maxDetOverloadRate": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "maximum": 1.0,
+                      "description": "Tighter bound on DET-based overload fraction than standard-tier criteria."
+                    },
+                    "maxOverloadEventsPerHour": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "description": "Tighter bound on overloadFlag event rate per hour."
+                    },
+                    "minTargetBandHitRate": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "maximum": 1.0,
+                      "description": "Higher minimum proportion of time key entertainment metrics stay in their target bands."
+                    },
+                    "maxVarAcrossCohorts": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "description": "Upper bound on variance of key metrics across cohorts, indicating stability."
+                    }
+                  }
+                },
+                "evidenceSources": {
+                  "type": "array",
+                  "description": "Evidence types required for mature promotion.",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "bci-telemetry-summary-v1",
+                      "bcistate-proof",
+                      "spectral-seed-attestation",
+                      "governance-review-record"
+                    ]
+                  },
+                  "minItems": 2,
+                  "uniqueItems": true
+                },
+                "requireGovernanceApproval": {
+                  "type": "boolean",
+                  "description": "Whether an explicit governance approval token is required for promotion."
+                }
+              }
+            },
+            "maintenance": {
+              "type": "object",
+              "description": "Ongoing health and rollback rules for mature bindings.",
+              "additionalProperties": false,
+              "properties": {
+                "maxRegressionWindowDays": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Rolling window (days) for mature-tier regression checks."
+                },
+                "rollbackOnIncidentCount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Incident count in the regression window that triggers rollback to standard."
+                },
+                "requirePeriodicReviewDays": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum interval between governance reviews."
+                },
+                "lockForCriticalUse": {
+                  "type": "boolean",
+                  "description": "If true, this binding may be designated as a critical baseline that cannot be modified without a new criteria artifact."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
