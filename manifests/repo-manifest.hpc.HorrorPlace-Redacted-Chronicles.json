@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "https://horror.place/constellation/schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Redacted-Chronicles",
+  "tier": "T3-lab",
+  "kind": "RESEARCH_LAB_REPO",
+  "description": "Redacted narrative chronicle contracts, derived from vault history but prepared for controlled exposure and analysis.",
+  "visibility": "private",
+  "implicitDeny": true,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "redactedChronicle",
+    "timelineEnvelope"
+  ],
+  "defaultPaths": {
+    "redactedChronicle": "chronicles/",
+    "timelineEnvelope": "timelines/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
+  },
+  "schemaWhitelist": [
+    "schemas/contracts/redacted-chronicle-v1.json",
+    "schemas/contracts/timeline-envelope-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "https://horror.place/constellation/schemas/core/repo-manifest-v1.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "Explicit narratives are permitted but must be redacted and traced back to vault sources."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All chronicles and timelines must use dedicated redacted schemas."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "Chronicles must include origin references into Black-Archivum and Atrocity-Seeds via IDs."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 1048576
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Only redactedChronicle-style objectKinds should route here from the spine."
+    }
+  },
+  "ciChecks": {
+    "validateChronicles": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/redacted-chronicle-v1.json",
+        "--input-glob",
+        "chronicles/*.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this repo to produce controlled, redacted narrative artifacts suitable for internal review and limited sharing.",
+    "aiBehavior": [
+      "Do not generate primary contracts here; only redacted views of existing vault content.",
+      "Always track provenance back to regionContractCard and seedContractCard IDs.",
+      "Expect additional governance review before any content in this repo is surfaced externally."
+    ]
+  }
+}
