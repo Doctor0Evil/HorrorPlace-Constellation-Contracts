@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:haptics-prism-v1.json",
+  "title": "Haptics Prism Output v1",
+  "description": "Derived haptic control indices. Drive = intensity recommendation; routingBias = spatial distribution hint (chest vs spine, surface vs deep).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "timestamp", "hapticDrive", "hapticRoutingBias"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "timestamp": { "type": "integer" },
+    "hapticDrive": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Recommended haptic intensity. Weighted blend of ARR, stressScore, EMD."
+    },
+    "hapticRoutingBias": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "Spatial routing hint: negative = peripheral/surface; positive = central/deep (chest/spine)."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "driveWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "arr": { "type": "number", "default": 0.4 },
+            "stressScore": { "type": "number", "default": 0.4 },
+            "emd": { "type": "number", "default": 0.2 }
+          }
+        },
+        "routingWeights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cic": { "type": "number", "default": 0.5 },
+            "shci": { "type": "number", "default": 0.3 },
+            "lsg": { "type": "number", "default": 0.2 }
+          }
+        }
+      }
+    }
+  }
+}
