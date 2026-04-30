@@ -1,0 +1,39 @@
+[
+  {
+    "schemaId": "hpnrl-bci-geometry-binding-v1",
+    "schemaVersion": "1.0.0",
+    "bindingId": "corridor_high_cic_sigmoid_tunnel",
+    "regionClass": "corridor",
+    "tier": "standard",
+    "priority": 7,
+    "invariantFilter": {
+      "cicMin": 0.7, "cicMax": 1.0,
+      "lsgMin": 0.4, "lsgMax": 0.8
+    },
+    "bciFilter": {
+      "stressBand": ["Medium", "High"],
+      "visualOverloadMax": 0.7
+    },
+    "metricsFilter": {
+      "uecMin": 0.3, "uecMax": 0.9
+    },
+    "inputWeights": {
+      "stressScore": 0.4, "visualOverloadIndex": 0.3, "cic": 0.2, "lsg": 0.1
+    },
+    "curves": {
+      "visual": {
+        "familyCode": "PKSIG",
+        "params": [0.0, 0.8, 0.5, 2.0]
+      },
+      "audio": {
+        "pressureLf": { "familyCode": "PKLIN", "params": [0.1, 0.6, 0.0, 1.0] },
+        "whisperSend": { "familyCode": "PKHYS", "params": [0.0, 0.4, 0.2, 0.5] }
+      },
+      "haptics": {
+        "intensity": { "familyCode": "PKHYS", "params": [0.2, 0.5, 0.1, 0.3] },
+        "pulseHz": { "familyCode": "PKRHY", "params": [2.0, 8.0, 0.5, 1.0] }
+      }
+    },
+    "safetyProfile": "corridor_med"
+  }
+]
