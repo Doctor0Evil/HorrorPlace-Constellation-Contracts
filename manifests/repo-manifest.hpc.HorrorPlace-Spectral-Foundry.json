@@ -4,7 +4,7 @@
   "repoName": "HorrorPlace-Spectral-Foundry",
   "tier": "T2-vault",
   "kind": "CONTENT_VAULT_REPO",
-  "description": "Spectral and anomaly-focused repository for entities derived from high CIC/MDI/AOS history layers. Vault content repo for mood contract instances and spectral entities.",
+  "description": "T2-vault content repository for spectral entities, spectral moods, and high-intensity events derived from high CIC/MDI/AOS history layers.",
   "visibility": "private",
   "implicitDeny": true,
   "routingSpineRef": "spine/hpc-routing-spine-v1.json",
@@ -18,50 +18,103 @@
     "moodContract": "moods/",
     "spectralEntityContractCard": "entities/",
     "eventContractCard": "events/",
-    "regionContractCard": "regions/"
+    "regionContractCard": "regions/",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json"
   },
   "schemaWhitelist": [
     "schemas/contracts/mood-contract-v1.json",
     "schemas/contracts/spectral-entity-contract-card-v1.json",
     "schemas/contracts/event-contract-v1.json",
-    "schemas/contracts/region-contract-card-v1.json"
+    "schemas/contracts/region-contract-card-v1.json",
+    "schemas/hpc-routing-spine.schema.json"
   ],
   "policies": {
     "POL001_OneFilePerRequest": {
       "enabled": true,
       "maxFilesPerRequest": 1
     },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": false,
+      "description": "Vault may contain explicit spectral narratives and high-intensity content; subject to internal gating and Dead-Ledger governance."
+    },
     "POL003_RequireSchemaRef": {
       "enabled": true,
-      "description": "All artifacts must include a valid schemaRef pointing to an approved schema."
+      "description": "All spectral moods, entities, events, and region cards must include a valid schemaRef pointing to an approved schema."
     },
     "POL004_RequireTargetMetadata": {
       "enabled": true,
-      "description": "All artifacts must include target metadata for routing and registry binding."
+      "description": "All artifacts must include targetRepo, targetPath, objectKind, tier, and routingSpineRef metadata for routing and registry binding."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 524288
     },
     "POL006_RequireRoutingSpineRef": {
       "enabled": true,
-      "description": "All authoring requests must reference the routing spine for route resolution."
+      "description": "All authoring requests that target this repo must resolve routes through spine/hpc-routing-spine-v1.json."
     }
   },
   "ciChecks": {
-    "schemaValidation": {
+    "validateSpectralMoods": {
       "enabled": true,
-      "tool": "ajv",
-      "args": ["--spec", "draft2020", "--validate", "schemas/**/*.json"]
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/mood-contract-v1.json",
+        "--input-glob",
+        "moods/*.json"
+      ]
+    },
+    "validateSpectralEntities": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/spectral-entity-contract-card-v1.json",
+        "--input-glob",
+        "entities/*.json"
+      ]
+    },
+    "validateSpectralEvents": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/event-contract-v1.json",
+        "--input-glob",
+        "events/*.json"
+      ]
+    },
+    "validateSpectralRegions": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/contracts/region-contract-card-v1.json",
+        "--input-glob",
+        "regions/*.json"
+      ]
     },
     "routingLint": {
       "enabled": true,
       "tool": "hpc-routing-lint",
-      "args": ["--root", ".", "--spine", "spine/hpc-routing-spine-v1.json", "--json"]
+      "args": [
+        "--root",
+        ".",
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--json"
+      ]
     }
   },
   "authoringHints": {
-    "summary": "T2-vault content repo for spectral entities and mood contract instances. Focus on high-invariant horror derived from historical data.",
+    "summary": "Use this T2-vault to define spectral moods, spectral entities, and high-intensity events realized by runtime adapters in HorrorPlace-Codebase-of-Death.",
     "aiBehavior": [
-      "Always verify schemaRef before generating spectral entity or mood artifacts",
-      "Route moodContract T2-vault requests to this repo",
-      "Ensure all spectral entities reference valid regionContractCard dependencies with appropriate invariant bands"
+      "Only generate moodContract, spectralEntityContractCard, eventContractCard, and regionContractCard artifacts in this repo.",
+      "Always verify schemaRef against the schemaWhitelist before generating or modifying artifacts.",
+      "Tie spectral entities and events to regionContractCard IDs instead of embedding raw history text.",
+      "Tune invariants (CIC, AOS, SHCI, DET, SPR) and metrics (UEC, EMD, STCI, ARR) according to the routing spine and Dead-Ledger profiles.",
+      "Treat implicitDeny=true as a hard rule: no new objectKind may be introduced here without updating allowedObjectKinds and the routing spine."
     ]
   }
 }
