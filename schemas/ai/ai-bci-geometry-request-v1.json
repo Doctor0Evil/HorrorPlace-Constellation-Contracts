@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:ai-bci-geometry-request-v1.json",
+  "title": "AI BCI Geometry Request v1",
+  "description": "Request envelope for AI-chat when proposing new bci-geometry-binding-v1 objects. AI must never invent new top-level fields or metric spaces.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "targetRepo", "targetPath", "bindingSchemaId", "experienceType"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "targetRepo": { "type": "string", "enum": ["HorrorPlace-Neural-Resonance-Lab", "HorrorPlace-Constellation-Contracts"] },
+    "targetPath": { "type": "string", "pattern": "^examples/.*\\.json$" },
+    "bindingSchemaId": { "type": "string", "const": "hpnrl-bci-geometry-binding-v1" },
+    "experienceType": { "type": "string", "enum": ["Slowburn", "ShortShock", "Apprehension", "Liminal"] },
+    "regionHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regionClass": { "type": "string", "enum": ["corridor", "chamber", "threshold", "open", "liminal", "sanctuary"] },
+        "cicTarget": { "type": "number", "minimum": 0, "maximum": 1 },
+        "lsgTarget": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowedTiers": { "type": "array", "items": { "enum": ["lab", "standard", "mature"] } },
+        "maxSafetyProfile": { "type": "string" },
+        "forbiddenFamilyCodes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "authorNotes": { "type": "string", "maxLength": 500 }
+  }
+}
