@@ -18,11 +18,11 @@ pub extern "C" fn hpc_bci_process(
     out_cap: usize,
 ) -> i32 {
     // 1. Validate inputs (null checks)
-    // 2. Parse feature_json -> BciFeatureEnvelopeV1
+    // 2. Parse feature_json -> BciFeatureEnvelopeV1 (schema: bci-feature-envelope-v1)
     // 3. Parse contract_json -> ConverterContract
     // 4. Apply EMA + calibration per transform.method
     // 5. Clamp all metrics to [0,1]; DET to [0,10]
-    // 6. Serialize to BciMetricsEnvelopeV1 JSON
+    // 6. Serialize to BciMetricsEnvelopeV1 JSON (schema: bci-metrics-envelope-v1)
     // 7. Write to out_metrics_json (respect out_cap)
     // 8. Return 0 on success, negative error code on failure
 }
@@ -85,21 +85,21 @@ return {
 }
 ```
 
-## Rust Geometry Kernel Pattern
+## Rust Geometry Kernel Pattern (Aligned Schema)
 
 ```rust
 // File: crates/bci_geometry/src/lib.rs
 
 pub fn evaluate_mapping(
-    binding: &BciGeometryBinding,
-    inputs: &BciMappingInputs,
-    safety: &BciSafetyProfile,
+    binding: &BciGeometryBinding,  // from bci-geometry-binding-v1 schema
+    inputs: &BciMappingInputs,     // { summary, invariants, metrics, csi }
+    safety: &BciSafetyProfile,     // from bci-safety-profile-v1 schema
     state: &mut BciKernelState,
     dt: f32,
 ) -> BciMappingOutputs {
-    // 1. Build weighted input vector from invariants/metrics/BCI
-    // 2. Evaluate curve families per binding.curves
-    // 3. Apply CSI/DET global caps
+    // 1. Build weighted input vector from invariants/metrics/BCI using binding.inputWeights
+    // 2. Evaluate curve families per binding.curves (structured visual/audio/haptics)
+    // 3. Apply CSI/DET global caps from safety.timingCaps
     // 4. Apply BciSafetyProfile caps (intensity, rate, recovery)
     // 5. Return clamped BciMappingOutputs
 }
@@ -112,18 +112,18 @@ pub fn evaluate_mapping(
 
 local function sample(player_id, region_id, tile_id)
   -- Assemble context
-  local summary = BCI.getSummary(player_id)
+  local summary = BCI.getSummary(player_id)  -- bci-summary-v1
   local invariants = H.Invariants.getSlice(region_id, tile_id)
   local metrics = H.Metrics.getBands(player_id, region_id)
   local csi = H.Timing.getCSI(player_id)
   local contract = H.Contract.getCurrentPolicy(player_id)
   
-  -- Call Rust kernel via FFI
+  -- Call Rust kernel via FFI (binding resolution happens in Rust)
   local outputs = RustBci.evaluate_mapping(
     summary, invariants, metrics, csi, contract
   )
   
-  -- Route to engine systems
+  -- Route to engine systems via helpers
   H.Visual.applyBciMask(player_id, outputs.visual)
   H.Audio.applyBciRtpcs(player_id, outputs.audio)
   H.Haptics.routeHaptics(player_id, outputs.haptics)
@@ -136,15 +136,20 @@ return { sample = sample }
 
 ## AI-Chat Authoring Rules
 
-1. **Never invent new schema fields**. Use `$ref` to existing schemas or propose schema changes via PR.
-2. **Never reference external libraries** (MNE, Python, BrainFlow) in engine code. Only Rust crates and Lua modules named in this doc.
-3. **Always clamp metrics** to canonical ranges: bands in `[0,1]`, DET in `[0,10]`.
-4. **Always log telemetry** via `BCIDebug.log*` functions; never silent-fail.
-5. **Always validate** JSON against schema before FFI calls; use `hpc_jsonschema_validate`.
+1. **Schema-first**: Always look up or reconstruct the JSON Schema before proposing Rust/Lua types.
+2. **Pipeline layering**: External EEG → `bci-feature-envelope-v1` → `bci-metrics-envelope-v1` → `bci-summary-v1` → geometry bindings → outputs. No direct feature consumption in Death-Engine.
+3. **Geometry binding constraints**:
+   - Use only fields defined in `bci-geometry-binding-v1.json`
+   - Express conditions only in terms of invariants (CIC, LSG, etc.) and BciSummary fields
+   - Use only recognized `familyCode` values and four-parameter arrays per curve
+   - Reference safety profiles via `profileId` into `bci-safety-profile-v1.json`
+4. **Safety enforcement in Rust only**: All caps, cooldowns, and safe zones belong in Rust geometry kernels.
+5. **No citations in generated files**: Never include `[web:..]`, `[file:..]`, or similar in repo content.
 
 ## File Naming Convention
 
 - Rust crates: `crates/bci_*` (e.g., `bci_ema_smoothing`, `bci_geometry`)
 - Lua modules: `scripts/bci/*.lua` or `scripts/hpc_bci_*.lua`
 - Schemas: `schemas/telemetry/bci-*-v1.json` or `schemas/bci/bci-*-v1.json`
+- AI envelopes: `schemas/ai/ai-bci-*-v1.json`
 - Docs: `docs/telemetry/` or `docs/ai-chat-integration/`
