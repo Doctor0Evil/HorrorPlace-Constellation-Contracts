@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaRef": "schemas/core/repo-manifest-v1.json",
+  "repoName": "HorrorPlace-Constellation-Contracts",
+  "tier": "T1-core",
+  "kind": "SCHEMA_SPINE_REPO",
+  "description": "Public, GitHub-safe contract spine and routing repository for the Horror.Place VM-constellation. Owns canonical JSON Schemas, routing spine, AI authoring contracts, and governance specs. Contains no raw horror content.",
+  "visibility": "public",
+  "implicitDeny": false,
+  "routingSpineRef": "spine/hpc-routing-spine-v1.json",
+  "allowedObjectKinds": [
+    "invariantsSpineSchema",
+    "metricsSpineSchema",
+    "contractCardSchema",
+    "policySchema",
+    "routingSpineSchema",
+    "routingSpineInstance",
+    "repoManifestSchema",
+    "aiAuthoringContractSchema",
+    "aiAuthoringPlanSchema",
+    "aiAuthoringProfileSchema",
+    "prismEnvelopeSchema",
+    "telemetryEnvelopeSchema",
+    "luaRuntimeSpecDoc",
+    "governanceSpecDoc"
+  ],
+  "defaultPaths": {
+    "invariantsSpineSchema": "schemas/spine/invariants-spine.v1.json",
+    "metricsSpineSchema": "schemas/spine/entertainment-metrics-spine.v1.json",
+    "contractCardSchema": "schemas/contracts/",
+    "policySchema": "schemas/policy/",
+    "routingSpineSchema": "schemas/hpc-routing-spine.schema.json",
+    "routingSpineInstance": "spine/hpc-routing-spine-v1.json",
+    "repoManifestSchema": "schemas/core/repo-manifest-v1.json",
+    "aiAuthoringContractSchema": "schemas/tooling/",
+    "aiAuthoringPlanSchema": "schemas/tooling/ai-authoring-plan-v1.json",
+    "aiAuthoringProfileSchema": "schemas/tooling/ai-safe-authoring-profile-v1.json",
+    "prismEnvelopeSchema": "schemas/tooling/prism-envelope-v1.json",
+    "telemetryEnvelopeSchema": "schemas/telemetry/",
+    "luaRuntimeSpecDoc": "docs/runtime/",
+    "governanceSpecDoc": "docs/governance/"
+  },
+  "schemaWhitelist": [
+    "schemas/core/repo-manifest-v1.json",
+    "schemas/hpc-routing-spine.schema.json",
+    "schemas/spine/invariants-spine.v1.json",
+    "schemas/spine/entertainment-metrics-spine.v1.json",
+    "schemas/contracts/*.json",
+    "schemas/policy/*.json",
+    "schemas/tooling/*.json",
+    "schemas/telemetry/*.json"
+  ],
+  "policies": {
+    "POL001_OneFilePerRequest": {
+      "enabled": true,
+      "maxFilesPerRequest": 1
+    },
+    "POL002_NoRawNarrativeInTier": {
+      "enabled": true,
+      "description": "Prohibits raw horror narrative content in this Tier 1 repository. Only schemas, contract cards, specs, and governance docs are allowed."
+    },
+    "POL003_RequireSchemaRef": {
+      "enabled": true,
+      "description": "All JSON artifacts must include a schemaRef pointing to a canonical schema ID or path in this repo."
+    },
+    "POL004_RequireTargetMetadata": {
+      "enabled": true,
+      "description": "AI-authored artifacts must declare objectKind, targetRepo, targetPath, schemaRef, and tier in associated envelopes."
+    },
+    "POL005_MaxFileSizeBytes": {
+      "enabled": true,
+      "maxFileSizeBytes": 131072
+    },
+    "POL006_RequireRoutingSpineRef": {
+      "enabled": true,
+      "description": "Routing and manifest tooling must treat routingSpineRef as the canonical router for objectKind/tier triples."
+    }
+  },
+  "ciChecks": {
+    "validateRepoManifestSchema": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/core/repo-manifest-v1.json",
+        "--input",
+        "repo-manifest.hpc.constellation-contracts.v1.json"
+      ]
+    },
+    "validateRoutingSpineInstance": {
+      "enabled": true,
+      "tool": "hpc-validate-json-schema",
+      "args": [
+        "--schema",
+        "schemas/hpc-routing-spine.schema.json",
+        "--input",
+        "spine/hpc-routing-spine-v1.json"
+      ]
+    },
+    "checkRoutingTotality": {
+      "enabled": true,
+      "tool": "hpc-routing-lint",
+      "args": [
+        "--spine",
+        "spine/hpc-routing-spine-v1.json",
+        "--repo-manifest",
+        "repo-manifest.hpc.constellation-contracts.v1.json"
+      ]
+    }
+  },
+  "authoringHints": {
+    "summary": "Use this repo for schemas, routing spine, AI authoring contracts, and governance specs. Do not generate seeds, regions, or runtime Lua here.",
+    "aiBehavior": [
+      "Always load this manifest and the routing spine before proposing any new schema or contract card.",
+      "Treat this repo as Tier 1 public: no raw horror text, no trauma narratives, no private vault IDs.",
+      "Prefer small, single-purpose files that conform to existing schema families.",
+      "When in doubt about targetPath for a new schema, propose it under schemas/tooling/ and let CI or maintainers refine."
+    ]
+  }
+}
