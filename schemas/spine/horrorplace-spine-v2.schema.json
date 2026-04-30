@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema:HorrorPlace-Neural-Resonance-Lab:horrorplace-spine-v2.schema.json",
+  "title": "Horror.Place Spine v2 Shared Definitions",
+  "description": "Shared definitions for invariants and metrics ranges. Other schemas may $ref these to avoid duplication.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "InvariantsSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cic": { "type": "number", "minimum": 0, "maximum": 1, "description": "Catastrophic Imprint Coefficient" },
+        "mdi": { "type": "number", "minimum": 0, "maximum": 1, "description": "Mythic Density Index" },
+        "aos": { "type": "number", "minimum": 0, "maximum": 1, "description": "Archival Opacity Score" },
+        "det": { "type": "number", "minimum": 0, "maximum": 10, "description": "Dread Exposure Time" },
+        "lsg": { "type": "number", "minimum": 0, "maximum": 1, "description": "Liminal Stress Gradient" },
+        "hvf": { "type": "number", "minimum": 0, "maximum": 1, "description": "Haunt Vector Field magnitude" },
+        "spr": { "type": "number", "minimum": 0, "maximum": 1, "description": "Spectral Plausibility Rating" },
+        "shci": { "type": "number", "minimum": 0, "maximum": 1, "description": "Spectral-Historical Convergence Index" }
+      }
+    },
+    "MetricsBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uecBand": { "type": "number", "minimum": 0, "maximum": 1, "description": "Unease/Engagement Coherence" },
+        "emdBand": { "type": "number", "minimum": 0, "maximum": 1, "description": "Environmental Mystery Density" },
+        "stciBand": { "type": "number", "minimum": 0, "maximum": 1, "description": "Safe-Threat Contrast Index" },
+        "cdlBand": { "type": "number", "minimum": 0, "maximum": 1, "description": "Cognitive Dissonance Load" },
+        "arrBand": { "type": "number", "minimum": 0, "maximum": 1, "description": "Ambiguous Resolution Ratio" }
+      }
+    },
+    "BciSummarySurface": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stressScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "stressBand": { "enum": ["Low", "Medium", "High", "Extreme"] },
+        "attentionBand": { "enum": ["Distracted", "Neutral", "Focused", "HyperFocused"] },
+        "visualOverloadIndex": { "type": "number", "minimum": 0, "maximum": 1 },
+        "startleSpike": { "type": "boolean" },
+        "signalQuality": { "enum": ["Good", "Degraded", "Unavailable"] }
+      }
+    }
+  }
+}
