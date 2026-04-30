@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "schema/HorrorPlace-Constellation-Contracts/bci-feature-envelope-v1.json",
+  "$id": "schema:HorrorPlace-Constellation-Contracts:bci-feature-envelope-v1.json",
   "title": "BCI Feature Envelope v1",
-  "description": "Minimally processed BCI feature window for HorrorPlace VM-Constellation.",
+  "description": "Minimally processed, NDJSON-safe BCI feature container for HorrorPlace VM-Constellation. No EMA, no derived metrics, no PII, no raw EEG.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,8 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.0.0",
+      "description": "Semantic version of the BCI feature envelope schema."
     },
     "windowId": {
       "type": "string",
@@ -28,20 +29,23 @@
     "sessionId": {
       "type": "string",
       "minLength": 1,
-      "description": "Pseudonymous identifier for the recording session; must not be a dataset subject ID."
+      "description": "Anonymized or pseudonymous session identifier; must not be a real-world subject or player identifier."
     },
     "timestamp": {
-      "type": "number",
-      "description": "Window start time in Unix seconds (may be fractional)."
+      "type": "integer",
+      "minimum": 0,
+      "description": "Window start time in Unix epoch milliseconds."
     },
     "samplingRateHz": {
       "type": "number",
-      "minimum": 1.0,
+      "minimum": 1,
+      "maximum": 2000,
       "description": "Sampling rate of the original recording in Hertz."
     },
     "windowDurationSec": {
       "type": "number",
       "minimum": 0.1,
+      "maximum": 10.0,
       "description": "Duration of this analysis window in seconds."
     },
     "channelLayout": {
@@ -51,6 +55,7 @@
         "channels",
         "montage"
       ],
+      "description": "Channel configuration used during acquisition.",
       "properties": {
         "channels": {
           "type": "array",
@@ -59,7 +64,7 @@
             "type": "string",
             "minLength": 1
           },
-          "description": "List of channel labels used for this recording (e.g., Fz, Cz)."
+          "description": "List of channel labels used for this recording (e.g., Fz, Cz, Pz)."
         },
         "montage": {
           "type": "string",
@@ -69,19 +74,25 @@
             "custom"
           ],
           "description": "EEG montage naming convention."
+        },
+        "layoutId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional short identifier for the layout (e.g., custom-8ch, custom-16ch)."
         }
       }
     },
     "features": {
       "type": "array",
       "minItems": 1,
-      "description": "Array of feature objects for this window.",
+      "description": "Array of minimally processed feature objects for this window.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
           "featureId",
           "featureType",
+          "channel",
           "value"
         ],
         "properties": {
@@ -93,13 +104,28 @@
           "featureType": {
             "type": "string",
             "enum": [
+              "bandpower_delta",
+              "bandpower_theta",
+              "bandpower_alpha",
+              "bandpower_beta",
+              "bandpower_gamma",
+              "arousal_score",
+              "valence_score",
+              "asymmetry_index",
+              "coherence_metric"
+            ],
+            "description": "Concrete feature type label aligned with upstream BCI extraction."
+          },
+          "featureClass": {
+            "type": "string",
+            "enum": [
               "bandpower",
               "differential_entropy",
               "arousal",
               "valence",
               "custom"
             ],
-            "description": "Classification of the feature."
+            "description": "High-level classification of the feature for offline analysis and tooling."
           },
           "channel": {
             "type": "string",
@@ -108,23 +134,45 @@
           },
           "value": {
             "type": "number",
-            "description": "Primary scalar value of the feature (e.g., band power, entropy, score)."
+            "minimum": -100,
+            "maximum": 100,
+            "description": "Primary scalar value of the feature (e.g., band power, entropy, score) in a normalized or log-scaled range."
           },
           "unit": {
             "type": "string",
             "minLength": 1,
-            "description": "Unit of the value field (e.g., 'log_uV2')."
+            "description": "Unit of the value field when applicable (e.g., log_uV2)."
           },
           "bandPowers": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Optional per-band power breakdown.",
+            "description": "Optional per-band power breakdown normalized to [0, 1].",
             "properties": {
-              "delta": { "type": "number" },
-              "theta": { "type": "number" },
-              "alpha": { "type": "number" },
-              "beta":  { "type": "number" },
-              "gamma": { "type": "number" }
+              "delta": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "theta": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "alpha": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "beta": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "gamma": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
             }
           },
           "arousalScore": {
@@ -146,16 +194,29 @@
             "properties": {
               "algorithm": {
                 "type": "string",
-                "description": "Name or ID of the algorithm used to compute this feature."
+                "description": "Name or identifier of the algorithm used to compute this feature."
               },
               "version": {
                 "type": "string",
                 "description": "Version string for the feature extraction algorithm."
+              },
+              "source": {
+                "type": "string",
+                "description": "Optional upstream system or pipeline identifier."
               }
             }
           }
         }
       }
     }
-  }
+  },
+  "forbiddenFields": [
+    "subjectId",
+    "playerId",
+    "rawWaveform",
+    "sampleArray",
+    "demographics",
+    "medicalHistory",
+    "consentStatus"
+  ]
 }
