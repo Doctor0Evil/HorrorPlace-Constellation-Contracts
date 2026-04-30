@@ -1,0 +1,27 @@
+[package]
+name = "hpc-routing-validator"
+version = "0.1.0"
+edition = "2021"
+description = "Routing spine and manifest validator for the Horror.Place VM-constellation."
+license = "MIT"
+
+[lib]
+name = "hpc_routing_validator"
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = ["std"]
+std = []
+wasm = ["serde_json", "serde", "wee_alloc"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+
+# Optional, only when compiling to WASM
+wasm-bindgen = { version = "0.2", optional = true }
+wee_alloc = { version = "0.4", optional = true }
+
+[dev-dependencies]
+serde_json = "1.0"
