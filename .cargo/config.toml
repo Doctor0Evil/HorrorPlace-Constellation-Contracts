@@ -1,0 +1,31 @@
+# .cargo/config.toml
+#
+# Repository-wide Cargo configuration.
+#
+# Goals:
+# - Prefer the sparse crates.io index to reduce disk usage in constrained environments.
+# - Default to offline-friendly behavior where possible.
+# - Avoid surprise network calls that can fail due to disk or connectivity limits.
+
+[registry]
+# Use the sparse index protocol for crates.io to reduce the size of the index.
+# Cargo understands this URL scheme; it does not change the logical registry,
+# only how the index is accessed.
+index = "sparse+https://index.crates.io/"
+
+[net]
+# Many CI / sandbox environments for this project are network-limited or
+# pre-provisioned with a fixed Cargo cache. Setting offline = true here
+# communicates that all normal cargo operations should be written to be
+# compatible with `--offline`.
+#
+# IMPORTANT:
+# - This does not prevent humans from temporarily overriding offline mode.
+# - AI and scripted tools must assume that `cargo check --offline` and
+#   `cargo test --offline` are the default forms to use in examples.
+offline = true
+
+[term]
+# Keep Cargo output simple and stable for logs and automated tools.
+color = "auto"
+verbose = false
