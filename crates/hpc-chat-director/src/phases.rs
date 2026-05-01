@@ -275,7 +275,7 @@ pub fn check_prom002(
     // Check if target repo accepts this object kind
     let repo_accepts = manifests
         .iter()
-        .find(|m| m.repo == req.target_repo)
+        .find(|m| m.repo_name == req.target_repo)
         .map_or(false, |m| m.allows_object_kind(&req.object_kind));
     
     if !repo_accepts {

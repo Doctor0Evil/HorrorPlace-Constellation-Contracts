@@ -74,7 +74,7 @@ pub fn run(
     // 2. Resolve target path from manifest
     let manifest = manifests
         .iter()
-        .find(|m| m.repo == vf.target_repo)
+        .find(|m| m.repo_name == vf.target_repo)
         .ok_or_else(|| Error::Config {
             message: format!("Unknown target repo: {}", vf.target_repo),
             path: config.root.clone(),

@@ -9,34 +9,36 @@ use crate::model::spine_types::Phase;
 
 /// Tier classification shared across manifests.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash)]
-#[serde(rename_all = "snake_case")]
 pub enum Tier {
-    Tier1,
-    Tier2,
-    Tier3,
+    #[serde(rename = "T1-core")]
+    T1Core,
+    #[serde(rename = "T2-vault")]
+    T2Vault,
+    #[serde(rename = "T3-research")]
+    T3Research,
 }
 
 impl Tier {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Tier::Tier1 => "Tier1",
-            Tier::Tier2 => "Tier2",
-            Tier::Tier3 => "Tier3",
+            Tier::T1Core => "T1-core",
+            Tier::T2Vault => "T2-vault",
+            Tier::T3Research => "T3-research",
         }
     }
 
     pub fn describe(&self) -> TierDescription {
         let (name, description) = match self {
-            Tier::Tier1 => (
-                "Tier1",
+            Tier::T1Core => (
+                "T1-core",
                 "Public contract-only surfaces and orchestrator logic; no raw horror payloads.",
             ),
-            Tier::Tier2 => (
-                "Tier2",
+            Tier::T2Vault => (
+                "T2-vault",
                 "Vault-style repos for styles, seeds, personas, and experimental logic.",
             ),
-            Tier::Tier3 => (
-                "Tier3",
+            Tier::T3Research => (
+                "T3-research",
                 "Research tier for BCI, neural resonance, and redacted chronicles.",
             ),
         };
@@ -67,8 +69,12 @@ pub enum AiRole {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RepoManifest {
+    /// Schema version for this manifest.
+    #[serde(default)]
+    pub schema_version: String,
     /// Logical repository name.
-    pub repo: String,
+    #[serde(rename = "repoName")]
+    pub repo_name: String,
     /// Tier classification for this repo.
     pub tier: Tier,
     /// Allowed object kinds for this repo.
@@ -133,7 +139,7 @@ impl RepoManifest {
 
     /// Build a policy checklist for this repo and tier.
     pub fn to_policy_checklist(&self) -> PolicyChecklist {
-        let mut checklist = PolicyChecklist::new(&self.repo, &self.tier);
+        let mut checklist = PolicyChecklist::new(&self.repo_name, &self.tier);
 
         if self.rules.one_file_per_request {
             checklist.add_item(

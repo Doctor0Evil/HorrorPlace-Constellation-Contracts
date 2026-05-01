@@ -188,7 +188,7 @@ fn build_object_kind_profile(
             (manifest.tier, TierRestriction {
                 allowed,
                 notes: if !allowed {
-                    Some(format!("Repo '{}' does not accept {}", manifest.repo, kind))
+                    Some(format!("Repo '{}' does not accept {}", manifest.repo_name, kind))
                 } else {
                     None
                 },
@@ -204,7 +204,7 @@ fn build_object_kind_profile(
         .filter(|m| m.allows_object_kind(kind))
         .filter_map(|m| {
             m.default_path_for(kind).map(|template| {
-                (m.repo.clone(), template.replace("{id}", "example_id"))
+                (m.repo_name.clone(), template.replace("{id}", "example_id"))
             })
         })
         .collect();
@@ -247,9 +247,9 @@ fn apply_filters(
     // Filter by tier if specified
     if let Some(t) = tier {
         let tier_enum = match t {
-            "T1" | "t1" => Tier::T1,
-            "T2" | "t2" => Tier::T2,
-            "T3" | "t3" => Tier::T3,
+            "T1" | "t1" | "T1-core" | "t1-core" => Tier::T1Core,
+            "T2" | "t2" | "T2-vault" | "t2-vault" => Tier::T2Vault,
+            "T3" | "t3" | "T3-research" | "t3-research" => Tier::T3Research,
             _ => return Err(Error::Internal {
                 message: format!("Invalid tier: {}", t),
             }),
