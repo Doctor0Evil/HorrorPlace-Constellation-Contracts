@@ -304,13 +304,13 @@ fn check_tier_policy(
     req: &AiAuthoringRequest,
 ) -> Option<ManifestDiagnostic> {
     match manifest.tier {
-        Tier::Tier1 => {
+        Tier::T1Core => {
             if manifest.is_raw_content_kind(&req.object_kind) {
                 let (charter, suggestion) = manifest.tier_violation_hints_for(&req.object_kind);
                 Some(ManifestDiagnostic {
                     code: ManifestDiagnosticCode::TierPolicyViolation,
                     message: format!(
-                        "Raw narrative content for '{}' is not allowed in Tier 1 repo '{}'.",
+                        "Raw narrative content for '{}' is not allowed in T1-core repo '{}'.",
                         req.object_kind, manifest.repo_name
                     ),
                     severity: ManifestDiagnosticSeverity::Error,

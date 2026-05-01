@@ -150,7 +150,7 @@ fn resolve_target(
 ) -> Result<(String, String, Tier), Error> {
     // Use override if provided
     if let Some(repo) = repo_override {
-        if let Some(manifest) = manifests.iter().find(|m| m.repo == repo) {
+        if let Some(manifest) = manifests.iter().find(|m| m.repo_name == repo) {
             if manifest.allows_object_kind(object_kind) {
                 let path = manifest.default_path_for(object_kind)
                     .unwrap_or("{id}.json")
@@ -170,7 +170,7 @@ fn resolve_target(
             let path = manifest.default_path_for(object_kind)
                 .unwrap_or("{id}.json")
                 .replace("{id}", "TODO_ID");
-            return Ok((manifest.repo.clone(), path, manifest.tier));
+            return Ok((manifest.repo_name.clone(), path, manifest.tier));
         }
     }
 
@@ -185,9 +185,9 @@ fn determine_default_phase(object_kind: &str, tier: Tier) -> Phase {
     // v1 defaults: all four contract families are Phase 2 (Bundles)
     // Phase 1 for registry entries only
     match tier {
-        Tier::T1 => Phase::Bundles2, // Public contracts
-        Tier::T2 => Phase::Bundles2, // Vault contracts
-        Tier::T3 => Phase::Bundles2, // Lab contracts
+        Tier::T1Core => Phase::Bundles2, // Public contracts
+        Tier::T2Vault => Phase::Bundles2, // Vault contracts
+        Tier::T3Research => Phase::Bundles2, // Lab contracts
     }
 }
 
