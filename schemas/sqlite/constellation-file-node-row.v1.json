@@ -1,0 +1,66 @@
+{
+  "$id": "https://horror.place/schemas/sqlite/constellation-file-node-row.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constellation File Node Row v1",
+  "type": "object",
+  "description": "Row manifest for constellation_file_node backing the blast-radius graph.",
+  "required": [
+    "file_id",
+    "vm_node_id",
+    "object_kind",
+    "created_at",
+    "updated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "file_node_id": {
+      "type": "integer",
+      "description": "Optional primary key; usually assigned by SQLite on insert."
+    },
+    "file_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Foreign key into constellation_file_manifest.file_id."
+    },
+    "vm_node_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Foreign key into constellation_vm_node.vm_node_id."
+    },
+    "object_kind": {
+      "type": "string",
+      "description": "High-level contract kind for this file node.",
+      "enum": [
+        "eventContract",
+        "regionContract",
+        "styleContract",
+        "personaContract",
+        "luaApi",
+        "sqlManifest",
+        "telemetryContract",
+        "deadLedgerEnvelope",
+        "historyBundleRef"
+      ]
+    },
+    "region_id": { "type": "string" },
+    "tile_id": { "type": "string" },
+    "cic":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "aos":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "mdi":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "rrm":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "fcf":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "spr":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "rwf":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "det":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "hvf":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "lsg":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "shci": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "uec":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "emd":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "stci": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "cdl":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "arr":  { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
