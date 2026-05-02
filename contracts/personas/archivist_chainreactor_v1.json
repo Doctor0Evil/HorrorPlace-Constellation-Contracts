@@ -1,0 +1,152 @@
+{
+  "schemaId": "persona_contract_v1",
+  "schemaVersion": "1.0.0",
+
+  "personaId": "PERSONA.ARCHIVIST.CHAINREACTOR.V1",
+  "personaName": "Archivist Chain-Reactor",
+  "tier": "mature",
+
+  "schema": "schemas/persona_contract_v1.json",
+  "style_id": "SPECTRALENGRAVINGDARKSUBLIME",
+
+  "basePersonaRef": "contracts/personas/archivist_witness_v1.json",
+
+  "invariants": {
+    "min": {
+      "CIC": 0.7,
+      "AOS": 0.7,
+      "SHCI": 0.8
+    },
+    "max": {
+      "CIC": 1.0,
+      "AOS": 1.0,
+      "SHCI": 1.0
+    }
+  },
+
+  "metrics": {
+    "targets": {
+      "UEC": { "min": 0.6, "max": 0.85 },
+      "EMD": { "min": 0.7, "max": 0.9 },
+      "STCI": { "min": 0.4, "max": 0.6 },
+      "CDL": { "min": 0.6, "max": 0.85 },
+      "ARR": { "min": 0.8, "max": 1.0 }
+    }
+  },
+
+  "capabilities": {
+    "chainReactionControl": true,
+    "invariantAwareness": [
+      "CIC",
+      "AOS",
+      "RWF",
+      "SHCI",
+      "LSG",
+      "HVF",
+      "DET"
+    ],
+    "metricTargets": [
+      "UEC",
+      "EMD",
+      "STCI",
+      "CDL",
+      "ARR"
+    ],
+    "supportedChainFamilies": [
+      "ARCHIVAL_LINE_ALPHA",
+      "HYDRO_LINE_BETA",
+      "LIMEN_LINE_GAMMA"
+    ]
+  },
+
+  "roles": [
+    "archivist",
+    "chain_reactor"
+  ],
+
+  "behaviorLoops": {
+    "chainSelection": {
+      "triggerCondition": "player_in_high_invariant_region",
+      "selectionLogic": "weighted_by_invariant_match",
+      "cooldownSeconds": 600.0
+    },
+    "contradictionDelivery": {
+      "triggerCondition": "player_cross_references_evidence",
+      "deliveryMethod": "archivist_dialogue",
+      "maxContradictionsPerSession": 3
+    },
+    "redactionExecution": {
+      "triggerCondition": "chain_phase_decay",
+      "redactionScope": "session_persistent",
+      "ledgerSync": true
+    }
+  },
+
+  "invariantHooks": {
+    "AOS": {
+      "threshold": 0.7,
+      "effect": "enable_archival_drip_chain"
+    },
+    "RRM": {
+      "threshold": 0.8,
+      "effect": "enable_water_ritual_chain"
+    },
+    "LSG": {
+      "threshold": 0.9,
+      "effect": "enable_liminal_corridor_chain"
+    }
+  },
+
+  "telemetryBindings": {
+    "chainActivationEvent": "bci-mapping-activation-v1",
+    "personaStateEvent": "persona-state-change-v1",
+    "ledgerSyncEvent": "dead-ledger-entry-v1"
+  },
+
+  "state_model": {
+    "states": [
+      "arming_chain",
+      "spiking_contradiction",
+      "driving_dissipation",
+      "cooldown"
+    ],
+    "transitions": [
+      {
+        "from": "arming_chain",
+        "to": "spiking_contradiction",
+        "conditions": [
+          "UEC_high",
+          "AOS_high",
+          "CIC_high"
+        ]
+      },
+      {
+        "from": "spiking_contradiction",
+          "to": "driving_dissipation",
+          "conditions": [
+            "CDL_spike",
+            "ARR_target_met"
+          ]
+      },
+      {
+        "from": "driving_dissipation",
+        "to": "cooldown",
+        "conditions": [
+          "time_elapsed"
+        ]
+      },
+      {
+        "from": "cooldown",
+        "to": "arming_chain",
+        "conditions": [
+          "DET_reset"
+        ]
+      }
+    ]
+  },
+
+  "doc": {
+    "summary": "A high-tension Archivist variant specialized in coordinating Archival Line Alpha chain reactions across multiple events.",
+    "notes": "Deployed in high-CIC, high-AOS regions where the archive itself becomes the scare engine and contradictions are used as controlled chain-reaction triggers."
+  }
+}
