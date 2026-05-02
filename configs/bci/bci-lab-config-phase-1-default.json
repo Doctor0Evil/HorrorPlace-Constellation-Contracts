@@ -1,0 +1,49 @@
+{
+  "schemaId": "hpc-bci-lab-config-v1",
+  "schemaVersion": "1.0.0",
+  "investigationRef": "bci-12m-investigation-v1.0.0",
+  "phaseId": "phase-1-framework-validation",
+  "labProfile": "T2-preset-lab",
+  "sqlite": {
+    "databasePath": "lab/sqlite/bci_phase1_default.db",
+    "schemaMigrationTag": "bci-lab-schema-v1.0.0",
+    "tables": {
+      "bciTilesetTable": "bci_tileset",
+      "bciGeometryProfileTable": "bci_geometry_profile",
+      "bciMetricsWindowTable": "bci_metrics_window",
+      "geometrySelectionEventTable": "geometry_selection_event"
+    }
+  },
+  "telemetry": {
+    "mappingActivationSchemaId": "bci-mapping-activation-v1",
+    "mappingClampSchemaId": "bci-mapping-clamp-v1",
+    "outputDir": "lab/telemetry/phase1/default"
+  },
+  "safety": {
+    "safetyProfileId": "bci-safety-profile-v1.monster-mode-standard",
+    "enforceDetJumpGuard": true,
+    "detJumpMaxPer2Seconds": 0.25,
+    "minModeCooldownSeconds": 30.0
+  },
+  "environments": [
+    {
+      "presetId": "penum-cube-lab-v1",
+      "category": "penum-cube",
+      "targetARR": 0.50,
+      "targetOptimalStressDuration": 0.60
+    },
+    {
+      "presetId": "lab-plague-ethics-v1",
+      "category": "lab-plague",
+      "targetARR": 0.55,
+      "targetOptimalStressDuration": 0.60
+    },
+    {
+      "presetId": "dead-city-ruins-vignette-v1",
+      "category": "dead-city-ruins",
+      "targetARR": 0.60,
+      "targetOptimalStressDuration": 0.60
+    }
+  ],
+  "interventions": []
+}
