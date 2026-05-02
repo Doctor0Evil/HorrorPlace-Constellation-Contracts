@@ -1,0 +1,44 @@
+{
+  "$id": "https://horror.place/schemas/sqlite/constellation-neighbor-edge-row.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constellation Neighbor Edge Row v1",
+  "type": "object",
+  "description": "Row manifest for constellation_neighbor_edge describing a blast-radius edge.",
+  "required": [
+    "source_file_node_id",
+    "target_file_node_id",
+    "neighbor_scope",
+    "distance",
+    "edge_kind",
+    "created_at",
+    "updated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "edge_id": { "type": "integer" },
+    "source_file_node_id": { "type": "integer", "minimum": 1 },
+    "target_file_node_id": { "type": "integer", "minimum": 1 },
+    "neighbor_scope": {
+      "type": "string",
+      "enum": ["tile", "room", "region", "vm", "constellation"]
+    },
+    "distance": { "type": "number", "minimum": 0.0 },
+    "radius_band": {
+      "type": "string",
+      "enum": ["immediate", "ring-1", "ring-2", "ring-3", "far"]
+    },
+    "cic_overlap": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "aos_overlap": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "det_delta": { "type": "number", "minimum": -10.0, "maximum": 10.0 },
+    "hvf_alignment": { "type": "number", "minimum": -1.0, "maximum": 1.0 },
+    "lsg_gradient": { "type": "number", "minimum": -10.0, "maximum": 10.0 },
+    "shci_coupling": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "edge_kind": {
+      "type": "string",
+      "enum": ["spatial", "logical", "contract", "telemetry"]
+    },
+    "enabled": { "type": "integer", "enum": [0, 1], "default": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
