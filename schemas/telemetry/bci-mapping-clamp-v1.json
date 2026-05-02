@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-mapping-clamp-v1",
+  "description": "Telemetry event emitted when a safety clamp is applied to BCI outputs. Critical for audit and safety review.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-mapping-clamp-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier (UUID v4)."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Anonymized session identifier."
+    },
+    "playerId": {
+      "type": "string",
+      "description": "Anonymized player identifier."
+    },
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tickTimestamp": {
+      "type": "number",
+      "description": "Unix timestamp in seconds."
+    },
+    "clampType": {
+      "type": "string",
+      "enum": [
+        "DET_CAP",
+        "CSI_CAP",
+        "ARR_RISE_RATE",
+        "MODE_COOLDOWN",
+        "CHANNEL_INTENSITY",
+        "RATE_OF_CHANGE",
+        "OVERLOAD_RECOVERY"
+      ],
+      "description": "Type of safety clamp that was triggered."
+    },
+    "clampReason": {
+      "type": "string",
+      "description": "Human-readable explanation of why clamp was applied."
+    },
+    "safetyProfileId": {
+      "type": "string",
+      "description": "Reference to bci-safety-profile-v1 instance."
+    },
+    "preClampValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "type": "string",
+          "description": "Metric being clamped (e.g., 'det', 'visualIntensity')."
+        },
+        "requestedValue": {
+          "type": "number",
+          "description": "Value requested before clamping."
+        },
+        "clampedValue": {
+          "type": "number",
+          "description": "Value after clamping was applied."
+        },
+        "capLimit": {
+          "type": "number",
+          "description": "The safety cap that was exceeded."
+        }
+      },
+      "required": ["metric", "requestedValue", "clampedValue", "capLimit"]
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stressBand": {
+          "type": "string",
+          "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"]
+        },
+        "det": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "csi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "modeTransitionPending": {
+          "type": "boolean",
+          "description": "Whether a mode transition was blocked by this clamp."
+        },
+        "cooldownRemainingSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds remaining in cooldown if applicable."
+        }
+      },
+      "required": ["stressBand", "det", "csi"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["INFO", "WARNING", "CRITICAL"],
+      "description": "Severity level of this clamp event."
+    },
+    "recoveryAction": {
+      "type": "string",
+      "enum": ["NONE", "REDUCE_INTENSITY", "ENTER_COOLDOWN", "TERMINATE_SESSION"],
+      "description": "Action taken to recover from the clamped state."
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "eventId",
+    "sessionId",
+    "playerId",
+    "tickIndex",
+    "tickTimestamp",
+    "clampType",
+    "clampReason",
+    "safetyProfileId",
+    "preClampValue",
+    "context",
+    "severity",
+    "recoveryAction"
+  ]
+}
