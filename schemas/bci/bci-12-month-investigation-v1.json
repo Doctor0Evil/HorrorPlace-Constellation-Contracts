@@ -1,0 +1,379 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-12-month-investigation-v1",
+  "description": "Machine-readable specification for the 12-month BCI-integrated horror environment investigation.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "hpc-bci-12-month-investigation-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "planVersionTag": {
+      "type": "string",
+      "description": "Git tag or semantic label for this investigation instance."
+    },
+    "timeframe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "monthsTotal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "phase-1-framework-validation",
+                  "phase-2-env-optimization",
+                  "phase-3-intervention-playbook"
+                ]
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "monthStart": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "monthEnd": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "effortPercent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "id",
+              "displayName",
+              "monthStart",
+              "monthEnd",
+              "effortPercent"
+            ]
+          }
+        }
+      },
+      "required": [
+        "monthsTotal",
+        "phases"
+      ]
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phase1": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "profileTargetAccuracyMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "shciResonanceR2Min": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "modeOscillationRateMax": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "uecDeltaTarget": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "uecDeltaTolerance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "profileTargetAccuracyMin",
+            "shciResonanceR2Min",
+            "modeOscillationRateMax"
+          ]
+        },
+        "phase2": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "optimalStressDurationMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "arrEndpointTolerance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "arrSessionsWithinToleranceMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "optimalStressDurationMin",
+            "arrEndpointTolerance",
+            "arrSessionsWithinToleranceMin"
+          ]
+        },
+        "phase3": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "interventionEffectivenessGainMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "overloadReductionMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "allowSafetyDegradation": {
+              "type": "boolean",
+              "const": false
+            }
+          },
+          "required": [
+            "interventionEffectivenessGainMin",
+            "overloadReductionMin",
+            "allowSafetyDegradation"
+          ]
+        }
+      },
+      "required": [
+        "phase1",
+        "phase2",
+        "phase3"
+      ]
+    },
+    "safetyHierarchy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hardSafety": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "detMin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "detMax": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "csiMax": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "detMin",
+            "detMax",
+            "csiMax"
+          ]
+        },
+        "hysteresis": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minModeCooldownSeconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "arrRiseRateMaxPerMinute": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detJumpMaxPer2Seconds": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "minModeCooldownSeconds",
+            "arrRiseRateMaxPerMinute",
+            "detJumpMaxPer2Seconds"
+          ]
+        },
+        "engagementOptimization": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "optStressPriority": {
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary"
+              ]
+            },
+            "arrOptimizationAllowed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "optStressPriority",
+            "arrOptimizationAllowed"
+          ]
+        }
+      },
+      "required": [
+        "hardSafety",
+        "hysteresis",
+        "engagementOptimization"
+      ]
+    },
+    "pipelines": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bciFeatureEnvelopeSchemaId": {
+          "type": "string"
+        },
+        "bciMetricsEnvelopeSchemaId": {
+          "type": "string"
+        },
+        "bciSummarySchemaId": {
+          "type": "string"
+        },
+        "bciGeometryBindingSchemaId": {
+          "type": "string"
+        },
+        "bciMappingRequestSchemaId": {
+          "type": "string"
+        },
+        "bciMappingResponseSchemaId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bciFeatureEnvelopeSchemaId",
+        "bciMetricsEnvelopeSchemaId",
+        "bciSummarySchemaId",
+        "bciGeometryBindingSchemaId",
+        "bciMappingRequestSchemaId",
+        "bciMappingResponseSchemaId"
+      ]
+    },
+    "tooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sqlite": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requiredTables": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "utilityViews": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "requiredTables"
+          ]
+        },
+        "cliTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "telemetrySchemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "sqlite",
+        "cliTools",
+        "telemetrySchemas"
+      ]
+    },
+    "vmDoctrine": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rustAsTruth": {
+          "type": "boolean",
+          "const": true
+        },
+        "luaAsOrchestrator": {
+          "type": "boolean",
+          "const": true
+        },
+        "schemasDefineReality": {
+          "type": "boolean",
+          "const": true
+        },
+        "oneWayPipeline": {
+          "type": "boolean",
+          "const": true
+        },
+        "telemetryAsView": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "rustAsTruth",
+        "luaAsOrchestrator",
+        "schemasDefineReality",
+        "oneWayPipeline",
+        "telemetryAsView"
+      ]
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "planVersionTag",
+    "timeframe",
+    "targets",
+    "safetyHierarchy",
+    "pipelines",
+    "tooling",
+    "vmDoctrine"
+  ]
+}
