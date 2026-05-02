@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-mapping-response-v1",
+  "description": "Unified mapping response with updated metrics, summary, outputs, and telemetry.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-mapping-response-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updatedMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uec": { "type": "number", "minimum": 0, "maximum": 1 },
+        "emd": { "type": "number", "minimum": 0, "maximum": 1 },
+        "stci": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cdl": { "type": "number", "minimum": 0, "maximum": 1 },
+        "arr": { "type": "number", "minimum": 0, "maximum": 1 },
+        "det": { "type": "number", "minimum": 0, "maximum": 10 }
+      },
+      "required": ["uec", "emd", "stci", "cdl", "arr", "det"]
+    },
+    "updatedSummary": {
+      "type": "object",
+      "properties": {
+        "stressScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "stressBand": { "type": "string", "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"] },
+        "attentionBand": { "type": "string", "enum": ["Distracted", "Neutral", "Focused", "HyperFocused"] },
+        "visualOverloadIndex": { "type": "number", "minimum": 0, "maximum": 1 },
+        "startleSpike": { "type": "integer", "enum": [0, 1] },
+        "signalQuality": { "type": "string", "enum": ["Good", "Degraded", "Unavailable"] },
+        "csi": { "type": "number", "minimum": 0, "maximum": 1 },
+        "modeTransitionCooldown": { "type": "number", "minimum": 0 }
+      },
+      "required": ["stressScore", "stressBand", "attentionBand", "visualOverloadIndex", "startleSpike", "signalQuality", "csi", "modeTransitionCooldown"]
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visual": {
+          "type": "object",
+          "properties": {
+            "bindingId": { "type": "string" },
+            "visualPressure": { "type": "number", "minimum": 0, "maximum": 1 },
+            "visualCap": { "type": "number", "minimum": 0, "maximum": 1 },
+            "visualInstability": { "type": "number", "minimum": 0, "maximum": 1 },
+            "saturationShift": { "type": "number", "minimum": -1, "maximum": 1 },
+            "contrastShift": { "type": "number", "minimum": -1, "maximum": 1 }
+          },
+          "required": ["bindingId"]
+        },
+        "audio": {
+          "type": "object",
+          "properties": {
+            "bindingId": { "type": "string" },
+            "ambientVolume": { "type": "number", "minimum": 0, "maximum": 1 },
+            "effectVolume": { "type": "number", "minimum": 0, "maximum": 1 },
+            "pitchShift": { "type": "number", "minimum": -1, "maximum": 1 },
+            "reverbMix": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "required": ["bindingId"]
+        },
+        "haptic": {
+          "type": "object",
+          "properties": {
+            "bindingId": { "type": "string" },
+            "hapticDrive": { "type": "number", "minimum": 0, "maximum": 1 },
+            "hapticRoutingBias": { "type": "string", "enum": ["left", "right", "center", "alternating"] },
+            "patternId": { "type": "string" }
+          },
+          "required": ["bindingId"]
+        }
+      },
+      "required": ["visual", "audio", "haptic"]
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bindingSelection": { "type": "string" },
+        "selectionScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "candidateCount": { "type": "integer", "minimum": 0 },
+        "capsApplied": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of safety caps that were applied."
+        },
+        "perfData": {
+          "type": "object",
+          "properties": {
+            "kernelLatencyMs": { "type": "number", "minimum": 0 },
+            "bindingSearchMs": { "type": "number", "minimum": 0 }
+          }
+        }
+      },
+      "required": ["bindingSelection", "selectionScore", "candidateCount"]
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "sessionId",
+    "tickIndex",
+    "updatedMetrics",
+    "updatedSummary",
+    "outputs",
+    "telemetry"
+  ]
+}
