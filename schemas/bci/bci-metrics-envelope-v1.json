@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-metrics-envelope-v1",
+  "description": "Normalized entertainment metrics derived from BCI features. All values in canonical ranges.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-metrics-envelope-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uec": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Uncertainty Engagement Coefficient."
+        },
+        "emd": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Evidential Mystery Density."
+        },
+        "stci": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Safe-Threat Contrast Index."
+        },
+        "cdl": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Cognitive Dissonance Load."
+        },
+        "arr": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ambiguous Resolution Ratio."
+        },
+        "det": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Dread Exposure Threshold (0-10 scale)."
+        }
+      },
+      "required": ["uec", "emd", "stci", "cdl", "arr", "det"]
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Catastrophic Imprint Coefficient."
+        },
+        "mdi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mythic Density Index."
+        },
+        "aos": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Archival Opacity Score."
+        },
+        "lsg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Liminal Stress Gradient."
+        },
+        "spr": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Spectral Plausibility Rating."
+        },
+        "rrm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ritual Residue Map."
+        },
+        "fcf": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Folkloric Convergence Factor."
+        },
+        "rwf": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Reliability Weighting Factor."
+        },
+        "hvf": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Haunt Vector Field."
+        },
+        "shci": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Spectral-Haunt Coupling Index."
+        }
+      },
+      "required": ["cic", "mdi", "aos", "lsg", "spr", "rrm", "fcf", "rwf", "hvf", "shci"]
+    },
+    "derivedFrom": {
+      "type": "string",
+      "description": "Reference to feature envelope schema version."
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "sessionId",
+    "tickIndex",
+    "metrics",
+    "invariants",
+    "derivedFrom"
+  ]
+}
