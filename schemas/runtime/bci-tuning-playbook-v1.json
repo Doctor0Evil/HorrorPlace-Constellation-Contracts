@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-tuning-playbook-v1",
+  "description": "Collection of prescriptive tuning rules derived from Phase 3 research. Machine-checkable and enforceable in production.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-tuning-playbook-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "playbookId": {
+      "type": "string",
+      "description": "Unique playbook identifier (e.g., 'PLAYBOOK.PHASE3.V1.0')."
+    },
+    "playbookVersion": {
+      "type": "string",
+      "description": "Semantic version of this playbook."
+    },
+    "generatedDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of playbook generation."
+    },
+    "phase3ExperimentRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of Phase 3 experiment IDs that contributed to this playbook."
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ruleId": {
+            "type": "string"
+          },
+          "ruleRef": {
+            "type": "string",
+            "description": "Reference to bci-intervention-rule-v1 file."
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "environments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Environments where this rule is active."
+          }
+        },
+        "required": ["ruleId", "ruleRef", "enabled"]
+      }
+    },
+    "globalConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxConcurrentInterventions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Maximum interventions that can be active simultaneously."
+        },
+        "minInterventionSpacingSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum seconds between intervention activations."
+        },
+        "safetyProfileId": {
+          "type": "string",
+          "description": "Master safety profile governing all rules in this playbook."
+        }
+      },
+      "required": ["maxConcurrentInterventions", "safetyProfileId"]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "totalRules": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabledRules": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "interventionTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "HINT_SYSTEM",
+              "SPAWN_DENSITY",
+              "HAPTIC_SYNC",
+              "BOOSTER_PROFILE",
+              "CONTENT_GATING",
+              "COOLDOWN_TRIGGER"
+            ]
+          }
+        },
+        "validatedPresetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of presets where rules were validated."
+        }
+      },
+      "required": ["totalRules", "enabledRules", "validatedPresetCount"]
+    },
+    "approvalStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "REVIEW", "APPROVED", "DEPRECATED"]
+        },
+        "approvedBy": {
+          "type": "string",
+          "description": "Identifier of approving authority (e.g., Dead-Ledger sig)."
+        },
+        "approvedDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "nextReviewDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["status"]
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "playbookId",
+    "playbookVersion",
+    "generatedDate",
+    "phase3ExperimentRefs",
+    "rules",
+    "globalConstraints",
+    "metrics",
+    "approvalStatus"
+  ]
+}
