@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/blast-radius-policy-v1.json",
+  "title": "Blast Radius Policy v1",
+  "description": "Policy envelope defining depth and invariant/metric caps for blast-radius computations around graph nodes (e.g., dungeonNodeContract).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "objectKind",
+    "tier",
+    "maxDepth",
+    "invariantCaps",
+    "riskWeights",
+    "engagementTargets"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this blast-radius policy document."
+    },
+    "schemaRef": {
+      "type": "string",
+      "const": "blast-radius-policy-v1",
+      "description": "Canonical schema discriminator."
+    },
+    "objectKind": {
+      "type": "string",
+      "description": "Contract family this policy applies to e.g., dungeonNodeContract, regionContractCard."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["Tier1Public", "Tier2Internal", "Tier3Vault", "Tier4Underground"],
+      "description": "Governance tier for which this policy is valid."
+    },
+    "maxDepth": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 64,
+      "description": "Absolute maximum traversal depth allowed when computing blast radius from any starting node."
+    },
+    "invariantCaps": {
+      "type": "object",
+      "description": "Upper bounds on cumulative invariant deltas along any path inside the blast radius.",
+      "additionalProperties": false,
+      "required": [
+        "maxDetDelta",
+        "maxCicDelta",
+        "maxAosDelta",
+        "maxRiskScore"
+      ],
+      "properties": {
+        "maxDetDelta": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed cumulative DET delta along a path from the origin node."
+        },
+        "maxCicDelta": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed cumulative CIC delta along a path from the origin node."
+        },
+        "maxAosDelta": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum allowed cumulative AOS delta along a path from the origin node."
+        },
+        "maxRiskScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Maximum allowed combined risk score using the riskWeights below (e.g., CIC/AOS/DET weighted sum)."
+        }
+      }
+    },
+    "riskWeights": {
+      "type": "object",
+      "description": "Weights for combining invariant deltas into a scalar risk score.",
+      "additionalProperties": false,
+      "required": [
+        "wCic",
+        "wAos",
+        "wDet"
+      ],
+      "properties": {
+        "wCic": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Weight for |ΔCIC| in the risk score."
+        },
+        "wAos": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Weight for |ΔAOS| in the risk score."
+        },
+        "wDet": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "description": "Weight for positive ΔDET in the risk score."
+        }
+      }
+    },
+    "engagementTargets": {
+      "type": "object",
+      "description": "Preferred engagement bands inside the blast radius, used as soft guidance for map design and AI-Chat.",
+      "additionalProperties": false,
+      "required": [
+        "uecBand",
+        "arrBand",
+        "cdlCap"
+      ],
+      "properties": {
+        "uecBand": {
+          "type": "array",
+          "description": "Inclusive [min,max] band for UEC across nodes in the blast radius.",
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "arrBand": {
+          "type": "array",
+          "description": "Inclusive [min,max] band for ARR across nodes in the blast radius.",
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "cdlCap": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum acceptable CDL inside the radius; higher CDL paths should be excluded from safe neighborhoods."
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human-readable explanation of this policy."
+    },
+    "prismMeta": {
+      "type": "object",
+      "description": "Standard prism metadata block for provenance and Dead-Ledger references.",
+      "additionalProperties": true
+    }
+  }
+}
