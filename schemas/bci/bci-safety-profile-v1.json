@@ -5,23 +5,20 @@
   "description": "Neurorights-aligned caps for BCI mappings. These limits are HARD and must be enforced in Rust geometry kernels: caps on CSI, DET, per-channel intensity, rate limits, and recovery windows. Lua must not implement safety logic.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "profileId",
-    "channelCaps",
-    "timingCaps",
-    "stressGates"
-  ],
   "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-safety-profile-v1"
+    },
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Schema version for BCI safety profiles."
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the safety profile schema."
     },
     "profileId": {
       "type": "string",
       "minLength": 1,
-      "description": "Human-readable profile ID (e.g., standard, corridor_med, safe_mode)."
+      "description": "Unique profile identifier (e.g., 'SAFE_DEFAULT_ADULT', 'corridor_med', 'tutorial_low')."
     },
     "tier": {
       "type": "string",
@@ -31,38 +28,12 @@
         "mature",
         "research"
       ],
-      "description": "Policy tier alignment. Lab profiles are experimental; standard/mature are allowed in production."
-    },
-    "channelCaps": {
-      "type": "object",
-      "description": "Per-channel caps for normalized intensity and rate of change. These are base caps before stress gates and safe-zone multipliers.",
-      "additionalProperties": false,
-      "required": [
-        "visual",
-        "audio",
-        "haptics"
-      ],
-      "properties": {
-        "visual": {
-          "$ref": "#/$defs/channelCaps"
-        },
-        "audio": {
-          "$ref": "#/$defs/channelCaps"
-        },
-        "haptics": {
-          "$ref": "#/$defs/channelCaps"
-        }
-      }
+      "description": "Policy tier alignment. Lab profiles are experimental; standard/mature are allowed in production; research is for controlled experiments only."
     },
     "timingCaps": {
       "type": "object",
       "description": "Global caps for CSI/DET and allowed DET drift over time.",
       "additionalProperties": false,
-      "required": [
-        "maxCsi",
-        "maxDet",
-        "maxDetDriftPerMinute"
-      ],
       "properties": {
         "maxCsi": {
           "type": "number",
@@ -81,18 +52,88 @@
           "minimum": 0,
           "maximum": 10,
           "description": "Maximum allowed change in DET per minute. Used to prevent rapid escalation."
+        },
+        "detJumpMaxPer2Seconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum DET increase allowed over any 2-second window."
+        },
+        "csiMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum CSI the kernel should recover toward during safe zones."
+        },
+        "csiRecoveryRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rate of CSI recovery per second during safe zones."
         }
-      }
+      },
+      "required": [
+        "maxCsi",
+        "maxDet",
+        "maxDetDriftPerMinute",
+        "detJumpMaxPer2Seconds",
+        "csiMin",
+        "csiRecoveryRate"
+      ]
+    },
+    "hysteresis": {
+      "type": "object",
+      "description": "Global hysteresis and mode-change constraints to avoid thrashing between geometry modes.",
+      "additionalProperties": false,
+      "properties": {
+        "minModeCooldownSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum seconds between geometry mode changes."
+        },
+        "arrRiseRateMaxPerMinute": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum ARR increase per minute allowed by BCI-driven adjustments."
+        },
+        "thresholdHysteresisWidth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum difference between entry and exit thresholds (H ≥ 0.10) to avoid rapid toggling."
+        }
+      },
+      "required": [
+        "minModeCooldownSeconds",
+        "arrRiseRateMaxPerMinute",
+        "thresholdHysteresisWidth"
+      ]
+    },
+    "channelCaps": {
+      "type": "object",
+      "description": "Per-channel caps for normalized intensity and rate of change in normal operation. These are base caps before stress gates and safe-zone multipliers.",
+      "additionalProperties": false,
+      "properties": {
+        "visual": {
+          "$ref": "#/$defs/channelCaps"
+        },
+        "audio": {
+          "$ref": "#/$defs/channelCaps"
+        },
+        "haptics": {
+          "$ref": "#/$defs/channelCaps"
+        }
+      },
+      "required": [
+        "visual",
+        "audio",
+        "haptics"
+      ]
     },
     "recoveryPolicy": {
       "type": "object",
       "description": "Mandatory back-off behavior after startle spikes or overload. Implemented as a cooldown/safe-zone envelope in Rust.",
       "additionalProperties": false,
-      "required": [
-        "startleRecoverySeconds",
-        "safeZoneDurationSeconds",
-        "safeZoneCaps"
-      ],
       "properties": {
         "startleRecoverySeconds": {
           "type": "number",
@@ -110,11 +151,6 @@
           "type": "object",
           "description": "Per-channel caps applied during safe zones. These override base channelCaps while recovery is active.",
           "additionalProperties": false,
-          "required": [
-            "visual",
-            "audio",
-            "haptics"
-          ],
           "properties": {
             "visual": {
               "$ref": "#/$defs/safeZoneCap"
@@ -125,18 +161,24 @@
             "haptics": {
               "$ref": "#/$defs/safeZoneCap"
             }
-          }
+          },
+          "required": [
+            "visual",
+            "audio",
+            "haptics"
+          ]
         }
-      }
+      },
+      "required": [
+        "startleRecoverySeconds",
+        "safeZoneDurationSeconds",
+        "safeZoneCaps"
+      ]
     },
     "stressGates": {
       "type": "object",
-      "description": "Stress-band-dependent multipliers and overload thresholds. Gates are keyed to BciSummary stressBand and visualOverloadIndex.",
+      "description": "Stress-band-dependent multipliers and overload thresholds. Gates are keyed to BciSummary.stressBand and visualOverloadIndex.",
       "additionalProperties": false,
-      "required": [
-        "stressBandCaps",
-        "overloadThreshold"
-      ],
       "properties": {
         "stressBandCaps": {
           "type": "object",
@@ -161,10 +203,6 @@
           "type": "object",
           "description": "Thresholds at which the kernel must enter safe-zone behavior based on visualOverloadIndex and stress band.",
           "additionalProperties": false,
-          "required": [
-            "visualOverloadIndex",
-            "extremeStressBand"
-          ],
           "properties": {
             "visualOverloadIndex": {
               "type": "number",
@@ -180,17 +218,22 @@
               ],
               "description": "Minimum stressBand value that, combined with overload, triggers safe-zone logic."
             }
-          }
+          },
+          "required": [
+            "visualOverloadIndex",
+            "extremeStressBand"
+          ]
         }
-      }
+      },
+      "required": [
+        "stressBandCaps",
+        "overloadThreshold"
+      ]
     },
     "bciInfluenceCaps": {
       "type": "object",
       "description": "Caps on how much BCI can influence outputs relative to non-BCI baselines.",
       "additionalProperties": false,
-      "required": [
-        "maxBciContribution"
-      ],
       "properties": {
         "maxBciContribution": {
           "type": "number",
@@ -198,7 +241,10 @@
           "maximum": 1,
           "description": "Maximum fraction of any output that may be attributable to BCI-driven adjustments instead of baseline content."
         }
-      }
+      },
+      "required": [
+        "maxBciContribution"
+      ]
     },
     "meta": {
       "type": "object",
@@ -211,7 +257,7 @@
         },
         "labels": {
           "type": "array",
-          "description": "Tags or labels for search and grouping (e.g., corridor, tutorial, low-intensity).",
+          "description": "Tags or labels for search and grouping (e.g., 'corridor', 'tutorial', 'low-intensity').",
           "items": {
             "type": "string",
             "minLength": 1
@@ -220,14 +266,22 @@
       }
     }
   },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "profileId",
+    "tier",
+    "timingCaps",
+    "hysteresis",
+    "channelCaps",
+    "recoveryPolicy",
+    "stressGates",
+    "bciInfluenceCaps"
+  ],
   "$defs": {
     "channelCaps": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "maxIntensity",
-        "maxDeltaPerSecond"
-      ],
       "properties": {
         "maxIntensity": {
           "type": "number",
@@ -241,14 +295,15 @@
           "maximum": 1,
           "description": "Hard cap on normalized per-second change for this channel. Used to prevent sudden jumps."
         }
-      }
+      },
+      "required": [
+        "maxIntensity",
+        "maxDeltaPerSecond"
+      ]
     },
     "safeZoneCap": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "maxIntensity"
-      ],
       "properties": {
         "maxIntensity": {
           "type": "number",
@@ -256,16 +311,14 @@
           "maximum": 1,
           "description": "Maximum normalized intensity for this channel while in safe-zone/recovery."
         }
-      }
+      },
+      "required": [
+        "maxIntensity"
+      ]
     },
     "bandCaps": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "visual",
-        "audio",
-        "haptics"
-      ],
       "properties": {
         "visual": {
           "$ref": "#/$defs/multiplier"
@@ -276,14 +329,16 @@
         "haptics": {
           "$ref": "#/$defs/multiplier"
         }
-      }
+      },
+      "required": [
+        "visual",
+        "audio",
+        "haptics"
+      ]
     },
     "multiplier": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "intensityMultiplier"
-      ],
       "properties": {
         "intensityMultiplier": {
           "type": "number",
@@ -291,7 +346,10 @@
           "maximum": 1,
           "description": "Multiplier applied to base caps for this stress band or channel. 1.0 leaves caps unchanged; lower values tighten them."
         }
-      }
+      },
+      "required": [
+        "intensityMultiplier"
+      ]
     }
   }
 }
