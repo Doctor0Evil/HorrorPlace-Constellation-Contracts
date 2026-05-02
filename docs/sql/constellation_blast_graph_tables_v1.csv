@@ -1,0 +1,6 @@
+Table Name,Key Columns,Purpose
+constellation_vm_node,"vm_node_id; vm_name; tier; git_remote","Registry of all repositories in the constellation with tier and remote metadata."
+constellation_file_manifest,"file_id; vm_node_id; file_path; object_kind; invariant_codes; metrics_codes","Manifest of all tracked files, linking them to repos, relative paths, and invariant/metric schema codes."
+constellation_file_node,"file_node_id; file_id; object_kind; cic; aos; det; uec; arr; cdl","Represents each file as a graph node with its invariant and metric snapshot for blast and neighbor analysis."
+constellation_neighbor_edge,"edge_id; source_file_node_id; target_file_node_id; neighbor_scope; distance; det_delta; hvf_alignment; edge_kind","Defines edges between file nodes, carrying deltas and alignment scores that quantify their relationship."
+constellation_blast_profile,"blast_profile_id; vm_node_id; neighbor_scope; max_distance; max_neighbors; det_cap; uec_target; arr_target","Stores policy-driven limits on blast radius per VM node, enforcing safety caps and engagement targets over neighbor sets."
