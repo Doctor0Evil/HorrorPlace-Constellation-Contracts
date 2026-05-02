@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-lab-config-v1",
+  "description": "Configuration schema for BCI lab runs used in the 12-month investigation.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "hpc-bci-lab-config-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "investigationRef": {
+      "type": "string",
+      "description": "Reference to a bci-12-month-investigation-v1 config instance, by planVersionTag or hash."
+    },
+    "phaseId": {
+      "type": "string",
+      "enum": [
+        "phase-1-framework-validation",
+        "phase-2-env-optimization",
+        "phase-3-intervention-playbook"
+      ]
+    },
+    "labProfile": {
+      "type": "string",
+      "enum": [
+        "T1-pilot",
+        "T2-preset-lab",
+        "T3-experimental"
+      ]
+    },
+    "sqlite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "databasePath": {
+          "type": "string"
+        },
+        "schemaMigrationTag": {
+          "type": "string"
+        },
+        "tables": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bciTilesetTable": {
+              "type": "string"
+            },
+            "bciGeometryProfileTable": {
+              "type": "string"
+            },
+            "bciMetricsWindowTable": {
+              "type": "string"
+            },
+            "geometrySelectionEventTable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "bciTilesetTable",
+            "bciGeometryProfileTable",
+            "bciMetricsWindowTable",
+            "geometrySelectionEventTable"
+          ]
+        }
+      },
+      "required": [
+        "databasePath",
+        "schemaMigrationTag",
+        "tables"
+      ]
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mappingActivationSchemaId": {
+          "type": "string"
+        },
+        "mappingClampSchemaId": {
+          "type": "string"
+        },
+        "outputDir": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mappingActivationSchemaId",
+        "mappingClampSchemaId",
+        "outputDir"
+      ]
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "safetyProfileId": {
+          "type": "string",
+          "description": "Profile ID from bci-safety-profile-v1.json."
+        },
+        "enforceDetJumpGuard": {
+          "type": "boolean"
+        },
+        "detJumpMaxPer2Seconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "minModeCooldownSeconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "safetyProfileId",
+        "enforceDetJumpGuard",
+        "detJumpMaxPer2Seconds",
+        "minModeCooldownSeconds"
+      ]
+    },
+    "environments": {
+      "type": "array",
+      "description": "List of environment presets included in this lab config.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "presetId": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "penum-cube",
+              "lab-plague",
+              "dead-city-ruins",
+              "puzzle-suite",
+              "keycard-chain",
+              "loot-entropy",
+              "other"
+            ]
+          },
+          "targetARR": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "targetOptimalStressDuration": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "presetId",
+          "category"
+        ]
+      }
+    },
+    "interventions": {
+      "type": "array",
+      "description": "Optional interventions to enable during this lab run, mainly for Phase 3.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "interventionId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hint-system",
+              "spawn-density",
+              "haptic-sync",
+              "other"
+            ]
+          },
+          "rulesetId": {
+            "type": "string",
+            "description": "Reference to a bci-intervention-rule-v1 or tuning-playbook entry."
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interventionId",
+          "type",
+          "enabled"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "investigationRef",
+    "phaseId",
+    "labProfile",
+    "sqlite",
+    "telemetry",
+    "safety"
+  ]
+}
