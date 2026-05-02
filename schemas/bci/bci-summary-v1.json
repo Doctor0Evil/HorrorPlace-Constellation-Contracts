@@ -2,23 +2,35 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:HorrorPlace-Constellation-Contracts:bci-summary-v1.json",
   "title": "BCI Summary v1",
-  "description": "Lossy, high-level BCI state derived from metrics envelope. Stable runtime API surface.",
+  "description": "High-level, lossy BCI state derived from metrics envelopes. Stable runtime API surface for BCI mapping and geometry decisions.",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-summary-v1",
+      "description": "Canonical identifier for this BCI summary schema."
+    },
     "schemaVersion": {
       "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "const": "1.0.0",
       "description": "Semantic version of the BCI summary schema."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the BCI session, matching the metrics envelope sessionId."
     },
     "windowId": {
       "type": "string",
       "minLength": 1,
       "description": "Logical window identifier within a session (e.g., rolling or fixed window UUID)."
     },
-    "sessionId": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Stable identifier for the BCI session, matching metrics envelope sessionId."
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic tick index for the runtime engine, aligned with the session timeline."
     },
     "timestamp": {
       "type": "integer",
@@ -29,15 +41,14 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "Continuous stress intensity in the range [0,1]."
+      "description": "Continuous stress intensity in the range [0,1] (0=relaxed, 1=extreme)."
     },
     "stressBand": {
       "type": "string",
       "enum": [
-        "Low",
-        "Medium",
-        "High",
-        "Extreme"
+        "UNDERSTIMULATED",
+        "OPTIMALSTRESS",
+        "OVERWHELMED"
       ],
       "description": "Banded stress category derived from stressScore for runtime filtering."
     },
@@ -58,8 +69,16 @@
       "description": "Estimated visual processing overload in the range [0,1]."
     },
     "startleSpike": {
-      "type": "boolean",
-      "description": "True if an acute startle response was detected within this window."
+      "oneOf": [
+        {
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Acute startle response indicator; engines may emit as 0/1 or boolean true/false."
     },
     "signalQuality": {
       "type": "string",
@@ -69,6 +88,17 @@
         "Unavailable"
       ],
       "description": "BCI signal reliability status for this window."
+    },
+    "csi": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Consent Safety Index in the range [0,1] (0=consent withdrawn, 1=full consent)."
+    },
+    "modeTransitionCooldown": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Seconds remaining before a mode transition is allowed by the safety layer."
     },
     "meta": {
       "type": "object",
@@ -89,16 +119,19 @@
     }
   },
   "required": [
+    "schemaId",
     "schemaVersion",
-    "windowId",
     "sessionId",
+    "windowId",
+    "tickIndex",
     "timestamp",
     "stressScore",
     "stressBand",
     "attentionBand",
     "visualOverloadIndex",
     "startleSpike",
-    "signalQuality"
-  ],
-  "additionalProperties": false
+    "signalQuality",
+    "csi",
+    "modeTransitionCooldown"
+  ]
 }
