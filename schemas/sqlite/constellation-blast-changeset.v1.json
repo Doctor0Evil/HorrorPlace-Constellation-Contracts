@@ -1,0 +1,24 @@
+{
+  "$id": "https://horror.place/schemas/sqlite/constellation-blast-changeset.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constellation Blast Changeset v1",
+  "type": "object",
+  "description": "Proposed SQLite blast-graph changes for a single authoring operation.",
+  "required": ["target_vm_node_id", "file_nodes", "neighbor_edges"],
+  "additionalProperties": false,
+  "properties": {
+    "target_vm_node_id": { "type": "integer", "minimum": 1 },
+    "file_nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "https://horror.place/schemas/sqlite/constellation-file-node-row.v1.json" }
+    },
+    "neighbor_edges": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 32,
+      "items": { "$ref": "https://horror.place/schemas/sqlite/constellation-neighbor-edge-row.v1.json" }
+    }
+  }
+}
