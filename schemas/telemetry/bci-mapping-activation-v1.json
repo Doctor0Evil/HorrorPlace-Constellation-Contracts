@@ -2,36 +2,235 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema:HorrorPlace-Constellation-Contracts:bci-mapping-activation-v1.json",
   "title": "BCI Mapping Activation Event v1",
-  "description": "Telemetry event logged when BciGeometry.sample() evaluates a binding. Used by Neural-Resonance-Lab for drift detection and comfort outcome analysis.",
+  "description": "Telemetry event logged when a BCI geometry binding is selected and evaluated. Used by Neural-Resonance-Lab for drift detection, safety verification, and comfort outcome analysis.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "eventType", "timestamp", "playerId", "regionId", "tileId", "bindingId", "inputs", "outputs", "telemetry"],
   "properties": {
-    "schemaVersion": { "type": "string", "const": "1.0.0" },
-    "eventType": { "type": "string", "const": "bci-mapping-activation" },
-    "timestamp": { "type": "integer" },
-    "playerId": { "type": "string", "description": "Anonymized session-scoped player ID" },
-    "regionId": { "type": "string" },
-    "tileId": { "type": "string" },
-    "bindingId": { "type": "string", "description": "ID of the resolved bci-geometry-binding-v1" },
+    "schemaId": {
+      "type": "string",
+      "const": "bci-mapping-activation-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "bci-mapping-activation"
+    },
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier (e.g., UUID v4)."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Anonymized session identifier."
+    },
+    "playerId": {
+      "type": "string",
+      "description": "Anonymized, session-scoped player identifier."
+    },
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic tick counter within the session."
+    },
+    "tickTimestamp": {
+      "type": "number",
+      "description": "Unix timestamp in seconds at the start of the tick."
+    },
+    "regionId": {
+      "type": "string",
+      "description": "Current region identifier."
+    },
+    "tileId": {
+      "type": "string",
+      "description": "Current tile identifier within the region."
+    },
+    "bindingId": {
+      "type": "string",
+      "description": "ID of the resolved bci-geometry-binding-v1."
+    },
+    "profileId": {
+      "type": "string",
+      "description": "Safety/geometry profile ID (e.g., from bci-safety-profile-v1)."
+    },
     "inputs": {
       "type": "object",
+      "description": "Snapshot of BCI summary and invariant values that were used to select this binding.",
       "additionalProperties": false,
-      "required": ["stressScore", "stressBand", "csi", "det"],
       "properties": {
-        "stressScore": { "type": "number", "minimum": 0, "maximum": 1 },
-        "stressBand": { "enum": ["Low", "Medium", "High", "Extreme"] },
-        "visualOverloadIndex": { "type": "number", "minimum": 0, "maximum": 1 },
-        "startleSpike": { "type": "boolean" },
-        "signalQuality": { "enum": ["Good", "Degraded", "Unavailable"] },
-        "csi": { "type": "number", "minimum": 0, "maximum": 1 },
-        "det": { "type": "number", "minimum": 0, "maximum": 10 },
-        "cic": { "type": "number", "minimum": 0, "maximum": 1 },
-        "lsg": { "type": "number", "minimum": 0, "maximum": 1 }
-      }
+        "stressScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "stressBand": {
+          "type": "string",
+          "enum": ["Low", "Medium", "High", "Extreme"]
+        },
+        "attentionBand": {
+          "type": "string",
+          "enum": ["Distracted", "Neutral", "Focused", "HyperFocused"]
+        },
+        "visualOverloadIndex": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "startleSpike": {
+          "type": "boolean"
+        },
+        "signalQuality": {
+          "type": "string",
+          "enum": ["Good", "Degraded", "Unavailable"]
+        },
+        "csi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "det": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "cic": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "lsg": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0"
+        }
+      },
+      "required": [
+        "stressScore",
+        "stressBand",
+        "attentionBand",
+        "visualOverloadIndex",
+        "startleSpike",
+        "signalQuality",
+        "csi",
+        "det"
+      ]
+    },
+    "preState": {
+      "type": "object",
+      "description": "Coarse horror/engagement state immediately before this binding was applied.",
+      "additionalProperties": false,
+      "properties": {
+        "stressBand": {
+          "type": "string",
+          "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"]
+        },
+        "uec": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "cdl": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "det": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "csi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "required": ["stressBand", "uec", "cdl", "det", "csi"]
+    },
+    "postState": {
+      "type": "object",
+      "description": "Coarse horror/engagement state observed after this binding’s outputs have taken effect.",
+      "additionalProperties": false,
+      "properties": {
+        "stressBand": {
+          "type": "string",
+          "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"]
+        },
+        "uec": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "cdl": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "det": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "csi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "required": ["stressBand", "uec", "cdl", "det", "csi"]
+    },
+    "selectionMetrics": {
+      "type": "object",
+      "description": "Details about how this binding was selected among candidates.",
+      "additionalProperties": false,
+      "properties": {
+        "candidateCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of bindings considered."
+        },
+        "selectionScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Normalized confidence/score for the selected binding."
+        },
+        "rankingMethod": {
+          "type": "string",
+          "enum": ["weighted-sum", "threshold-filter", "ml-ranker"],
+          "description": "Method used to select the binding."
+        }
+      },
+      "required": ["candidateCount", "selectionScore", "rankingMethod"]
+    },
+    "kernelPerf": {
+      "type": "object",
+      "description": "Performance characteristics of the geometry evaluation for this tick.",
+      "additionalProperties": false,
+      "properties": {
+        "evaluationLatencyMs": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Time spent evaluating all candidate bindings."
+        },
+        "bindingSelectionMs": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Time spent scoring and selecting the final binding."
+        },
+        "totalLatencyMs": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Total CPU time spent in the geometry kernel for this activation."
+        }
+      },
+      "required": ["evaluationLatencyMs", "bindingSelectionMs", "totalLatencyMs"]
     },
     "outputs": {
       "type": "object",
+      "description": "Per-channel geometry outputs prior to downstream engine processing.",
       "additionalProperties": false,
       "properties": {
         "visual": { "$ref": "#/$defs/channelOutput" },
@@ -39,12 +238,23 @@
         "haptics": { "$ref": "#/$defs/channelOutput" }
       }
     },
+    "capsApplied": {
+      "type": "array",
+      "description": "List of high-level safety caps that were active during this activation.",
+      "items": {
+        "type": "string"
+      }
+    },
     "telemetry": {
       "type": "object",
+      "description": "Additional observational telemetry for this activation.",
       "additionalProperties": false,
       "properties": {
-        "safetyProfileId": { "type": "string" },
-        "capsApplied": {
+        "safetyProfileId": {
+          "type": "string",
+          "description": "ID of the safety profile applied by the kernel."
+        },
+        "capsAppliedDetail": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
@@ -54,19 +264,51 @@
             "safeZoneActive": { "type": "boolean" }
           }
         },
-        "processingTimeMs": { "type": "number", "minimum": 0 }
+        "processingTimeMs": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Overall processing time for this activation as observed by Lua/engine."
+        }
       }
     }
   },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "eventType",
+    "eventId",
+    "sessionId",
+    "playerId",
+    "tickIndex",
+    "tickTimestamp",
+    "regionId",
+    "tileId",
+    "bindingId",
+    "profileId",
+    "inputs",
+    "preState",
+    "postState",
+    "selectionMetrics",
+    "kernelPerf"
+  ],
   "$defs": {
     "channelOutput": {
       "type": "object",
+      "description": "Raw/clamped values for a single geometry channel, plus cap attribution.",
       "additionalProperties": false,
       "properties": {
-        "rawValue": { "type": "number" },
-        "clampedValue": { "type": "number" },
-        "capSource": { "enum": ["safetyProfile", "csi", "det", "recovery", "safeZone", "none"] }
-      }
+        "rawValue": {
+          "type": "number"
+        },
+        "clampedValue": {
+          "type": "number"
+        },
+        "capSource": {
+          "type": "string",
+          "enum": ["safetyProfile", "csi", "det", "recovery", "safeZone", "none"]
+        }
+      },
+      "required": ["rawValue", "clampedValue", "capSource"]
     }
   }
 }
