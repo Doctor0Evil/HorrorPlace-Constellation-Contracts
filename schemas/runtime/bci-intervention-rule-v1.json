@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-intervention-rule-v1",
+  "description": "Prescriptive tuning rule for BCI-driven interventions. Generated from Phase 3 research and enforced in Rust kernel.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-intervention-rule-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "ruleId": {
+      "type": "string",
+      "description": "Unique rule identifier (e.g., 'INT.UEC.BOOSTER.001')."
+    },
+    "ruleName": {
+      "type": "string",
+      "description": "Human-readable name for this rule."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["standard", "mature", "research"],
+      "description": "Content tier this rule applies to."
+    },
+    "interventionType": {
+      "type": "string",
+      "enum": [
+        "HINT_SYSTEM",
+        "SPAWN_DENSITY",
+        "HAPTIC_SYNC",
+        "BOOSTER_PROFILE",
+        "CONTENT_GATING",
+        "COOLDOWN_TRIGGER"
+      ],
+      "description": "Category of intervention this rule governs."
+    },
+    "triggerConditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metricConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "metric": {
+                "type": "string",
+                "enum": ["UEC", "EMD", "STCI", "CDL", "ARR", "DET", "CSI"]
+              },
+              "operator": {
+                "type": "string",
+                "enum": ["LT", "LTE", "EQ", "GTE", "GT"]
+              },
+              "threshold": {
+                "type": "number"
+              },
+              "durationSeconds": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Minimum duration condition must be met."
+              }
+            },
+            "required": ["metric", "operator", "threshold"]
+          }
+        },
+        "stressBand": {
+          "type": "string",
+          "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"]
+        },
+        "regionTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Region tags this rule applies to (empty = all regions)."
+        },
+        "presetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preset IDs this rule applies to (empty = all presets)."
+        }
+      },
+      "required": ["metricConditions"]
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionType": {
+          "type": "string",
+          "enum": [
+            "APPLY_BINDING",
+            "ADJUST_SPAWN_DENSITY",
+            "TRIGGER_HINT",
+            "APPLY_HAPTIC_PATTERN",
+            "GATE_CONTENT",
+            "ENTER_COOLDOWN"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Action-specific parameters (varies by actionType)."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Rule priority (higher = evaluated first)."
+        },
+        "cooldownSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum seconds before this rule can fire again."
+        }
+      },
+      "required": ["actionType", "parameters", "priority"]
+    },
+    "safetyConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxDetIncrease": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum DET increase allowed by this intervention."
+        },
+        "requiresCsiAbove": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum CSI required for this intervention to fire."
+        },
+        "blockedInStressBands": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["UNDERSTIMULATED", "OPTIMALSTRESS", "OVERWHELMED"]
+          },
+          "description": "Stress bands where this intervention is blocked."
+        }
+      },
+      "required": ["maxDetIncrease"]
+    },
+    "validationMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phase3ExperimentId": {
+          "type": "string",
+          "description": "Reference to Phase 3 experiment that validated this rule."
+        },
+        "effectSize": {
+          "type": "number",
+          "description": "Measured effect size from validation (e.g., +0.12 UEC)."
+        },
+        "generalizablePresets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "description": "Presets where this rule was validated (must be ≥3)."
+        },
+        "safetyDegradationObserved": {
+          "type": "boolean",
+          "const": false,
+          "description": "Must be false for rule to be production-ready."
+        }
+      },
+      "required": ["phase3ExperimentId", "generalizablePresets", "safetyDegradationObserved"]
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "ruleId",
+    "ruleName",
+    "tier",
+    "interventionType",
+    "triggerConditions",
+    "action",
+    "safetyConstraints",
+    "validationMetrics"
+  ]
+}
