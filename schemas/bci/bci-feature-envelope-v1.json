@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bci-feature-envelope-v1",
+  "description": "Raw, anonymized BCI feature envelope. No PII, no raw waveforms. Band powers, arousal/valence proxies only.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "bci-feature-envelope-v1"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Anonymized session identifier. No user PII."
+    },
+    "tickIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic tick counter within session."
+    },
+    "tickTimestamp": {
+      "type": "number",
+      "description": "Unix timestamp in seconds (float for sub-second precision)."
+    },
+    "eegBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "delta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized delta band power (0.5-4Hz)."
+        },
+        "theta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized theta band power (4-8Hz)."
+        },
+        "alpha": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized alpha band power (8-12Hz)."
+        },
+        "beta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized beta band power (12-30Hz)."
+        },
+        "gamma": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized gamma band power (30-100Hz)."
+        }
+      },
+      "required": ["delta", "theta", "alpha", "beta", "gamma"]
+    },
+    "arousalProxy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Derived arousal indicator from band ratios."
+    },
+    "valenceProxy": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "Derived valence indicator (negative=unpleasant, positive=pleasant)."
+    },
+    "signalQuality": {
+      "type": "string",
+      "enum": ["Good", "Degraded", "Unavailable"],
+      "description": "Quality flag for this feature sample."
+    }
+  },
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "sessionId",
+    "tickIndex",
+    "tickTimestamp",
+    "eegBands",
+    "arousalProxy",
+    "valenceProxy",
+    "signalQuality"
+  ]
+}
