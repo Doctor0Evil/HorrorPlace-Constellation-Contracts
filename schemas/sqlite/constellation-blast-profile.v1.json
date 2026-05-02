@@ -1,0 +1,31 @@
+{
+  "$id": "https://horror.place/schemas/sqlite/constellation-blast-profile.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constellation Blast Profile v1",
+  "type": "object",
+  "description": "Configuration row for blast-radius and neighbor limits per VM and scope.",
+  "required": [
+    "neighbor_scope",
+    "max_distance",
+    "max_neighbors",
+    "created_at",
+    "updated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "blast_profile_id": { "type": "integer" },
+    "vm_node_id": { "type": ["integer", "null"], "minimum": 1 },
+    "neighbor_scope": {
+      "type": "string",
+      "enum": ["tile", "room", "region", "vm", "constellation"]
+    },
+    "max_distance": { "type": "number", "minimum": 0.0 },
+    "max_neighbors": { "type": "integer", "minimum": 0 },
+    "det_cap": { "type": ["number", "null"], "minimum": 0.0, "maximum": 10.0 },
+    "uec_target": { "type": ["number", "null"], "minimum": 0.0, "maximum": 10.0 },
+    "emd_target": { "type": ["number", "null"], "minimum": 0.0, "maximum": 10.0 },
+    "arr_target": { "type": ["number", "null"], "minimum": 0.0, "maximum": 10.0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
