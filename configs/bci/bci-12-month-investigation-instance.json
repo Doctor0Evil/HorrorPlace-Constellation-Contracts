@@ -1,0 +1,107 @@
+{
+  "schemaId": "hpc-bci-12-month-investigation-v1",
+  "schemaVersion": "1.0.0",
+  "planVersionTag": "bci-12m-investigation-v1.0.0",
+  "timeframe": {
+    "monthsTotal": 12,
+    "phases": [
+      {
+        "id": "phase-1-framework-validation",
+        "displayName": "Phase 1 – Framework Validation",
+        "monthStart": 1,
+        "monthEnd": 3,
+        "effortPercent": 35
+      },
+      {
+        "id": "phase-2-env-optimization",
+        "displayName": "Phase 2 – Environment-Specific Optimization",
+        "monthStart": 4,
+        "monthEnd": 7,
+        "effortPercent": 40
+      },
+      {
+        "id": "phase-3-intervention-playbook",
+        "displayName": "Phase 3 – Intervention Testing & Tuning Playbook",
+        "monthStart": 8,
+        "monthEnd": 12,
+        "effortPercent": 25
+      }
+    ]
+  },
+  "targets": {
+    "phase1": {
+      "profileTargetAccuracyMin": 0.70,
+      "shciResonanceR2Min": 0.65,
+      "modeOscillationRateMax": 0.05,
+      "uecDeltaTarget": 0.10,
+      "uecDeltaTolerance": 0.05
+    },
+    "phase2": {
+      "optimalStressDurationMin": 0.60,
+      "arrEndpointTolerance": 0.10,
+      "arrSessionsWithinToleranceMin": 0.70
+    },
+    "phase3": {
+      "interventionEffectivenessGainMin": 0.10,
+      "overloadReductionMin": 0.20,
+      "allowSafetyDegradation": false
+    }
+  },
+  "safetyHierarchy": {
+    "hardSafety": {
+      "detMin": 0.0,
+      "detMax": 10.0,
+      "csiMax": 0.85
+    },
+    "hysteresis": {
+      "minModeCooldownSeconds": 30.0,
+      "arrRiseRateMaxPerMinute": 0.05,
+      "detJumpMaxPer2Seconds": 0.25
+    },
+    "engagementOptimization": {
+      "optStressPriority": "primary",
+      "arrOptimizationAllowed": true
+    }
+  },
+  "pipelines": {
+    "bciFeatureEnvelopeSchemaId": "bci-feature-envelope-v1",
+    "bciMetricsEnvelopeSchemaId": "bci-metrics-envelope-v1",
+    "bciSummarySchemaId": "bci-summary-v1",
+    "bciGeometryBindingSchemaId": "bci-geometry-binding-v1",
+    "bciMappingRequestSchemaId": "bci-mapping-request-v1",
+    "bciMappingResponseSchemaId": "bci-mapping-response-v1"
+  },
+  "tooling": {
+    "sqlite": {
+      "requiredTables": [
+        "bci_tileset",
+        "bci_geometry_profile",
+        "bci_metrics_window",
+        "geometry_selection_event"
+      ],
+      "utilityViews": [
+        "v_profile_performance",
+        "v_region_stress",
+        "v_session_summary"
+      ]
+    },
+    "cliTools": [
+      "hpc-schema-to-sqlite",
+      "hpc-validate-sqlite",
+      "bci-eval-binding",
+      "bci-eval-promotion"
+    ],
+    "telemetrySchemas": [
+      "bci-mapping-activation-v1",
+      "bci-mapping-clamp-v1",
+      "bci-kernel-perf-v1"
+    ]
+  },
+  "vmDoctrine": {
+    "rustAsTruth": true,
+    "luaAsOrchestrator": true,
+    "schemasDefineReality": true,
+    "oneWayPipeline": true,
+    "telemetryAsView": true
+  }
+}
