@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/runtime/prism_blast_summary-v1.json",
+  "title": "Prism Blast Summary v1",
+  "description": "Derived summary metrics for the blast neighborhood of a single prism monument under a specific blast-radius policy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prismId",
+    "policyId",
+    "originNodeId",
+    "blastSize",
+    "riskExtremes",
+    "engagementAverages",
+    "repoExposure"
+  ],
+  "properties": {
+    "prismId": {
+      "type": "string",
+      "description": "Identifier of the prism monument contract this summary refers to."
+    },
+    "policyId": {
+      "type": "string",
+      "description": "ID of the blast-radius-policy-v1 used when computing this summary."
+    },
+    "originNodeId": {
+      "type": "string",
+      "description": "Origin node ID (e.g., dungeonNodeContract nodeId) for the blast neighborhood."
+    },
+    "originRepoSlug": {
+      "type": "string",
+      "description": "Repository slug for the origin node.",
+      "default": "Horror.Place"
+    },
+    "blastSize": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of nodes in the blast neighborhood |B_p|."
+    },
+    "riskExtremes": {
+      "type": "object",
+      "description": "Extreme values of risk metrics over the blast neighborhood.",
+      "additionalProperties": false,
+      "required": [
+        "maxRiskScore",
+        "maxDetDelta"
+      ],
+      "properties": {
+        "maxRiskScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Maximum combined risk score (e.g., CIC/AOS/DET-weighted) across nodes in the neighborhood."
+        },
+        "maxDetDelta": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Maximum cumulative DET delta observed along any path to nodes in the neighborhood."
+        }
+      }
+    },
+    "engagementAverages": {
+      "type": "object",
+      "description": "Average engagement metrics over the blast neighborhood.",
+      "additionalProperties": false,
+      "required": [
+        "avgUEC",
+        "avgARR",
+        "avgCDL"
+      ],
+      "properties": {
+        "avgUEC": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average User Engagement Coefficient across nodes in the neighborhood."
+        },
+        "avgARR": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average Ambiguous Resolution Ratio across nodes in the neighborhood."
+        },
+        "avgCDL": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average Cognitive Dissonance Load across nodes in the neighborhood."
+        }
+      }
+    },
+    "repoExposure": {
+      "type": "array",
+      "description": "Per-repository exposure fractions for this prism's blast neighborhood.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repoSlug",
+          "fraction"
+        ],
+        "properties": {
+          "repoSlug": {
+            "type": "string",
+            "description": "Repository slug, e.g., HorrorPlace-Atrocity-Seeds."
+          },
+          "fraction": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Fraction of nodes in the neighborhood belonging to this repo."
+          }
+        }
+      }
+    },
+    "computedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this summary was computed."
+    },
+    "summaryMeta": {
+      "type": "object",
+      "description": "Optional metadata for analysis and tooling.",
+      "additionalProperties": true
+    }
+  }
+}
