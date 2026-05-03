@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-2020-12/schema",
+  "title": "Wiring Pattern v1",
+  "type": "object",
+  "required": ["patternId", "patternKind", "inputQuery", "outputTemplate"],
+  "properties": {
+    "patternId": {"type": "string"},
+    "patternKind": {
+      "type": "string",
+      "enum": ["Add-Region", "Add-Persona", "Add-Event", "Add-Prism", "Wire-BCI-Geometry"]
+    },
+    "inputQuery": {
+      "type": "object",
+      "required": ["dbQueries", "requiredFields"],
+      "properties": {
+        "dbQueries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["queryId", "sql", "bindParams"],
+            "properties": {
+              "queryId": {"type": "string"},
+              "sql": {"type": "string"},
+              "bindParams": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "requiredFields": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "outputTemplate": {
+      "type": "object",
+      "required": ["files", "dbInserts"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["repoId", "path", "templateRef"],
+            "properties": {
+              "repoId": {"type": "string"},
+              "path": {"type": "string"},
+              "templateRef": {"type": "string"},
+              "schemaId": {"type": "string"}
+            }
+          }
+        },
+        "dbInserts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["table", "rowTemplate"],
+            "properties": {
+              "table": {"type": "string"},
+              "rowTemplate": {"type": "object"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
