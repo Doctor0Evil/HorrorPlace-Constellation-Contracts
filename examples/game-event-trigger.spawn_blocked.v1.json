@@ -1,0 +1,21 @@
+{
+  "eventType": "spawn_blocked",
+  "params": {
+    "spawn_blocked": {
+      "reason": "invariant_caps",
+      "regionId": "atrocity-basin-v3",
+      "tileId": "tile-042"
+    },
+    "bci_spike": {
+      "kind": "stress",
+      "value": 0.82,
+      "summarySnapshotId": "bci-snap-2026-05-03T13:05:12Z"
+    },
+    "invariants": {
+      "CIC": 0.72,
+      "AOS": 0.63,
+      "DET": 7.4,
+      "LSG": 0.55
+    }
+  }
+}
