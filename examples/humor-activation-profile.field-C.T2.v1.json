@@ -1,0 +1,34 @@
+{
+  "profileId": "humor-field-C-T2-v1",
+  "version": "1.0.0",
+  "description": "Field C humor activation profile for moderate intensity horror with occasional levity.",
+  "eventMappings": [
+    {
+      "eventType": "dialogue-line",
+      "audienceInvariantBands": {
+        "CIC": { "min": 0.30, "max": 0.65 },
+        "AOS": { "min": 0.10, "max": 0.50 },
+        "DET": { "min": 2.0, "max": 6.0 }
+      },
+      "jokeIntensityBand": {
+        "min": 0.20,
+        "max": 0.60
+      },
+      "impact": 0.45,
+      "notes": "Allow humor when cognitive intensity is mid-range and distress not at peak."
+    },
+    {
+      "eventType": "ambient-comment",
+      "audienceInvariantBands": {
+        "CIC": { "min": 0.20, "max": 0.60 },
+        "DET": { "min": 0.0, "max": 4.0 }
+      },
+      "jokeIntensityBand": {
+        "min": 0.10,
+        "max": 0.35
+      },
+      "impact": 0.25,
+      "notes": "Low-key humor in ambient narration when DET is low."
+    }
+  ]
+}
