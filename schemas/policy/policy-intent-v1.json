@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/policy-intent-v1.json",
+  "title": "Policy Intent v1",
+  "description": "Immutable, versioned network policy intent document for blast-aware rule management. Captures human- or agent-authored intent, compiled representation, and provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "policyName",
+    "version",
+    "tier",
+    "createdAt",
+    "author",
+    "sourceKind",
+    "intentSpec",
+    "status",
+    "isCurrent"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this policy intent instance. Usually a UUID or Dead-Ledger-attested ID.",
+      "minLength": 1
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "policy-intent-v1"
+    },
+    "policyName": {
+      "type": "string",
+      "description": "Logical name of the policy this intent belongs to, e.g. 'core-edge-firewall', 'vpn-access'.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "version": {
+      "type": "integer",
+      "description": "Monotonic version number for this policyName. 1 for initial, then incremented for each new intent.",
+      "minimum": 1
+    },
+    "tier": {
+      "type": "string",
+      "description": "Governance tier for this policy intent.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Creation time in RFC 3339 / ISO-8601 format.",
+      "format": "date-time"
+    },
+    "author": {
+      "type": "object",
+      "description": "Author provenance for this intent.",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Author type.",
+          "enum": [
+            "human",
+            "agent",
+            "system"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "description": "Identifier for the author (user id, agent id, or system component).",
+          "minLength": 1
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Optional human-readable name.",
+          "minLength": 1
+        }
+      }
+    },
+    "sourceKind": {
+      "type": "string",
+      "description": "How this intent was produced.",
+      "enum": [
+        "manual-edit",
+        "ai-suggestion",
+        "auto-refactor",
+        "migration"
+      ]
+    },
+    "previousIntentId": {
+      "type": "string",
+      "description": "Optional link to the previous intent in the version chain for this policyName.",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of this intent.",
+      "enum": [
+        "draft",
+        "proposed",
+        "approved",
+        "rejected",
+        "deprecated"
+      ]
+    },
+    "isCurrent": {
+      "type": "boolean",
+      "description": "True if this intent is the current, active one for the given policyName."
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this policy intent.",
+      "minLength": 8
+    },
+    "blastProfileRef": {
+      "type": "string",
+      "description": "Identifier of the blast-radius policy profile associated with this intent, if any.",
+      "minLength": 1
+    },
+    "governanceCorridorRef": {
+      "type": "string",
+      "description": "Identifier of the net-change corridor definition used to validate this intent.",
+      "minLength": 1
+    },
+    "intentSpec": {
+      "type": "object",
+      "description": "Logical, device-agnostic policy specification. This is what authors and agents manipulate.",
+      "additionalProperties": false,
+      "required": [
+        "rules"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the policy intent.",
+          "maxLength": 2048
+        },
+        "goal": {
+          "type": "string",
+          "description": "Short statement of the goal (e.g., 'limit HS DB exposure via VPN', 'whitelist CI own IPs').",
+          "maxLength": 512
+        },
+        "constraints": {
+          "type": "object",
+          "description": "High-level constraints applied during compilation, beyond blast/governance corridors.",
+          "additionalProperties": false,
+          "properties": {
+            "allowListOnly": {
+              "type": "boolean",
+              "description": "If true, only allow-list style rules are permitted."
+            },
+            "denyNewHSPaths": {
+              "type": "boolean",
+              "description": "If true, compilation must not introduce new paths to high-sensitivity zones."
+            }
+          }
+        },
+        "rules": {
+          "type": "array",
+          "description": "Logical rules, order-significant, that define the policy intent.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "action",
+              "direction",
+              "priority"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Logical rule identifier unique within this intent.",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "priority": {
+                "type": "integer",
+                "description": "Rule priority. Lower numbers are evaluated earlier.",
+                "minimum": 0
+              },
+              "action": {
+                "type": "string",
+                "description": "High-level rule action.",
+                "enum": [
+                  "ALLOW",
+                  "DENY",
+                  "REJECT",
+                  "LOG",
+                  "RATE-LIMIT"
+                ]
+              },
+              "direction": {
+                "type": "string",
+                "description": "Traffic direction this rule applies to.",
+                "enum": [
+                  "ingress",
+                  "egress",
+                  "both"
+                ]
+              },
+              "srcZone": {
+                "type": "string",
+                "description": "Logical source zone identifier, e.g. 'vpn-clients', 'dmz', 'hs-db'.",
+                "minLength": 1
+              },
+              "dstZone": {
+                "type": "string",
+                "description": "Logical destination zone identifier.",
+                "minLength": 1
+              },
+              "srcCidr": {
+                "type": "string",
+                "description": "Optional source CIDR in canonical notation.",
+                "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+              },
+              "dstCidr": {
+                "type": "string",
+                "description": "Optional destination CIDR in canonical notation.",
+                "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+              },
+              "protocol": {
+                "type": "string",
+                "description": "IP protocol name or number.",
+                "enum": [
+                  "any",
+                  "tcp",
+                  "udp",
+                  "icmp"
+                ]
+              },
+              "dstPort": {
+                "type": "string",
+                "description": "Destination port or range (e.g., '443', '1024-65535').",
+                "pattern": "^[0-9]{1,5}(-[0-9]{1,5})?$"
+              },
+              "srcPort": {
+                "type": "string",
+                "description": "Source port or range.",
+                "pattern": "^[0-9]{1,5}(-[0-9]{1,5})?$"
+              },
+              "conntrackState": {
+                "type": "array",
+                "description": "Optional conntrack states to match.",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "NEW",
+                    "ESTABLISHED",
+                    "RELATED"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "labels": {
+                "type": "array",
+                "description": "Optional labels for grouping and analysis.",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "uniqueItems": true
+              },
+              "notes": {
+                "type": "string",
+                "description": "Optional human-readable notes about this rule.",
+                "maxLength": 1024
+              }
+            }
+          }
+        }
+      }
+    },
+    "compiled": {
+      "type": "object",
+      "description": "Optional compiled representation of this intent for a specific target (e.g., iptables).",
+      "additionalProperties": false,
+      "properties": {
+        "targetKind": {
+          "type": "string",
+          "description": "Compilation target kind.",
+          "enum": [
+            "iptables",
+            "nftables",
+            "cloud-fw"
+          ]
+        },
+        "snapshotId": {
+          "type": "string",
+          "description": "Identifier of the snapshot in the iptablessnapshot or equivalent table.",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "object",
+          "description": "Short compiled summary useful for diffs.",
+          "additionalProperties": false,
+          "properties": {
+            "totalRules": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "chainsTouched": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "netChange": {
+      "type": "object",
+      "description": "Optional net-change metrics derived from blast simulation comparing this intent to the current one.",
+      "additionalProperties": false,
+      "properties": {
+        "corridorId": {
+          "type": "string",
+          "description": "Identifier of the corridor definition used for this evaluation.",
+          "minLength": 1
+        },
+        "roh": {
+          "type": "integer",
+          "description": "Radius of Harm: delta in number of reachable high-sensitivity nodes (after - before)."
+        },
+        "deltaMaxDet": {
+          "type": "number",
+          "description": "Change in maximum DET along any path from entry to HS zones.",
+          "minimum": -10.0,
+          "maximum": 10.0
+        },
+        "deltaMaxCic": {
+          "type": "number",
+          "description": "Change in maximum CIC along any path.",
+          "minimum": -10.0,
+          "maximum": 10.0
+        },
+        "deltaReachProb": {
+          "type": "number",
+          "description": "Change in reachability probability to HS zones under probabilistic blast.",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "nef": {
+          "type": "number",
+          "description": "Network Exposure Factor summarizing overall exposure change.",
+          "minimum": -10.0,
+          "maximum": 10.0
+        },
+        "withinCorridor": {
+          "type": "boolean",
+          "description": "True if the RoH, Veco components, and NEF are within corridor thresholds."
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Optional metadata for tooling and analysis.",
+      "additionalProperties": false,
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "uniqueItems": true
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      }
+    }
+  }
+}
