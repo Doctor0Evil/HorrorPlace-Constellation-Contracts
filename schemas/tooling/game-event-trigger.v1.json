@@ -1,0 +1,135 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/game-event-trigger.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game Event Trigger v1",
+  "description": "Controlled vocabulary and parameter schema for trigger_game_event calls.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventType", "params"],
+  "properties": {
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "dynamic_weather",
+        "levelution_breach",
+        "spawn_blocked",
+        "spawn_allowed",
+        "humor_event",
+        "bci_spike",
+        "ambient_state_change",
+        "ui_notification",
+        "scripted_sequence",
+        "custom"
+      ]
+    },
+    "params": {
+      "type": "object",
+      "description": "Event-type-specific parameters.",
+      "additionalProperties": false,
+      "properties": {
+        "dynamic_weather": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["patternId"],
+          "properties": {
+            "patternId": { "type": "string" },
+            "intensity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "durationSeconds": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "levelution_breach": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["breachId", "regionId"],
+          "properties": {
+            "breachId": { "type": "string" },
+            "regionId": { "type": "string" },
+            "severity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "detDeltaHint": { "type": "number" }
+          }
+        },
+        "spawn_blocked": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason"],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "enum": ["safety", "cooldown", "invariant_caps", "bci_overload", "other"]
+            },
+            "regionId": { "type": "string" },
+            "tileId": { "type": "string" }
+          }
+        },
+        "spawn_allowed": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "regionId": { "type": "string" },
+            "tileId": { "type": "string" }
+          }
+        },
+        "humor_event": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["humorProfileId", "impact"],
+          "properties": {
+            "humorProfileId": { "type": "string" },
+            "impact": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "lineId": { "type": "string" },
+            "channel": {
+              "type": "string",
+              "enum": ["diegetic", "ui_overlay", "narrator"]
+            }
+          }
+        },
+        "bci_spike": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["stress", "attention", "startle"]
+            },
+            "value": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "summarySnapshotId": { "type": "string" }
+          }
+        },
+        "ambient_state_change": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "stateId": { "type": "string" },
+            "value": { "type": "string" }
+          }
+        },
+        "ui_notification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["messageId"],
+          "properties": {
+            "messageId": { "type": "string" },
+            "severity": {
+              "type": "string",
+              "enum": ["info", "warning", "error"]
+            }
+          }
+        },
+        "scripted_sequence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sequenceId"],
+          "properties": {
+            "sequenceId": { "type": "string" }
+          }
+        },
+        "custom": {
+          "type": "object",
+          "description": "Catch-all for experimental events; discouraged for T1.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
