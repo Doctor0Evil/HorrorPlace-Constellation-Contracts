@@ -1,0 +1,9 @@
+{
+  "limitsMode": "absolute",
+  "maxChunksRead": 120,
+  "maxChunksWritten": 8,
+  "maxFilesCreated": 2,
+  "maxDbInserts": 24,
+  "maxLinesPerFile": 600,
+  "maxTokensPerPrism": 22000
+}
