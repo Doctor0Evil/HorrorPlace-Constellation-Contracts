@@ -1,0 +1,77 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/token-cost-model.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Token Cost Estimation Model v1",
+  "description": "Formal definition of how token cost is estimated for source chunks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["modelId", "strategy", "targetModel", "accuracyBand"],
+  "properties": {
+    "modelId": {
+      "type": "string",
+      "description": "Identifier for this estimation model, e.g., token-cost-simple-v1."
+    },
+    "targetModel": {
+      "type": "string",
+      "description": "Name or family of the LLM this estimator targets."
+    },
+    "strategy": {
+      "type": "string",
+      "description": "Primary estimation strategy.",
+      "enum": ["line-count", "byte-size", "hybrid-heuristic"]
+    },
+    "lineCost": {
+      "type": "number",
+      "description": "Average tokens per line for line-count strategy.",
+      "minimum": 0.0
+    },
+    "byteCost": {
+      "type": "number",
+      "description": "Average tokens per byte for byte-size strategy.",
+      "minimum": 0.0
+    },
+    "hybridWeights": {
+      "type": "object",
+      "description": "Weights and corrections for hybrid heuristics.",
+      "additionalProperties": false,
+      "properties": {
+        "wLines": { "type": "number", "minimum": 0.0 },
+        "wBytes": { "type": "number", "minimum": 0.0 },
+        "functionDepthPenalty": {
+          "type": "number",
+          "description": "Optional multiplier per nesting level.",
+          "minimum": 0.0
+        },
+        "maxDepthFactor": {
+          "type": "number",
+          "description": "Cap for the depth multiplier.",
+          "minimum": 0.0
+        }
+      }
+    },
+    "accuracyBand": {
+      "type": "object",
+      "description": "Expected accuracy band for approxTokenCost.",
+      "additionalProperties": false,
+      "required": ["tolerancePercent", "measuredAgainst"],
+      "properties": {
+        "tolerancePercent": {
+          "type": "number",
+          "description": "Maximum relative error allowed, e.g., 25 for ±25%.",
+          "minimum": 0.0,
+          "maximum": 100.0
+        },
+        "measuredAgainst": {
+          "type": "string",
+          "description": "How actual tokens are measured for calibration.",
+          "enum": ["batch-encoding", "per-file-sample", "live-telemetry"]
+        }
+      }
+    },
+    "calibrationSampleSize": {
+      "type": "integer",
+      "description": "Number of chunks used to validate this model's accuracy band.",
+      "minimum": 1
+    }
+  }
+}
