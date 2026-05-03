@@ -1,0 +1,69 @@
+{
+  "patternId": "add-region-v1",
+  "patternKind": "Add-Region",
+  "description": "Create a new region contract card in HorrorPlace-Atrocity-Seeds and register it in the constellation file manifest with invariant bands.",
+  "inputQuery": {
+    "dbQueries": [
+      {
+        "queryId": "find-similar-regions",
+        "sql": "SELECT region_id, cic, aos, det FROM region_contracts WHERE cic BETWEEN ? AND ? ORDER BY cic DESC LIMIT 3",
+        "bindParams": [
+          "{{goal.cicMin}}",
+          "{{goal.cicMax}}"
+        ],
+        "expectRows": "any"
+      },
+      {
+        "queryId": "get-atrocity-seeds-node",
+        "sql": "SELECT vm_node_id AS repo_id, tier FROM constellation_vm_node WHERE vm_name = 'HorrorPlace-Atrocity-Seeds' LIMIT 1",
+        "bindParams": [],
+        "expectRows": "one"
+      }
+    ],
+    "requiredFields": [
+      "regionId",
+      "cicTarget",
+      "aosTarget",
+      "detTarget"
+    ]
+  },
+  "outputTemplate": {
+    "files": [
+      {
+        "repoId": "{{query.get-atrocity-seeds-node[0].repo_id}}",
+        "path": "regions/{{goal.regionId}}.json",
+        "templateRef": "region-contract-card-v1",
+        "schemaId": "region-contract-card.v1.json",
+        "tier": "T2-vault"
+      }
+    ],
+    "dbInserts": [
+      {
+        "table": "constellation_file_manifest",
+        "rowTemplate": {
+          "vm_node_id": "{{query.get-atrocity-seeds-node[0].repo_id}}",
+          "repository": "HorrorPlace-Atrocity-Seeds",
+          "file_path": "regions/{{goal.regionId}}.json",
+          "object_kind": "regionContractCard",
+          "schema_uri": "region-contract-card.v1.json"
+        },
+        "expectReturning": [
+          "file_id"
+        ]
+      },
+      {
+        "table": "constellation_file_node",
+        "rowTemplate": {
+          "file_id": "{{insert.constellation_file_manifest.file_id}}",
+          "region_id": "{{goal.regionId}}",
+          "cic": "{{goal.cicTarget}}",
+          "aos": "{{goal.aosTarget}}",
+          "det": "{{goal.detTarget}}"
+        },
+        "dependsOn": [
+          "constellation_file_manifest"
+        ]
+      }
+    ]
+  }
+}
