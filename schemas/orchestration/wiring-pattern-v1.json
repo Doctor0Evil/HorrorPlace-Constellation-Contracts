@@ -1,58 +1,180 @@
 {
-  "$schema": "http://json-schema.org/draft-2020-12/schema",
+  "$id": "https://horror.place/constellation/schemas/tooling/wiring-pattern.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Wiring Pattern v1",
+  "description": "Declarative wiring pattern for AI-chat and tooling: how to query constellation state and emit files + DB inserts in a single, deterministic step.",
   "type": "object",
-  "required": ["patternId", "patternKind", "inputQuery", "outputTemplate"],
+  "additionalProperties": false,
+  "required": [
+    "patternId",
+    "patternKind",
+    "inputQuery",
+    "outputTemplate"
+  ],
   "properties": {
-    "patternId": {"type": "string"},
+    "patternId": {
+      "type": "string",
+      "description": "Stable, unique identifier for this wiring pattern, e.g., add-region-v1."
+    },
     "patternKind": {
       "type": "string",
-      "enum": ["Add-Region", "Add-Persona", "Add-Event", "Add-Prism", "Wire-BCI-Geometry"]
+      "description": "High-level category of wiring operation.",
+      "enum": [
+        "Add-Region",
+        "Add-Persona",
+        "Add-Event",
+        "Add-Prism",
+        "Wire-BCI-Geometry"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable summary of what this pattern does."
     },
     "inputQuery": {
       "type": "object",
-      "required": ["dbQueries", "requiredFields"],
+      "additionalProperties": false,
+      "required": [
+        "dbQueries",
+        "requiredFields"
+      ],
       "properties": {
         "dbQueries": {
           "type": "array",
+          "description": "SQL queries that must be executed before rendering outputs.",
+          "minItems": 0,
           "items": {
             "type": "object",
-            "required": ["queryId", "sql", "bindParams"],
+            "additionalProperties": false,
+            "required": [
+              "queryId",
+              "sql"
+            ],
             "properties": {
-              "queryId": {"type": "string"},
-              "sql": {"type": "string"},
-              "bindParams": {"type": "array", "items": {"type": "string"}}
+              "queryId": {
+                "type": "string",
+                "description": "Short identifier used to reference this query's results in templates."
+              },
+              "sql": {
+                "type": "string",
+                "description": "Parameterized SQL string compatible with the constellation DB."
+              },
+              "bindParams": {
+                "type": "array",
+                "description": "Template expressions for bound parameters, evaluated at runtime.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "expectRows": {
+                "type": "string",
+                "description": "Expected cardinality of the result set.",
+                "enum": [
+                  "zero-or-one",
+                  "one",
+                  "many",
+                  "any"
+                ],
+                "default": "any"
+              }
             }
           }
         },
-        "requiredFields": {"type": "array", "items": {"type": "string"}}
+        "requiredFields": {
+          "type": "array",
+          "description": "Goal fields the AI-chat request must provide before this pattern can be applied.",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "outputTemplate": {
       "type": "object",
-      "required": ["files", "dbInserts"],
+      "additionalProperties": false,
+      "required": [
+        "files",
+        "dbInserts"
+      ],
       "properties": {
         "files": {
           "type": "array",
+          "description": "File artifacts to emit in target repositories.",
+          "minItems": 0,
           "items": {
             "type": "object",
-            "required": ["repoId", "path", "templateRef"],
+            "additionalProperties": false,
+            "required": [
+              "repoId",
+              "path",
+              "templateRef"
+            ],
             "properties": {
-              "repoId": {"type": "string"},
-              "path": {"type": "string"},
-              "templateRef": {"type": "string"},
-              "schemaId": {"type": "string"}
+              "repoId": {
+                "type": "string",
+                "description": "Target repo identifier, typically from a prior query (e.g. constellation VM node)."
+              },
+              "path": {
+                "type": "string",
+                "description": "Repository-relative path where the file will be written."
+              },
+              "templateRef": {
+                "type": "string",
+                "description": "Logical name for the content template to apply."
+              },
+              "schemaId": {
+                "type": "string",
+                "description": "Canonical schema id or filename that the emitted file must conform to."
+              },
+              "tier": {
+                "type": "string",
+                "description": "Optional tier label for the new file.",
+                "enum": [
+                  "T1-core",
+                  "T2-vault",
+                  "T3-lab"
+                ]
+              }
             }
           }
         },
         "dbInserts": {
           "type": "array",
+          "description": "Database insert operations that must be performed alongside file writes.",
+          "minItems": 0,
           "items": {
             "type": "object",
-            "required": ["table", "rowTemplate"],
+            "additionalProperties": false,
+            "required": [
+              "table",
+              "rowTemplate"
+            ],
             "properties": {
-              "table": {"type": "string"},
-              "rowTemplate": {"type": "object"}
+              "table": {
+                "type": "string",
+                "description": "Target table name in the constellation or engine DB."
+              },
+              "rowTemplate": {
+                "type": "object",
+                "description": "Template for the row to insert; values are template expressions evaluated at runtime."
+              },
+              "expectReturning": {
+                "type": "array",
+                "description": "Logical names for fields that may be returned from this insert (e.g., auto-increment ids).",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "dependsOn": {
+                "type": "array",
+                "description": "Names of previous inserts this row depends on, for template references.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              }
             }
           }
         }
