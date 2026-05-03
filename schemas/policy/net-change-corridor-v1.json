@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/net-change-corridor-v1.json",
+  "title": "Net-Change Corridor v1",
+  "description": "Governance corridor definition for allowed blast-radius expansions when modifying network policies. Encodes thresholds over RoH, Veco components, and NEF.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "name",
+    "tier",
+    "createdAt",
+    "scope",
+    "thresholds"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this corridor definition.",
+      "minLength": 1
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "net-change-corridor-v1"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable corridor name, e.g. 'default-core', 'vpn-lab-strict'.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "tier": {
+      "type": "string",
+      "description": "Governance tier this corridor applies to.",
+      "enum": [
+        "Tier1Public",
+        "Tier2Internal",
+        "Tier3Vault",
+        "Tier4Underground"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Creation time in RFC 3339 / ISO-8601 format.",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of this corridor's intended use.",
+      "maxLength": 2048
+    },
+    "scope": {
+      "type": "object",
+      "description": "Scope of policies this corridor is intended for.",
+      "additionalProperties": false,
+      "properties": {
+        "policyNames": {
+          "type": "array",
+          "description": "Optional list of policyName values this corridor applies to. Empty or missing means 'all'.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "uniqueItems": true
+        },
+        "zoneKinds": {
+          "type": "array",
+          "description": "Optional list of logical zone kinds e.g. 'vpn', 'dmz', 'core', 'hs-db' this corridor is tuned for.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "Numeric thresholds for allowed net-change.",
+      "additionalProperties": false,
+      "required": [
+        "maxRoH",
+        "minRoH",
+        "maxDeltaMaxDet",
+        "maxDeltaMaxCic",
+        "maxDeltaReachProb",
+        "maxAbsNef"
+      ],
+      "properties": {
+        "maxRoH": {
+          "type": "integer",
+          "description": "Maximum allowed positive Radius of Harm (increase in count of reachable HS nodes).",
+          "minimum": 0
+        },
+        "minRoH": {
+          "type": "integer",
+          "description": "Minimum allowed RoH (negative values allow reductions). Use negative to require non-expansive changes.",
+          "maximum": 0
+        },
+        "maxDeltaMaxDet": {
+          "type": "number",
+          "description": "Maximum allowed increase in max DET along any path to HS zones.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxDeltaMaxCic": {
+          "type": "number",
+          "description": "Maximum allowed increase in max CIC along any path.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        },
+        "maxDeltaReachProb": {
+          "type": "number",
+          "description": "Maximum allowed increase in reachability probability to HS zones.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "maxAbsNef": {
+          "type": "number",
+          "description": "Maximum allowed absolute value of NEF (Network Exposure Factor) change. Applies to both positive and negative changes.",
+          "minimum": 0.0,
+          "maximum": 10.0
+        }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "description": "Weights used when computing NEF, kept here for auditability.",
+      "additionalProperties": false,
+      "properties": {
+        "wReachProb": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Weight of deltaReachProb in NEF."
+        },
+        "wMaxDet": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Weight of deltaMaxDet in NEF."
+        },
+        "wRoH": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Weight of RoH (normalized) in NEF."
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Optional metadata and tags.",
+      "additionalProperties": false,
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "uniqueItems": true
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      }
+    }
+  }
+}
