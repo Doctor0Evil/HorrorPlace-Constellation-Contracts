@@ -1,0 +1,72 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/kill-feed-event.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Kill Feed Event v1",
+  "description": "Canonical message format for kill feed notifications.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "timestamp",
+    "source",
+    "victim",
+    "cause",
+    "channels"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique id for this kill feed event."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityId"],
+      "properties": {
+        "entityId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "team": { "type": "string" }
+      }
+    },
+    "victim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityId"],
+      "properties": {
+        "entityId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "team": { "type": "string" }
+      }
+    },
+    "cause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["weapon", "environment", "scripted", "disconnect", "suicide", "other"]
+        },
+        "weaponId": { "type": "string" },
+        "detail": { "type": "string" }
+      }
+    },
+    "channels": {
+      "type": "array",
+      "description": "Intended delivery channels.",
+      "items": {
+        "type": "string",
+        "enum": ["hud_local", "network_broadcast", "sqlite_log"]
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Optional engine-specific metadata.",
+      "additionalProperties": true
+    }
+  }
+}
