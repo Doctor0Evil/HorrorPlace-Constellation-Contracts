@@ -1,0 +1,38 @@
+{
+  "sessionId": "...",
+  "agentId": "...",
+  "tokenBudget": {
+    "total": 8000,
+    "reading": {
+      "schemasLoaded": 1200,
+      "registriesQueried": 400,
+      "priorArtifactsRead": 800,
+      "totalReadingTokens": 2400
+    },
+    "writing": {
+      "skeletonGeneration": 600,
+      "contractDrafting": 1200,
+      "envelopeFormatting": 200,
+      "totalWritingTokens": 2000
+    },
+    "validation": {
+      "firstPassTokens": 500,
+      "retryCount": 2,
+      "retryTokens": 800,
+      "totalValidationTokens": 1300
+    },
+    "overhead": {
+      "contextSwitching": 300,
+      "redundantQueries": 200,
+      "totalOverheadTokens": 500
+    },
+    "useful": {
+      "acceptedArtifactTokens": 1800
+    }
+  },
+  "wasteMetrics": {
+    "readingEfficiency": 0.75,
+    "retryRatio": 0.40,
+    "overheadRatio": 0.0625
+  }
+}
