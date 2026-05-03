@@ -1,0 +1,113 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/humor-activation-profile.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Humor Activation Profile v1",
+  "description": "Maps game event types and audience-state invariant bands into joke intensity ranges and a normalized impact value for the humor module.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "version",
+    "eventMappings"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "description": "Stable identifier for this humor activation profile."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for this profile definition."
+    },
+    "description": {
+      "type": "string"
+    },
+    "eventMappings": {
+      "type": "array",
+      "description": "Per-event mappings of invariants into joke intensity and impact.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventType",
+          "audienceInvariantBands",
+          "jokeIntensityBand",
+          "impact"
+        ],
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "description": "Engine-level event type key, e.g. 'dialogue-line', 'jump-scare', 'ambient-comment'."
+          },
+          "audienceInvariantBands": {
+            "type": "object",
+            "description": "Optional bands for audience-state invariants; missing fields mean 'no constraint'. Values are normalized 0.0–1.0, except DET which is 0–10.",
+            "additionalProperties": false,
+            "properties": {
+              "CIC": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+                }
+              },
+              "AOS": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+                }
+              },
+              "DET": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "min": { "type": "number", "minimum": 0.0, "maximum": 10.0 },
+                  "max": { "type": "number", "minimum": 0.0, "maximum": 10.0 }
+                }
+              },
+              "LSG": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+                }
+              },
+              "SHCI": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+                }
+              }
+            }
+          },
+          "jokeIntensityBand": {
+            "type": "object",
+            "description": "Allowed joke intensity band for this event+audience state. Values normalized 0.0–1.0 where 0.0 is no humor and 1.0 is maximum intensity permitted by doctrine.",
+            "additionalProperties": false,
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "max": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            }
+          },
+          "impact": {
+            "type": "number",
+            "description": "Final normalized impact value (0.0–1.0) the Godot humor module should apply for this mapping.",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes for designers or auditors."
+          }
+        }
+      }
+    }
+  }
+}
