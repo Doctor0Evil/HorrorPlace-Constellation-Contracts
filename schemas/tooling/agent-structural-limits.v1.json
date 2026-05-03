@@ -1,0 +1,54 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/agent-structural-limits.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Structural Limits v1",
+  "description": "Caps on chunks and structural operations an agent may perform per prism execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "limitsMode",
+    "maxChunksRead",
+    "maxChunksWritten"
+  ],
+  "properties": {
+    "limitsMode": {
+      "type": "string",
+      "description": "How strictly the limits are enforced.",
+      "enum": [
+        "absolute",
+        "advisory"
+      ]
+    },
+    "maxChunksRead": {
+      "type": "integer",
+      "description": "Maximum number of chunks the agent may read per prism execution.",
+      "minimum": 0
+    },
+    "maxChunksWritten": {
+      "type": "integer",
+      "description": "Maximum number of chunks the agent may write or modify per prism execution.",
+      "minimum": 0
+    },
+    "maxFilesCreated": {
+      "type": "integer",
+      "description": "Maximum number of new files the agent may create per prism execution.",
+      "minimum": 0,
+      "default": 1
+    },
+    "maxDbInserts": {
+      "type": "integer",
+      "description": "Maximum number of DB insert operations permitted per prism execution.",
+      "minimum": 0
+    },
+    "maxLinesPerFile": {
+      "type": "integer",
+      "description": "Soft or hard cap on the number of logical lines per file the agent may emit.",
+      "minimum": 1
+    },
+    "maxTokensPerPrism": {
+      "type": "integer",
+      "description": "Optional cap on model tokens consumed across all chunks for this prism execution.",
+      "minimum": 0
+    }
+  }
+}
