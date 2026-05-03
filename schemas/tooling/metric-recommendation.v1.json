@@ -1,0 +1,71 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/metric-recommendation.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Metric Recommendation v1",
+  "description": "Recommended and forbidden metric ranges for an objectKind + tier pair.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objectKind",
+    "tier",
+    "metrics",
+    "policy"
+  ],
+  "properties": {
+    "objectKind": {
+      "type": "string",
+      "description": "Contract kind, e.g., regionContractCard, eventContract."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Constellation tier label.",
+      "enum": ["T1-core", "T2-vault", "T3-lab"]
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Per-metric recommended and forbidden ranges.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["recommendedMin", "recommendedMax"],
+        "properties": {
+          "recommendedMin": {
+            "type": "number",
+            "description": "Lower bound of the recommended band (inclusive)."
+          },
+          "recommendedMax": {
+            "type": "number",
+            "description": "Upper bound of the recommended band (inclusive)."
+          },
+          "forbiddenMin": {
+            "type": "number",
+            "description": "Lower bound of the forbidden band (optional)."
+          },
+          "forbiddenMax": {
+            "type": "number",
+            "description": "Upper bound of the forbidden band (optional)."
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "description": "Policy for handling out-of-range values in CHATDIRECTOR and CI.",
+      "additionalProperties": false,
+      "required": ["outOfRangeMode"],
+      "properties": {
+        "outOfRangeMode": {
+          "type": "string",
+          "enum": ["warn", "reject"],
+          "description": "Default handling when proposed metric values fall outside recommended bands."
+        },
+        "forbiddenMode": {
+          "type": "string",
+          "enum": ["reject", "warn"],
+          "description": "Handling when proposed values intersect forbidden bands.",
+          "default": "reject"
+        }
+      }
+    }
+  }
+}
