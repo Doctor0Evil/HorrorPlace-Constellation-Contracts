@@ -1,0 +1,75 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/invariant-rule-condition.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Invariant Rule Condition v1",
+  "description": "Domain-specific JSON structure describing matching conditions for invariant_rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "region": {
+      "type": "object",
+      "description": "Region match criteria.",
+      "additionalProperties": false,
+      "properties": {
+        "equals": { "type": "string" },
+        "in": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "tile": {
+      "type": "object",
+      "description": "Tile match criteria.",
+      "additionalProperties": false,
+      "properties": {
+        "equals": { "type": "string" },
+        "in": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Per-invariant range or comparison matchers.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "gt": { "type": "number" },
+          "gte": { "type": "number" },
+          "lt": { "type": "number" },
+          "lte": { "type": "number" }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Optional per-metric range or comparison matchers.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "gt": { "type": "number" },
+          "gte": { "type": "number" },
+          "lt": { "type": "number" },
+          "lte": { "type": "number" }
+        }
+      }
+    },
+    "logic": {
+      "type": "string",
+      "description": "How to combine conditions within this rule.",
+      "enum": [
+        "AND",
+        "OR"
+      ],
+      "default": "AND"
+    }
+  }
+}
