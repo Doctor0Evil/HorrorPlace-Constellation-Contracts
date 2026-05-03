@@ -1,0 +1,490 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/constellation-sqlite-schema.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Constellation SQLite Schema v1",
+  "description": "Logical schema for the constellation-wide SQLite index. Each table definition describes the expected columns and types in the SQLite database.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "tables"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Logical version of the constellation SQLite schema, e.g. v1."
+    },
+    "tables": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repos",
+        "repo_manifests",
+        "routing_rules",
+        "schemas",
+        "schema_fields",
+        "schema_consumers",
+        "invariants",
+        "metrics",
+        "invariant_relations",
+        "metric_recommendations",
+        "registries",
+        "registry_entries",
+        "registry_entry_invariants",
+        "registry_entry_metrics",
+        "agents",
+        "agent_profiles",
+        "prisms",
+        "prism_dependencies",
+        "files",
+        "chunks"
+      ],
+      "properties": {
+        "repos": {
+          "type": "object",
+          "description": "Repositories in the constellation and their high-level roles.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "name", "visibility", "tier", "git_url", "role", "created_at", "updated_at"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "name": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "visibility": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "tier": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "git_url": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "role": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "created_at": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "updated_at": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "repo_manifests": {
+          "type": "object",
+          "description": "Parsed repo-manifest.hpc.json entries per repo.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "repo_id", "manifest_path", "schema_ref", "raw_json", "ai_authoring_rules", "one_file_per_request", "require_deadledger_ref"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "manifest_path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "raw_json": { "type": "string", "enum": ["TEXT"] },
+                "ai_authoring_rules": { "type": "string", "enum": ["TEXT"] },
+                "one_file_per_request": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "require_deadledger_ref": { "type": "string", "enum": ["INTEGER NOT NULL"] }
+              }
+            }
+          }
+        },
+        "routing_rules": {
+          "type": "object",
+          "description": "Deterministic routing from objectKind+tier to repo and path pattern.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "repo_id", "object_kind", "tier", "schema_ref", "default_path_pattern", "policy_notes"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "object_kind": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "tier": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "default_path_pattern": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "policy_notes": { "type": "string", "enum": ["TEXT"] }
+              }
+            }
+          }
+        },
+        "schemas": {
+          "type": "object",
+          "description": "Canonical JSON Schemas registered in the spine.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "schema_ref", "family", "title", "version", "repo_id", "path", "draft", "additional_properties_forbidden"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "family": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "title": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "version": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "draft": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "additional_properties_forbidden": { "type": "string", "enum": ["INTEGER NOT NULL"] }
+              }
+            }
+          }
+        },
+        "schema_fields": {
+          "type": "object",
+          "description": "Individual JSON Schema fields and their numeric bounds.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "schema_id", "field_path", "field_name", "field_type", "min_value", "max_value", "enum_values"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "schema_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES schemas(id)"] },
+                "field_path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "field_name": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "field_type": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "min_value": { "type": "string", "enum": ["REAL"] },
+                "max_value": { "type": "string", "enum": ["REAL"] },
+                "enum_values": { "type": "string", "enum": ["TEXT"] }
+              }
+            }
+          }
+        },
+        "schema_consumers": {
+          "type": "object",
+          "description": "Where each schema is consumed across repos.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "schema_id", "repo_id", "file_path", "object_kind", "usage_kind"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "schema_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES schemas(id)"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "file_path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "object_kind": { "type": "string", "enum": ["TEXT"] },
+                "usage_kind": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "invariants": {
+          "type": "object",
+          "description": "Canonical horror invariants, their ranges, and derived flags.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["code", "name", "description", "min_value", "max_value", "derived"],
+              "properties": {
+                "code": { "type": "string", "enum": ["TEXT PRIMARY KEY"] },
+                "name": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "description": { "type": "string", "enum": ["TEXT"] },
+                "min_value": { "type": "string", "enum": ["REAL NOT NULL"] },
+                "max_value": { "type": "string", "enum": ["REAL NOT NULL"] },
+                "derived": { "type": "string", "enum": ["INTEGER NOT NULL"] }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Canonical entertainment metrics and their ranges.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["code", "name", "description", "min_value", "max_value"],
+              "properties": {
+                "code": { "type": "string", "enum": ["TEXT PRIMARY KEY"] },
+                "name": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "description": { "type": "string", "enum": ["TEXT"] },
+                "min_value": { "type": "string", "enum": ["REAL NOT NULL"] },
+                "max_value": { "type": "string", "enum": ["REAL NOT NULL"] }
+              }
+            }
+          }
+        },
+        "invariant_relations": {
+          "type": "object",
+          "description": "Relationships and derivation rules between invariants.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "invariant_code", "depends_on", "rule_type", "rule_json"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "invariant_code": { "type": "string", "enum": ["TEXT NOT NULL REFERENCES invariants(code)"] },
+                "depends_on": { "type": "string", "enum": ["TEXT"] },
+                "rule_type": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "rule_json": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "metric_recommendations": {
+          "type": "object",
+          "description": "Recommended metric bands by object kind and tier.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "metric_code", "object_kind", "tier", "recommended_min", "recommended_max"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "metric_code": { "type": "string", "enum": ["TEXT NOT NULL REFERENCES metrics(code)"] },
+                "object_kind": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "tier": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "recommended_min": { "type": "string", "enum": ["REAL NOT NULL"] },
+                "recommended_max": { "type": "string", "enum": ["REAL NOT NULL"] }
+              }
+            }
+          }
+        },
+        "registries": {
+          "type": "object",
+          "description": "NDJSON registries for regions, events, personas, styles, seeds, etc.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "repo_id", "name", "schema_ref", "path"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "name": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "path": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "registry_entries": {
+          "type": "object",
+          "description": "Canonical registry entries and their IDs.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "registry_id", "entry_id", "schemaref", "tier", "deadledger_ref", "payload_ref", "raw_line"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "registry_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES registries(id)"] },
+                "entry_id": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schemaref": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "tier": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "deadledger_ref": { "type": "string", "enum": ["TEXT"] },
+                "payload_ref": { "type": "string", "enum": ["TEXT"] },
+                "raw_line": { "type": "string", "enum": ["TEXT"] }
+              }
+            }
+          }
+        },
+        "registry_entry_invariants": {
+          "type": "object",
+          "description": "Invariant values bound to a registry entry.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "entry_id", "invariant_code", "value"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "entry_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES registry_entries(id)"] },
+                "invariant_code": { "type": "string", "enum": ["TEXT NOT NULL REFERENCES invariants(code)"] },
+                "value": { "type": "string", "enum": ["REAL NOT NULL"] }
+              }
+            }
+          }
+        },
+        "registry_entry_metrics": {
+          "type": "object",
+          "description": "Metric bands bound to a registry entry.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "entry_id", "metric_code", "min_value", "max_value"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "entry_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES registry_entries(id)"] },
+                "metric_code": { "type": "string", "enum": ["TEXT NOT NULL REFERENCES metrics(code)"] },
+                "min_value": { "type": "string", "enum": ["REAL NOT NULL"] },
+                "max_value": { "type": "string", "enum": ["REAL NOT NULL"] }
+              }
+            }
+          }
+        },
+        "agents": {
+          "type": "object",
+          "description": "AI agents and tools that emit artifacts.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "agent_id", "display_name", "kind"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "agent_id": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "display_name": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "kind": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "agent_profiles": {
+          "type": "object",
+          "description": "Safe authoring profiles and caps per agent.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "agent_id", "profile_id", "schema_version", "allowed_tiers", "allowed_object_kinds", "structural_limits_json", "invariant_caps_json", "metric_bands_json"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "agent_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES agents(id)"] },
+                "profile_id": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "schema_version": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "allowed_tiers": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "allowed_object_kinds": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "structural_limits_json": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "invariant_caps_json": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "metric_bands_json": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "prisms": {
+          "type": "object",
+          "description": "Prism metadata for AI-generated contract artifacts.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "prism_id", "schema_version", "session_id", "agent_id", "agent_profile_id", "target_repo_id", "path", "tier", "file_hash", "schema_ref", "validation_schema_validated", "validation_subset_validated", "validation_ledger_validated", "validation_clamped", "validation_timestamp"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "prism_id": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "schema_version": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "session_id": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "agent_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES agents(id)"] },
+                "agent_profile_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES agent_profiles(id)"] },
+                "target_repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "tier": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "file_hash": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "validation_schema_validated": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "validation_subset_validated": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "validation_ledger_validated": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "validation_clamped": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "validation_timestamp": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "prism_dependencies": {
+          "type": "object",
+          "description": "Dependencies recorded by each prism artifact.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "prism_id", "dependency_id", "kind", "repo_name", "path"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "prism_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES prisms(id)"] },
+                "dependency_id": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "kind": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "repo_name": { "type": "string", "enum": ["TEXT"] },
+                "path": { "type": "string", "enum": ["TEXT"] }
+              }
+            }
+          }
+        },
+        "files": {
+          "type": "object",
+          "description": "Physical files in each repo, with inferred schema and language.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "repo_id", "path", "schema_ref", "object_kind", "language", "line_count", "byte_size", "last_modified"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "repo_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES repos(id)"] },
+                "path": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "schema_ref": { "type": "string", "enum": ["TEXT"] },
+                "object_kind": { "type": "string", "enum": ["TEXT"] },
+                "language": { "type": "string", "enum": ["TEXT"] },
+                "line_count": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "byte_size": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "last_modified": { "type": "string", "enum": ["TEXT NOT NULL"] }
+              }
+            }
+          }
+        },
+        "chunks": {
+          "type": "object",
+          "description": "Token-aware chunks over files, used by AI-chat and coding agents.",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "file_id", "chunk_id", "start_line", "end_line", "approx_token_cost", "chunk_kind", "invariants_used_json", "metrics_used_json", "prism_refs_json"],
+              "properties": {
+                "id": { "type": "string", "enum": ["INTEGER PRIMARY KEY"] },
+                "file_id": { "type": "string", "enum": ["INTEGER NOT NULL REFERENCES files(id)"] },
+                "chunk_id": { "type": "string", "enum": ["TEXT UNIQUE NOT NULL"] },
+                "start_line": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "end_line": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "approx_token_cost": { "type": "string", "enum": ["INTEGER NOT NULL"] },
+                "chunk_kind": { "type": "string", "enum": ["TEXT NOT NULL"] },
+                "invariants_used_json": { "type": "string", "enum": ["TEXT"] },
+                "metrics_used_json": { "type": "string", "enum": ["TEXT"] },
+                "prism_refs_json": { "type": "string", "enum": ["TEXT"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
