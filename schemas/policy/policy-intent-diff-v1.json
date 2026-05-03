@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/policy/policy-intent-diff-v1.json",
+  "title": "Policy Intent Diff v1",
+  "description": "Structured diff between two policy-intent-v1 documents. Used by agents to propose safe modifications and by validators to apply changes deterministically.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "policyName",
+    "fromIntentId",
+    "toIntentId",
+    "changes",
+    "createdAt",
+    "author"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this diff instance.",
+      "minLength": 1
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "policy-intent-diff-v1"
+    },
+    "policyName": {
+      "type": "string",
+      "description": "Name of the policy the diff applies to.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "fromIntentId": {
+      "type": "string",
+      "description": "Identifier of the base intent this diff is applied to.",
+      "minLength": 1
+    },
+    "toIntentId": {
+      "type": "string",
+      "description": "Identifier of the target intent that will exist after applying this diff.",
+      "minLength": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Creation time in RFC 3339 / ISO-8601 format.",
+      "format": "date-time"
+    },
+    "author": {
+      "type": "object",
+      "description": "Author provenance for this diff.",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "human",
+            "agent",
+            "system"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this diff.",
+      "minLength": 8
+    },
+    "summary": {
+      "type": "object",
+      "description": "High-level summary of changes, suitable for UI and governance review.",
+      "additionalProperties": false,
+      "properties": {
+        "rulesAdded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rulesRemoved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rulesModified": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "description": "Structured change sets to transform fromIntent into toIntent.",
+      "additionalProperties": false,
+      "required": [
+        "ruleAdds",
+        "ruleRemovals",
+        "ruleUpdates",
+        "metaUpdates"
+      ],
+      "properties": {
+        "ruleAdds": {
+          "type": "array",
+          "description": "New rules to be appended or inserted into the intentSpec.rules array of the target intent.",
+          "items": {
+            "type": "object",
+            "description": "A complete rule object matching policy-intent-v1 intentSpec.rules.*.",
+            "additionalProperties": true
+          }
+        },
+        "ruleRemovals": {
+          "type": "array",
+          "description": "Logical identifiers of rules to remove from the base intent.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "uniqueItems": true
+        },
+        "ruleUpdates": {
+          "type": "array",
+          "description": "Field-level updates to existing rules in the base intent.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ruleId",
+              "operations"
+            ],
+            "properties": {
+              "ruleId": {
+                "type": "string",
+                "description": "Identifier of the rule being updated.",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "operations": {
+                "type": "array",
+                "description": "Atomic updates to apply to this rule.",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "op",
+                    "path"
+                  ],
+                  "properties": {
+                    "op": {
+                      "type": "string",
+                      "description": "Operation kind.",
+                      "enum": [
+                        "set",
+                        "unset"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "JSON Pointer into the rule object, e.g. '/dstZone', '/dstPort'.",
+                      "pattern": "^/(?:[^/~]|~[01])*$"
+                    },
+                    "value": {
+                      "description": "New value for 'set' operations. Type must match the target field.",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "metaUpdates": {
+          "type": "object",
+          "description": "Optional updates to top-level metadata in the target intent (status, goal, etc.).",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "proposed",
+                "approved",
+                "rejected",
+                "deprecated"
+              ]
+            },
+            "goal": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          }
+        }
+      }
+    }
+  }
+}
