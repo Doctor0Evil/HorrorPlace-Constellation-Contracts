@@ -1,0 +1,110 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/chunk-manifest.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Chunk Manifest v1",
+  "description": "Manifest describing token-aware chunks over constellation files for AI-chat and tooling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "chunks"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the chunk manifest schema, e.g., v1."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this manifest was generated."
+    },
+    "generator": {
+      "type": "string",
+      "description": "Name or identifier of the tool that generated this manifest."
+    },
+    "chunks": {
+      "type": "array",
+      "description": "List of chunk descriptors.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "chunkId",
+          "repo",
+          "path",
+          "startLine",
+          "endLine",
+          "approxTokenCost",
+          "chunkKind",
+          "invariantsUsed",
+          "metricsUsed",
+          "prismRefs"
+        ],
+        "properties": {
+          "chunkId": {
+            "type": "string",
+            "description": "Stable identifier for this chunk, unique within the manifest."
+          },
+          "repo": {
+            "type": "string",
+            "description": "Repository identifier (e.g., org/repo or VM-node id)."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative file path."
+          },
+          "startLine": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "First line (1-based) included in this chunk."
+          },
+          "endLine": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Last line (1-based) included in this chunk; must be >= startLine."
+          },
+          "approxTokenCost": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Approximate token cost for this chunk when sent to the model."
+          },
+          "chunkKind": {
+            "type": "string",
+            "description": "Logical kind of chunk.",
+            "enum": [
+              "schema",
+              "contract",
+              "registry",
+              "runtime-lua",
+              "rust",
+              "doc",
+              "other"
+            ]
+          },
+          "invariantsUsed": {
+            "type": "array",
+            "description": "List of invariant codes referenced in this chunk (e.g., CIC, DET).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metricsUsed": {
+            "type": "array",
+            "description": "List of entertainment metric codes referenced (e.g., UEC, ARR).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "prismRefs": {
+            "type": "array",
+            "description": "List of prism ids or meta ids that have touched or generated this chunk.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
