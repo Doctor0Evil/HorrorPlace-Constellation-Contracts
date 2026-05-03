@@ -1,0 +1,10 @@
+{
+  "eventType": "dynamic_weather",
+  "params": {
+    "dynamic_weather": {
+      "patternId": "storm-low-visibility",
+      "intensity": 0.6,
+      "durationSeconds": 300
+    }
+  }
+}
