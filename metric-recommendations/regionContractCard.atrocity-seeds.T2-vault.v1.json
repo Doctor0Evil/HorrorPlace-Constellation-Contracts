@@ -1,0 +1,26 @@
+{
+  "objectKind": "regionContractCard",
+  "tier": "T2-vault",
+  "metrics": {
+    "UEC": {
+      "recommendedMin": 0.35,
+      "recommendedMax": 0.70,
+      "forbiddenMin": 0.90,
+      "forbiddenMax": 1.00
+    },
+    "ARR": {
+      "recommendedMin": 0.40,
+      "recommendedMax": 0.80
+    },
+    "CDL": {
+      "recommendedMin": 0.00,
+      "recommendedMax": 0.40,
+      "forbiddenMin": 0.70,
+      "forbiddenMax": 1.00
+    }
+  },
+  "policy": {
+    "outOfRangeMode": "warn",
+    "forbiddenMode": "reject"
+  }
+}
