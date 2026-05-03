@@ -1,0 +1,67 @@
+{
+  "$id": "https://horror.place/constellation/schemas/tooling/prism-dependency.v1.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prism Dependency v1",
+  "description": "Describes a single upstream contract or proof that a prism artifact depends on, including optional Dead-Ledger proof linkage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "kind"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier of the dependency, e.g., regionContractCard id, policyEnvelope id, proofEnvelope id."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Type of dependency.",
+      "enum": [
+        "policy",
+        "region",
+        "seed",
+        "persona",
+        "style",
+        "proof",
+        "telemetry",
+        "other"
+      ]
+    },
+    "repo": {
+      "type": "string",
+      "description": "Optional repository where the dependency resides (org/repo or VM-node id)."
+    },
+    "path": {
+      "type": "string",
+      "description": "Optional file path of the dependency within the repo."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Optional schema reference describing the dependency payload."
+    },
+    "deadledgerProof": {
+      "type": "object",
+      "description": "When authoring rules require a Dead-Ledger proof for this dependency, this block links to the proof envelope.",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "True if the target repo's authoring rules require a Dead-Ledger proof for this dependency."
+        },
+        "proofEnvelopeId": {
+          "type": "string",
+          "description": "Identifier of the proof envelope in Dead-Ledger, if known."
+        },
+        "verifierRef": {
+          "type": "string",
+          "description": "Reference to a verifier descriptor (e.g., entry in a verifiers registry)."
+        },
+        "circuitType": {
+          "type": "string",
+          "description": "Logical circuit type used for this proof (e.g., 'age-gate', 'entitlement', 'integrity')."
+        }
+      }
+    }
+  }
+}
