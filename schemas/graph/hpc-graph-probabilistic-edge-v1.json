@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/graph/hpc-graph-probabilistic-edge-v1.json",
+  "title": "HPC Graph Probabilistic Edge v1",
+  "description": "Probabilistic extension for a blast-radius graph edge. Wraps a deterministic edge identity with link success probability, intermittency flags, and provenance for probabilistic reachability queries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "tenantId",
+    "snapshotId",
+    "edgeKey",
+    "sourceNodeId",
+    "targetNodeId",
+    "direction",
+    "successProb",
+    "isIntermittent",
+    "probSource",
+    "provenance"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this probabilistic edge record, e.g. a UUID."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "hpc-graph-probabilistic-edge-v1"
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Tenant identifier for multi-tenant constellation setups.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "snapshotId": {
+      "type": "integer",
+      "description": "Identifier of the graph snapshot this edge probability belongs to.",
+      "minimum": 0
+    },
+    "edgeKey": {
+      "type": "string",
+      "description": "Deterministic key linking back to the underlying deterministic edge row (e.g., constellation_neighbor_edge.edge_id or a composite key).",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "sourceNodeId": {
+      "type": "integer",
+      "description": "Source node identifier, matching the underlying graph edge.",
+      "minimum": 0
+    },
+    "targetNodeId": {
+      "type": "integer",
+      "description": "Target node identifier, matching the underlying graph edge.",
+      "minimum": 0
+    },
+    "direction": {
+      "type": "string",
+      "description": "Directionality of the probabilistic edge. Typically 'forward' for source->target.",
+      "enum": ["forward", "reverse", "bidirectional"]
+    },
+    "scope": {
+      "type": "string",
+      "description": "Optional scope label for the edge, mirroring graph edge scopes (e.g., 'vpn', 'lan', 'auth-path').",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "distance": {
+      "type": "number",
+      "description": "Optional numeric distance or weight for path-length constraints, mirroring the deterministic edge distance.",
+      "minimum": 0.0
+    },
+    "successProb": {
+      "type": "number",
+      "description": "Estimated success probability of the link as a Bernoulli trial in [0, 1].",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "failureProb": {
+      "type": "number",
+      "description": "Optional explicit failure probability in [0, 1]. If omitted, treated as (1 - successProb) within consumers.",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "isIntermittent": {
+      "type": "boolean",
+      "description": "True if this edge represents an intermittent link (e.g., VPN) whose availability fluctuates."
+    },
+    "probSource": {
+      "type": "string",
+      "description": "Source of the success probability estimate.",
+      "enum": ["measured", "config", "default", "learned", "unknown"]
+    },
+    "timeWindow": {
+      "type": "object",
+      "description": "Optional time window over which successProb was estimated.",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of the measurement or assumption window in RFC 3339 format."
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of the measurement or assumption window in RFC 3339 format."
+        }
+      }
+    },
+    "observations": {
+      "type": "object",
+      "description": "Optional raw counts backing the probability estimate.",
+      "additionalProperties": false,
+      "required": ["successCount", "failureCount"],
+      "properties": {
+        "successCount": {
+          "type": "integer",
+          "description": "Number of observed successful transmissions over the window.",
+          "minimum": 0
+        },
+        "failureCount": {
+          "type": "integer",
+          "description": "Number of observed failures over the window.",
+          "minimum": 0
+        },
+        "probeKind": {
+          "type": "string",
+          "description": "Kind of probe used for measurement, e.g., 'icmp', 'tcp-handshake', 'application-heartbeat'.",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    },
+    "dependencyScenarioId": {
+      "type": "string",
+      "description": "Optional identifier for a correlated failure scenario (e.g., shared cloud-region outage). When present, reachability tools may evaluate per-scenario risk.",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "governance": {
+      "type": "object",
+      "description": "Governance flags and caps for using this probabilistic edge in safety-critical queries.",
+      "additionalProperties": false,
+      "properties": {
+        "governanceAllowed": {
+          "type": "boolean",
+          "description": "If false, this edge must not be used in governed reachability calculations."
+        },
+        "policyName": {
+          "type": "string",
+          "description": "Optional logical policy name that authorized probabilistic use of this edge.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "intentId": {
+          "type": "string",
+          "description": "Optional policy-intent identifier that produced this edge probability.",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Provenance and freshness for the probability estimate.",
+      "additionalProperties": false,
+      "required": ["kind", "ref", "estimatedAt"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Provenance kind for this probability.",
+          "enum": ["infra-declared", "telemetry-derived", "ai-suggested", "manual-override", "migration"]
+        },
+        "ref": {
+          "type": "string",
+          "description": "Reference identifier (e.g., Dead-Ledger entry, ticket ID, or telemetry batch ID).",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "estimatedAt": {
+          "type": "string",
+          "description": "Timestamp when this probability estimate was last computed or verified.",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "Optional expiry timestamp after which this probability is considered stale for governed decisions.",
+          "format": "date-time"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Open-ended metadata block for tools, experiments, and annotations.",
+      "additionalProperties": true
+    }
+  }
+}
