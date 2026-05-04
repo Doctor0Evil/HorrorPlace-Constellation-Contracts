@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/tenant/tenant-profile-v1.json",
+  "title": "Tenant Profile v1",
+  "description": "Canonical capability and safety profile for a tenant in the policy/blast kernel.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaRef",
+    "tenantId",
+    "displayName",
+    "createdAt",
+    "blastCapabilities",
+    "governance",
+    "kernelBacking"
+  ],
+  "properties": {
+    "schemaRef": {
+      "type": "string",
+      "const": "tenant-profile-v1"
+    },
+    "tenantId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Stable tenant identifier used across SQLite, Dead-Ledger, and MCP."
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "kernelBacking": {
+      "type": "object",
+      "description": "Facts about how much of the policy/blast model is backed by real host kernels.",
+      "additionalProperties": false,
+      "required": [
+        "iptablesSnapshotMode",
+        "supportsLiveHashDriftCheck"
+      ],
+      "properties": {
+        "iptablesSnapshotMode": {
+          "type": "string",
+          "description": "How iptables state is modeled for this tenant.",
+          "enum": [
+            "none",           /* no snapshot; pure simulation only */
+            "static-import",  /* one-off import; may drift */
+            "continuous-sync" /* reconciler maintains snapshot + hash */
+          ]
+        },
+        "supportsLiveHashDriftCheck": {
+          "type": "boolean",
+          "description": "True if iptables hash drift is monitored and exposed to MCP tools."
+        },
+        "lastSnapshotAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of most recent known-good iptables snapshot, if any."
+        },
+        "snapshotStalenessSec": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum allowed age in seconds before a snapshot is considered stale."
+        }
+      }
+    },
+
+    "blastCapabilities": {
+      "type": "object",
+      "description": "What the tenant is allowed to do with blast_radius/propose tools.",
+      "additionalProperties": false,
+      "required": [
+        "allowBlastRadiusQueries",
+        "allowPropose",
+        "maxBlastTier",
+        "maxNetChangeCorridorTier"
+      ],
+      "properties": {
+        "allowBlastRadiusQueries": {
+          "type": "boolean",
+          "description": "If false, blast_radius MCP tool must always fail closed for this tenant."
+        },
+        "allowPropose": {
+          "type": "boolean",
+          "description": "If false, propose MCP tool must always reject new policy changes."
+        },
+        "maxBlastTier": {
+          "type": "string",
+          "description": "Highest blast tier this tenant can request (T0–T3).",
+          "enum": ["T0", "T1", "T2", "T3"]
+        },
+        "maxNetChangeCorridorTier": {
+          "type": "string",
+          "description": "Highest governance corridor tier allowed for net-change evaluations."
+        },
+        "requireKernelBackedForPropose": {
+          "type": "boolean",
+          "description": "If true, propose must fail when iptablesSnapshotMode != continuous-sync."
+        },
+        "requireKernelBackedForBlastRadius": {
+          "type": "boolean",
+          "description": "If true, blast_radius must fail when iptablesSnapshotMode == none."
+        }
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "description": "Pointers into corridors, drift thresholds, and admission rules.",
+      "additionalProperties": false,
+      "required": [
+        "defaultCorridorRef",
+        "policyDriftMax",
+        "denyOnDrift"
+      ],
+      "properties": {
+        "defaultCorridorRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Reference to a net-change-corridor-v1 document."
+        },
+        "policyDriftMax": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum tolerated policy drift D before new proposals must be rejected."
+        },
+        "denyOnDrift": {
+          "type": "boolean",
+          "description": "If true, MCP tools must reject propose when drift > policyDriftMax."
+        }
+      }
+    },
+
+    "mcpToolPolicy": {
+      "type": "object",
+      "description": "Fine-grained flags for individual MCP tools.",
+      "additionalProperties": false,
+      "properties": {
+        "blast_radius": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "maxHops": { "type": "integer", "minimum": 0, "maximum": 16 },
+            "maxNeighbors": { "type": "integer", "minimum": 1, "maximum": 4096 }
+          }
+        },
+        "propose": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "maxRuleAdds": { "type": "integer", "minimum": 0, "maximum": 1024 },
+            "maxRuleRemovals": { "type": "integer", "minimum": 0, "maximum": 1024 }
+          }
+        }
+      }
+    }
+  }
+}
