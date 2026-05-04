@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/governance/tenant-profile-v1.json",
+  "title": "Tenant Profile v1",
+  "description": "Governance and blast-radius profile for a single tenant, including blast tiers, default corridors, and probabilistic reachability settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "tenantId",
+    "displayName",
+    "createdAt",
+    "blastTierTaxonomy",
+    "defaultCorridors",
+    "probReachability",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this tenant profile document, e.g. a UUID or Dead-Ledger-attested ID."
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "tenant-profile-v1"
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Tenant identifier used across constellation systems.",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name for this tenant.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Creation timestamp in RFC 3339 format.",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Last update timestamp in RFC 3339 format.",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of this tenant profile.",
+      "enum": ["active", "suspended", "deprecated"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional descriptive text about this tenant's purpose and constraints.",
+      "maxLength": 2048
+    },
+    "deadLedgerRef": {
+      "type": "string",
+      "description": "Optional Dead-Ledger attestation reference for this tenant profile.",
+      "minLength": 8
+    },
+    "blastTierTaxonomy": {
+      "type": "object",
+      "description": "Blast-tier taxonomy for this tenant, mapping tiers (T0–T3) to allowed egress zones and radius constraints.",
+      "additionalProperties": false,
+      "required": ["tiers"],
+      "properties": {
+        "taxonomyId": {
+          "type": "string",
+          "description": "Identifier for this taxonomy instance (e.g., 'default', 'strict-lab').",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Ordered list of tiers, from least to most permissive.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tierId", "name", "allowedEgressZones"],
+            "properties": {
+              "tierId": {
+                "type": "string",
+                "description": "Tier identifier, e.g. 'T0', 'T1', 'T2', 'T3'.",
+                "minLength": 1,
+                "maxLength": 16
+              },
+              "name": {
+                "type": "string",
+                "description": "Short name for this tier.",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional description of this tier's intent and constraints.",
+                "maxLength": 1024
+              },
+              "maxDepth": {
+                "type": "integer",
+                "description": "Optional maximum blast BFS depth for this tier.",
+                "minimum": 0
+              },
+              "allowedEgressZones": {
+                "type": "array",
+                "description": "List of logical zone identifiers where egress is allowed for this tier.",
+                "minItems": 0,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                }
+              },
+              "maxEBR": {
+                "type": "number",
+                "description": "Optional maximum effective blast radius score for this tier.",
+                "minimum": 0.0
+              },
+              "notes": {
+                "type": "string",
+                "description": "Optional free-form notes for this tier.",
+                "maxLength": 1024
+              }
+            }
+          }
+        }
+      }
+    },
+    "defaultCorridors": {
+      "type": "object",
+      "description": "Default governance corridors for this tenant, including RoH, Veco, and NEF thresholds.",
+      "additionalProperties": false,
+      "required": ["corridors"],
+      "properties": {
+        "corridors": {
+          "type": "array",
+          "description": "List of corridor definitions keyed by name and optionally by tier.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["corridorId", "name", "rohMax", "vecoMax", "nefMax"],
+            "properties": {
+              "corridorId": {
+                "type": "string",
+                "description": "Stable identifier for this corridor.",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "name": {
+                "type": "string",
+                "description": "Short name for this corridor.",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "tierId": {
+                "type": "string",
+                "description": "Optional tier this corridor is primarily intended for, e.g. 'T1' or 'T2'.",
+                "minLength": 1,
+                "maxLength": 16
+              },
+              "rohMax": {
+                "type": "number",
+                "description": "Maximum allowed Radius of Harm (delta in number of HS nodes or blast radius).",
+                "minimum": 0.0
+              },
+              "vecoMax": {
+                "type": "number",
+                "description": "Maximum allowed magnitude of the Vector of Exposure change.",
+                "minimum": 0.0
+              },
+              "nefMax": {
+                "type": "number",
+                "description": "Maximum allowed Network Exposure Factor change.",
+                "minimum": 0.0
+              },
+              "maxNewHsNodes": {
+                "type": "integer",
+                "description": "Optional hard cap on newly reachable high-sensitivity nodes.",
+                "minimum": 0
+              },
+              "notes": {
+                "type": "string",
+                "description": "Optional notes on how this corridor was derived (e.g., from tuning experiments).",
+                "maxLength": 1024
+              }
+            }
+          }
+        }
+      }
+    },
+    "probReachability": {
+      "type": "object",
+      "description": "Tenant-level defaults for probabilistic reachability calculations.",
+      "additionalProperties": false,
+      "required": ["maxPaths", "maxDepth", "defaultSuccessProb", "independenceAssumption"],
+      "properties": {
+        "maxPaths": {
+          "type": "integer",
+          "description": "Maximum number of highest-probability paths to consider when approximating reachability.",
+          "minimum": 1
+        },
+        "maxDepth": {
+          "type": "integer",
+          "description": "Maximum path length for probabilistic reachability queries.",
+          "minimum": 1
+        },
+        "defaultSuccessProb": {
+          "type": "number",
+          "description": "Fallback success probability for edges without explicit measurements.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "independenceAssumption": {
+          "type": "string",
+          "description": "How to treat edge failures when combining path probabilities.",
+          "enum": ["independent", "scenario-bucketed"]
+        },
+        "scenarioWeights": {
+          "type": "object",
+          "description": "Optional per-scenario weights for correlated failure analysis when independenceAssumption is 'scenario-bucketed'.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        "truncationPolicy": {
+          "type": "object",
+          "description": "Policy for truncating fan-out in large graphs to respect time budgets.",
+          "additionalProperties": false,
+          "properties": {
+            "maxFanoutPerNode": {
+              "type": "integer",
+              "description": "Maximum number of outgoing edges per node considered in probabilistic traversal.",
+              "minimum": 1
+            },
+            "probCutoff": {
+              "type": "number",
+              "description": "Minimum path success probability for a path to be included in aggregation.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          }
+        }
+      }
+    },
+    "uidTierBindings": {
+      "type": "array",
+      "description": "Optional mapping from UID or UID ranges to blast tiers for this tenant.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "value", "tierId"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Binding kind: single UID, UID range, or role.",
+            "enum": ["uid", "uid-range", "role"]
+          },
+          "value": {
+            "type": "string",
+            "description": "Binding value, e.g., '1001', '1000-1999', or 'ci-agent'.",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "tierId": {
+            "type": "string",
+            "description": "Tier identifier this binding maps to.",
+            "minLength": 1,
+            "maxLength": 16
+          }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Open-ended metadata for tooling, experiments, and annotations.",
+      "additionalProperties": true
+    }
+  }
+}
