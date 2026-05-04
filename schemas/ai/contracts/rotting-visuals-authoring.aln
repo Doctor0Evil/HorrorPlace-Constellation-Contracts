@@ -1,0 +1,63 @@
+; ALN v1.0 — Rotting-Visuals BCI Authoring Contract
+; Machine-readable governance spec for AI-generated bindings
+
+@version "1.0.0"
+@style "Rotting-Visuals"
+@experienceType "monster-mode"
+
+schema {
+  id: "aln://horror.place/rotting-visuals-v1"
+  hash_algorithm: "blake3"
+  target_schema: "hpnrl-bci-geometry-binding-v1.json"
+}
+
+constraints {
+  ; BCI Surface Limits
+  bci_summary {
+    allowed_fields: ["stressScore", "attentionBand", "visualOverloadIndex", "startleSpike", "signalQuality"]
+    ranges {
+      stressScore: [0.0, 1.0]
+      visualOverloadIndex: [0.0, 1.0]
+    }
+    forbidden: ["rawEEG", "heartRateBPM", "participantID"]
+  }
+
+  ; Invariant Surface Limits
+  invariants {
+    allowed: ["CIC", "DET", "LSG", "AOS"]
+    range01_enforced: true
+  }
+
+  ; Output Channel Allowlist
+  curves {
+    visual: ["maskRadius", "maskFeather", "decayGrain", "colorDesat", "veinOverlay", "motionSmear"]
+    audio: ["infectedChannelGain", "squadMuffle", "heartbeatGain", "breathGain", "ringingLevel"]
+    haptics: ["chestPressure", "spineCrawl", "tremorRate"]
+    max_delta_per_sec: 0.15
+  }
+
+  ; Safety & Promotion Gates
+  safety {
+    required_profile_ids: ["monster-mode-standard", "monster-mode-safe-room"]
+    max_intensity_cap: 0.85
+    overload_gate: "visualOverloadIndex > 0.75 -> force_desaturation = 0.0"
+  }
+
+  ; AI Generation Rules
+  authoring {
+    max_curve_families_per_binding: 3
+    allowed_families: ["SIGMOID", "LINEAR", "HYSTERESIS", "NOISE_AUGMENTED"]
+    require_autodoc: true
+    schema_verification: {
+      mode: "strict"
+      hash_check: true
+      fallback_on_mismatch: "reject_with_remediation"
+    }
+  }
+}
+
+remediation {
+  on_range_violation: "clamp to [0.0, 1.0] and log telemetry"
+  on_family_mismatch: "reject and suggest SIGMOID/LINEAR equivalents"
+  on_missing_safety: "inject monster-mode-safe-room profile and flag for review"
+}
