@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/tools/compute-reachability-prob-request-v1.json",
+  "title": "Compute Reachability Prob Request v1",
+  "description": "Tool request envelope for probabilistic reachability queries over the blast-radius graph.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "tenantProfile",
+    "query"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this request (UUID or Dead-Ledger-linked ID).",
+      "minLength": 1
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "compute-reachability-prob-request-v1"
+    },
+    "tenantProfile": {
+      "type": "object",
+      "description": "Tenant profile document governing graph scope and caps, typically tenant-profile-v1.",
+      "additionalProperties": true
+    },
+    "query": {
+      "type": "object",
+      "description": "Probabilistic reachability query parameters.",
+      "additionalProperties": false,
+      "required": [
+        "tenantId",
+        "snapshotId",
+        "sourceNodeId",
+        "targetFilter"
+      ],
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant identifier used to scope graph queries.",
+          "minLength": 1
+        },
+        "snapshotId": {
+          "type": "integer",
+          "description": "Graph snapshot identifier (e.g., for blast/edge tables).",
+          "minimum": 1
+        },
+        "sourceNodeId": {
+          "type": "integer",
+          "description": "Starting node in the blast-radius graph.",
+          "minimum": 1
+        },
+        "targetFilter": {
+          "type": "object",
+          "description": "Filter describing which nodes count as targets.",
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "required": ["nodeIds"],
+              "properties": {
+                "nodeIds": {
+                  "type": "array",
+                  "description": "Explicit list of target node IDs.",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              }
+            },
+            {
+              "required": ["zoneKind"],
+              "properties": {
+                "zoneKind": {
+                  "type": "string",
+                  "description": "Logical zone kind (e.g., highSensitivity, dmz, vpn).",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              }
+            }
+          ]
+        },
+        "maxDepth": {
+          "type": "integer",
+          "description": "Optional override for maximum hop depth in path search.",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "maxPaths": {
+          "type": "integer",
+          "description": "Maximum number of highest-probability paths to consider.",
+          "minimum": 1,
+          "maximum": 128
+        },
+        "minEdgeSuccessProb": {
+          "type": "number",
+          "description": "Optional lower bound on allowed edge success probability.",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "includePathSamples": {
+          "type": "boolean",
+          "description": "If true, response may include a small sample of contributing paths."
+        }
+      }
+    },
+    "edges": {
+      "type": "object",
+      "description": "Optional edge source selector or inline probabilistic edges.",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Implicit, DB-backed edges resolved by tenantId and snapshotId.",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "sqlite"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Inline probabilistic edges array matching the hpc-graph-probabilistic-edge-v1 shape.",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "items"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "inline"
+            },
+            "items": {
+              "type": "array",
+              "description": "Probabilistic edge rows, each with sourceId, targetId, and successProb.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sourceNodeId",
+                  "targetNodeId",
+                  "successProb"
+                ],
+                "properties": {
+                  "sourceNodeId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "targetNodeId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "successProb": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  },
+                  "isIntermittent": {
+                    "type": "boolean",
+                    "description": "Optional hint that this edge is intermittent."
+                  },
+                  "probSource": {
+                    "type": "string",
+                    "description": "Source of the probability (measured, config, default).",
+                    "minLength": 1
+                  }
+                }
+              },
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "meta": {
+      "type": "object",
+      "description": "Optional metadata for AI tools and orchestrators.",
+      "additionalProperties": false,
+      "properties": {
+        "toolName": {
+          "type": "string",
+          "description": "Name of the calling tool or agent.",
+          "minLength": 1
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for correlation with logs and telemetry.",
+          "minLength": 1
+        },
+        "traceId": {
+          "type": "string",
+          "description": "Trace or span identifier for observability pipelines.",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
