@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/tools/compute-reachability-prob-response-v1.json",
+  "title": "Compute Reachability Prob Response v1",
+  "description": "Tool response envelope for probabilistic reachability queries over the blast-radius graph.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaRef",
+    "requestId",
+    "ok",
+    "error",
+    "data"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this response.",
+      "minLength": 1
+    },
+    "schemaRef": {
+      "type": "string",
+      "description": "Canonical schema discriminator.",
+      "const": "compute-reachability-prob-response-v1"
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Identifier of the corresponding request envelope.",
+      "minLength": 1
+    },
+    "ok": {
+      "type": "boolean",
+      "description": "True if the kernel completed successfully."
+    },
+    "error": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "description": "Structured error details when ok is false.",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Short, stable error code (e.g., INVALID_INPUT, FFI_ERROR).",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable description of the error.",
+          "minLength": 1
+        },
+        "detail": {
+          "description": "Optional machine-friendly details (e.g., numeric return codes, parse traces)."
+        }
+      }
+    },
+    "data": {
+      "description": "Probabilistic reachability result when ok is true; null on error.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tenantId",
+            "snapshotId",
+            "sourceNodeId",
+            "maxDepthUsed",
+            "pathsConsidered",
+            "truncated",
+            "targets"
+          ],
+          "properties": {
+            "tenantId": {
+              "type": "string",
+              "description": "Tenant identifier for the evaluated graph.",
+              "minLength": 1
+            },
+            "snapshotId": {
+              "type": "integer",
+              "description": "Snapshot identifier used for the calculation.",
+              "minimum": 1
+            },
+            "sourceNodeId": {
+              "type": "integer",
+              "description": "Source node for this reachability evaluation.",
+              "minimum": 1
+            },
+            "maxDepthUsed": {
+              "type": "integer",
+              "description": "Maximum depth actually reached during path enumeration.",
+              "minimum": 0
+            },
+            "pathsConsidered": {
+              "type": "integer",
+              "description": "Number of distinct paths included in the probability calculation.",
+              "minimum": 0
+            },
+            "truncated": {
+              "type": "boolean",
+              "description": "True if the computation was truncated due to maxDepth, maxPaths, or budget limits."
+            },
+            "targets": {
+              "type": "array",
+              "description": "Per-target marginal reachability probabilities.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "nodeId",
+                  "reachabilityProb"
+                ],
+                "properties": {
+                  "nodeId": {
+                    "type": "integer",
+                    "description": "Target node identifier.",
+                    "minimum": 1
+                  },
+                  "reachabilityProb": {
+                    "type": "number",
+                    "description": "Probability that at least one safe path from source reaches this node.",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  },
+                  "zoneKind": {
+                    "type": "string",
+                    "description": "Optional zone classification (e.g., highSensitivity).",
+                    "minLength": 1
+                  },
+                  "viaIntermittent": {
+                    "type": "boolean",
+                    "description": "True if all contributing paths depend on at least one intermittent edge."
+                  }
+                }
+              },
+              "minItems": 0
+            },
+            "aggregate": {
+              "type": "object",
+              "description": "Aggregate probability over the filtered target set, if applicable.",
+              "additionalProperties": false,
+              "required": [
+                "reachabilityProb"
+              ],
+              "properties": {
+                "targetKind": {
+                  "type": "string",
+                  "description": "Narrative label for the aggregate target set (e.g., highSensitivityZone).",
+                  "minLength": 1
+                },
+                "reachabilityProb": {
+                  "type": "number",
+                  "description": "Probability that at least one safe path reaches any node in the target set.",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            },
+            "pathSamples": {
+              "type": "array",
+              "description": "Optional sample of top paths contributing to the aggregate probability.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "targetNodeId",
+                  "nodes",
+                  "edgeSuccessProb",
+                  "pathSuccessProb"
+                ],
+                "properties": {
+                  "targetNodeId": {
+                    "type": "integer",
+                    "description": "Target node reached by this path.",
+                    "minimum": 1
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "description": "Ordered list of node IDs from source to target, inclusive.",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "minItems": 2
+                  },
+                  "edgeSuccessProb": {
+                    "type": "array",
+                    "description": "Per-edge success probabilities along the path, aligned with edges between nodes.",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0.0,
+                      "maximum": 1.0
+                    },
+                    "minItems": 1
+                  },
+                  "pathSuccessProb": {
+                    "type": "number",
+                    "description": "Product of edge success probabilities along the path.",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  }
+                }
+              },
+              "minItems": 0
+            },
+            "limits": {
+              "type": "object",
+              "description": "Echo of key limits applied during the computation.",
+              "additionalProperties": false,
+              "properties": {
+                "maxDepth": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "maxPaths": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "minEdgeSuccessProb": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              }
+            },
+            "meta": {
+              "type": "object",
+              "description": "Optional metadata block for explainability and audit.",
+              "additionalProperties": false,
+              "properties": {
+                "engineVersion": {
+                  "type": "string",
+                  "description": "Version of the underlying kernel.",
+                  "minLength": 1
+                },
+                "runtimeMs": {
+                  "type": "number",
+                  "description": "Approximate runtime of the computation in milliseconds.",
+                  "minimum": 0.0
+                },
+                "warnings": {
+                  "type": "array",
+                  "description": "Non-fatal warnings emitted during evaluation.",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
