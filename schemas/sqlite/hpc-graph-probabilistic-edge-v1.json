@@ -1,0 +1,159 @@
+{
+  "$id": "https://horror.place/schemas/sqlite/hpc-graph-probabilistic-edge-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HPC Graph Probabilistic Edge v1",
+  "description": "Row manifest for a probabilistic, state-conditioned blast-graph edge, suitable for both constellation neighbor edges and network/policy graphs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "edgeId",
+    "snapshotId",
+    "sourceNodeId",
+    "targetNodeId",
+    "scope",
+    "distance",
+    "edgeKind",
+    "enabled",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "edgeId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional primary key; usually assigned by SQLite on insert."
+    },
+    "snapshotId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Foreign key into the graph snapshot this edge belongs to."
+    },
+    "tenantId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Tenant identifier for multi-tenant constellations."
+    },
+    "sourceNodeId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Source node in the blast graph."
+    },
+    "targetNodeId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Target node in the blast graph."
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["tile", "room", "region", "vm", "constellation", "net-segment", "vpn-link", "chain-jump"],
+      "description": "Scope for this edge; combines spatial and network scopes."
+    },
+    "distance": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Graph or spatial distance; semantics depend on scope."
+    },
+    "radiusBand": {
+      "type": "string",
+      "enum": ["immediate", "ring-1", "ring-2", "ring-3", "far"],
+      "description": "Optional qualitative radius band."
+    },
+
+    "cicDelta": {
+      "type": "number",
+      "minimum": -10.0,
+      "maximum": 10.0
+    },
+    "aosDelta": {
+      "type": "number",
+      "minimum": -10.0,
+      "maximum": 10.0"
+    },
+    "detDelta": {
+      "type": "number",
+      "minimum": -10.0,
+      "maximum": 10.0
+    },
+    "hvfDelta": {
+      "type": "number",
+      "minimum": -10.0,
+      "maximum": 10.0
+    },
+    "lsgDelta": {
+      "type": "number",
+      "minimum": -10.0,
+      "maximum": 10.0
+    },
+    "shciDelta": {
+      "type": "number",
+      "minimum": -1.0,
+      "maximum": 1.0
+    },
+
+    "edgeKind": {
+      "type": "string",
+      "enum": [
+        "spatial",
+        "logical",
+        "contract",
+        "telemetry",
+        "network",
+        "iptables-chain-jump",
+        "alienfs-link"
+      ],
+      "description": "High-level edge kind used by blast and policy logic."
+    },
+    "enabled": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "1 if this edge is currently considered during traversals."
+    },
+
+    "successProb": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Estimated success probability for this edge (Bernoulli link)."
+    },
+    "probSource": {
+      "type": "string",
+      "enum": ["measured", "config", "default", "inferred"],
+      "description": "Origin of successProb."
+    },
+    "isIntermittent": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "1 if this edge is intermittent (e.g., VPN link with frequent flaps)."
+    },
+
+    "requiresConntrack": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "1 if this edge becomes active only when a matching conntrack state exists."
+    },
+    "conntrackTuple": {
+      "type": "string",
+      "description": "Optional canonical conntrack tuple, e.g. 'srcZoneA,dstZoneB,tcp,5432,ingress'.",
+      "maxLength": 256
+    },
+
+    "governanceFlags": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Bitfield for governance properties (HS boundary, egress, consent required, etc.)."
+    },
+    "propertiesJson": {
+      "type": "string",
+      "description": "Opaque JSON string with module-specific details or annotations."
+    },
+
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
