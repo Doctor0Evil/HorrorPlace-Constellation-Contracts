@@ -1,0 +1,7 @@
+"Section","Content","Purpose"
+"Types","Struct/enum definitions with domain constraints","Type-safe inputs (e.g., stressScore ∈ [0, 1])"
+"Functions","Name, signature, description","API surface documentation"
+"Formulas","Symbolic expressions + coefficients","Math-level specification (e.g., i=0.35+0.45S+0.30Vi = 0.35 + 0.45S + 0.30Vi=0.35+0.45S+0.30V)"
+"Edge Cases","Concrete input-output pairs","Regression test fixtures"
+"Invariants","Pre/post-conditions","Safety constraints (e.g., index < palette_size)"
+"Performance","Time/space complexity, max execution time","Non-functional requirements"
