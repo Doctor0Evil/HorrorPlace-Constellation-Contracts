@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/bci/can-token-registry-v1.json",
+  "title": "CAN Token Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "registryVersion", "tokens"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "can-token-registry-v1"
+    },
+    "registryVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "bindingsSchemaRef": {
+      "type": "string",
+      "description": "Reference to bci-geometry-binding-v1.json version this registry targets"
+    },
+    "tokens": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["token", "field", "modality", "domain"],
+        "properties": {
+          "token": { "type": "string", "pattern": "^[a-z][A-Z]$" },
+          "field": { "type": "string" },
+          "modality": { "type": "string", "enum": ["visual", "audio", "haptics", "global"] },
+          "domain": { "$ref": "#/$defs/valueDomain" },
+          "default": { "description": "Default value if omitted in CAN" },
+          "safetyCapRef": { "type": "string", "description": "Path to safety cap in BciSafetyProfile" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "valueDomain": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "min", "max"],
+          "properties": {
+            "type": { "const": "range" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "values"],
+          "properties": {
+            "type": { "const": "enum" },
+            "values": { "type": "array" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": { "type": { "const": "boolean" } }
+        }
+      ]
+    }
+  }
+}
