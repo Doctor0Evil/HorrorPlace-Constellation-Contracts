@@ -1,0 +1,33 @@
+# Research Impact Report Template
+
+## Token Efficiency
+- **Baseline token usage**: X tokens per query (reading source files)
+- **Optimized token usage**: Y tokens per query (using index)
+- **Savings**: Z% reduction
+- **Projected annual savings**: (queries_per_year) × (tokens_saved_per_query) × (cost_per_token)
+
+## Developer Productivity
+- **Average query latency**: Xms (vs. Yms manual search)
+- **Queries handled per day**: Z
+- **Estimated time savings**: X hours/week
+- **Documentation freshness**: Auto-updated within Y minutes of code changes
+
+## Formula Quality
+- **Average R²**: 0.XXX
+- **High-quality formulas**: X/Y (Z%)
+- **Validation pass rate**: Z%
+
+## Energy Optimization
+- **Patterns indexed**: X
+- **Energy profiles available**: X/X (100%)
+- **Estimated energy savings**: Y% for free-tier users
+
+## Cross-Repo Navigation
+- **Total repositories indexed**: X
+- **Cross-repo call relationships mapped**: Y
+- **Average dependency resolution time**: Zms
+
+## AI-Chat Compatibility
+- **Supported query types**: X
+- **API uptime**: Y%
+- **Average response time**: Zms
