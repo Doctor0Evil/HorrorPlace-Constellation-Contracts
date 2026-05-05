@@ -1,0 +1,104 @@
+{
+  "version": "v1",
+  "constellation": "HorrorPlace",
+  "generatedAt": "2026-05-05T23:00:00Z",
+
+  "repos": [
+    {
+      "name": "Rotting-Visuals-BCI",
+      "gitUrl": "https://github.com/Doctor0Evil/Rotting-Visuals-BCI",
+      "aiMetadataPath": "docs/ai-metadata.json",
+      "role": "runtime",
+      "lastModified": "2026-05-05T22:30:00Z"
+    },
+    {
+      "name": "HorrorPlace-Constellation-Contracts",
+      "gitUrl": "https://github.com/Doctor0Evil/HorrorPlace-Constellation-Contracts",
+      "aiMetadataPath": "docs/ai-metadata.json",
+      "role": "contracts",
+      "lastModified": "2026-05-05T22:15:00Z"
+    },
+    {
+      "name": "HorrorPlace-Dead-Ledger-Network",
+      "gitUrl": "https://github.com/Doctor0Evil/HorrorPlace-Dead-Ledger-Network",
+      "aiMetadataPath": "docs/ai-metadata.json",
+      "role": "ledger",
+      "lastModified": "2026-05-05T22:20:00Z"
+    }
+  ],
+
+  "components": [
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "sqlschema",
+      "path": "db/schema/rottingvisuals-monstermode.sql",
+      "summary": "Monster-mode BCI log schema for frames, bindings, and palettes.",
+      "domain": "bci",
+      "tags": "runtimelog,telemetry"
+    },
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "schema",
+      "path": "schemas/ai-bci-geometry-request-v1.json",
+      "summary": "Client request envelope for monster-mode BCI geometry, including BciSummary and invariants.",
+      "domain": "bci",
+      "tags": "request,schema"
+    },
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "schema",
+      "path": "schemas/ai-bci-geometry-response-v1.json",
+      "summary": "Response schema for monster-mode bindings with visual and audio geometry.",
+      "domain": "bci",
+      "tags": "response,schema"
+    },
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "schema",
+      "path": "schemas/bci-geometry-binding-v1.json",
+      "summary": "Per-binding geometry schema defining VisualParams, AudioParams, and invariant gates.",
+      "domain": "bci",
+      "tags": "binding,schema"
+    },
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "schema",
+      "path": "schemas/swatch-index-ontology.json",
+      "summary": "Swatch index ontology describing semantic roles for palette indices.",
+      "domain": "palette",
+      "tags": "ontology,color"
+    },
+    {
+      "repo": "Rotting-Visuals-BCI",
+      "kind": "sqlschema",
+      "path": "db/schema/constellation-ontology.sql",
+      "summary": "SQL mirror of swatch index roles, palette groups, and hex swatches for queryable color ontology.",
+      "domain": "palette",
+      "tags": "ontology,sql"
+    },
+    {
+      "repo": "HorrorPlace-Constellation-Contracts",
+      "kind": "sqlschema",
+      "path": "db/schema/fieldusage.sql",
+      "summary": "Constellation-wide index mapping field paths to schemas, tables, and code locations.",
+      "domain": "wiring",
+      "tags": "index,fieldusage"
+    },
+    {
+      "repo": "HorrorPlace-Constellation-Contracts",
+      "kind": "sqlschema",
+      "path": "db/schema/bci-pipeline.sql",
+      "summary": "Directed graph schema for BCI pipeline stages and edges across HorrorPlace repos.",
+      "domain": "wiring",
+      "tags": "pipeline,bcipipelinestage"
+    },
+    {
+      "repo": "HorrorPlace-Constellation-Contracts",
+      "kind": "schema",
+      "path": "schemas/can-token-registry-rot-visuals-v1.json",
+      "summary": "Registry of safe, bounded CAN tokens for Rotting-Visuals monster-mode geometry.",
+      "domain": "bci",
+      "tags": "canregistry,tokens"
+    }
+  ]
+}
