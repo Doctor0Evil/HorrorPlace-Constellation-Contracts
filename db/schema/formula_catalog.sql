@@ -21,3 +21,9 @@ INSERT INTO formula_catalog VALUES
      '["S", "SB", "V"]', '[0.2, 0.85, 0.3, 0.10]', strftime('%s', 'now') * 1000),
     (3, 0, 'motionSmear', '0.15 + 0.4*V + 0.25*(1-AF) + 0.25*Sp + 0.15*V', 'linear', 0.9994,
      '["V", "AF", "Sp"]', '[0.15, 0.55, -0.25, 0.25]', strftime('%s', 'now') * 1000);
+
+-- Get all formulas for zombie-vomit pattern
+SELECT parameter_name, formula_symbolic 
+FROM formula_catalog 
+WHERE pattern_id = 0
+ORDER BY parameter_name;
