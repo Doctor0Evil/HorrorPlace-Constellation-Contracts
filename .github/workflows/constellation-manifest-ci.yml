@@ -1,0 +1,44 @@
+name: Constellation Manifest
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  validate-constellation-manifest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install jq and jsonschema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq python3-pip
+          pip3 install --user jsonschema
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch manifest schema from Constellation-Contracts
+        run: |
+          mkdir -p schemas/metadata
+          curl -sS \
+            "https://raw.githubusercontent.com/Doctor0Evil/HorrorPlace-Constellation-Contracts/main/schemas/metadata/hpc-constellation-manifest-v1.json" \
+            -o schemas/metadata/hpc-constellation-manifest-v1.json
+
+      - name: Fetch manifest checker script
+        run: |
+          mkdir -p scripts
+          curl -sS \
+            "https://raw.githubusercontent.com/Doctor0Evil/HorrorPlace-Constellation-Contracts/main/scripts/check-constellation-manifest.sh" \
+            -o scripts/check-constellation-manifest.sh
+          chmod +x scripts/check-constellation-manifest.sh
+
+      - name: Validate constellation manifest
+        env:
+          SCHEMA_PATH: "schemas/metadata/hpc-constellation-manifest-v1.json"
+          MANIFEST_PATH: "horror_place_constellation_manifest.json"
+        run: |
+          ./scripts/check-constellation-manifest.sh
