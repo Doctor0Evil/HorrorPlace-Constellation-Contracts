@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/ai-metadata-schema.json",
+  "title": "HorrorPlace AI Metadata Schema",
+  "type": "object",
+
+  "required": [
+    "metadataVersion",
+    "repository",
+    "components",
+    "documentation",
+    "securityAssumptions",
+    "constellationServices"
+  ],
+
+  "properties": {
+    "metadataVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+
+    "repository": {
+      "type": "string",
+      "description": "Canonical name of this repository (e.g. Rotting-Visuals-BCI)."
+    },
+
+    "constellation": {
+      "type": "string",
+      "description": "Canonical identifier or URL for the constellation index."
+    },
+
+    "components": {
+      "type": "object",
+      "description": "Key schemas, code modules, database artifacts, and configuration files.",
+      "properties": {
+        "schemas": {
+          "type": "object",
+          "properties": {
+            "request":   { "type": "string" },
+            "response":  { "type": "string" },
+            "binding":   { "type": "string" },
+            "swatchOntology":   { "type": "string" },
+            "paletteRegistry":  { "type": "string" },
+            "canRegistry":      { "type": "string" }
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "database": {
+          "type": "object",
+          "properties": {
+            "schema":           { "type": "string" },
+            "canTokensSchema":  { "type": "string" },
+            "migrations":       { "type": "string" },
+            "tables": {
+              "type": "object",
+              "properties": {
+                "requestFrames":   { "type": "string" },
+                "bindings":        { "type": "string" },
+                "paletteUsage":    { "type": "string" },
+                "canTokens":       { "type": "string" },
+                "canTokenRegistry":{ "type": "string" }
+              },
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "codeModules": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "documentation": {
+      "type": "object",
+      "description": "Pointers to human-facing docs and policies.",
+      "required": [
+        "toolingPolicy"
+      ],
+      "properties": {
+        "toolingPolicy": {
+          "description": "Either 'constellation-default' or a repo-relative path to the tooling policy document.",
+          "oneOf": [
+            {
+              "type": "string",
+              "const": "constellation-default"
+            },
+            {
+              "type": "string",
+              "pattern": "^[^\\n]+$"
+            }
+          ]
+        },
+        "forAiAgents": {
+          "type": "string",
+          "description": "Path to docs/for-ai-agents.md or equivalent."
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "securityAssumptions": {
+      "type": "object",
+      "description": "Explicit assumptions to guide agent reasoning about trust and safety.",
+      "required": [
+        "untrustedInputs",
+        "trustedZones",
+        "canTokenExposure"
+      ],
+      "properties": {
+        "untrustedInputs": {
+          "type": "array",
+          "description": "Sources considered untrusted in this repo.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "network",
+              "user-content",
+              "lab-only",
+              "external-logs",
+              "unknown"
+            ]
+          },
+          "default": []
+        },
+        "trustedZones": {
+          "type": "array",
+          "description": "Logical trust zones this repo participates in.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "core",
+              "edge",
+              "external",
+              "lab-only",
+              "theatre-node",
+              "ledger"
+            ]
+          },
+          "default": []
+        },
+        "canTokenExposure": {
+          "type": "object",
+          "required": [
+            "usesCanTokens",
+            "canSafetyEnforcedIn"
+          ],
+          "properties": {
+            "usesCanTokens": {
+              "type": "boolean",
+              "description": "True if this repo reads or writes CAN tokens."
+            },
+            "canSafetyEnforcedIn": {
+              "type": "array",
+              "description": "Repos responsible for enforcing CAN safety guarantees.",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional free-text clarifications."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "constellationServices": {
+      "type": "object",
+      "description": "Logical cross-repo service references within the HorrorPlace constellation.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "repo",
+          "aiMetadataPath"
+        ],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Canonical name of the target repo."
+          },
+          "aiMetadataPath": {
+            "type": "string",
+            "description": "Relative path to the target repo's ai-metadata.json."
+          },
+          "url": {
+            "type": "string",
+            "description": "Optional external URL for hosted metadata, if any."
+          },
+          "role": {
+            "type": "string",
+            "description": "Optional role hint, e.g. 'bciCore','ledger','contracts','theatre'."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+
+    "@context": {
+      "description": "Optional JSON-LD context for semantic tooling.",
+      "type": ["object", "string"]
+    },
+    "@type": {
+      "description": "Optional JSON-LD type, e.g. 'hp:Repository'.",
+      "type": "string"
+    }
+  },
+
+  "additionalProperties": true
+}
