@@ -1,0 +1,114 @@
+# File: .github/workflows/constellation-index.yml
+# Target repo: Doctor0Evil/HorrorPlace-Constellation-Contracts
+
+name: Constellation Index CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive  # Fetch all constellation repos
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r tools/requirements.txt
+      
+      - name: Build constellation index
+        run: |
+          bash tools/index_constellation.sh
+      
+      - name: Check index size
+        run: |
+          SIZE=$(stat -f%z constellation_index.db 2>/dev/null || stat -c%s constellation_index.db)
+          echo "Index size: $((SIZE / 1024 / 1024)) MB"
+          if [ $SIZE -gt 10485760 ]; then
+            echo "Error: Index exceeds 10MB limit"
+            exit 1
+          fi
+      
+      - name: Upload index artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: constellation-index
+          path: constellation_index.db
+  
+  validate-formulas:
+    needs: build-index
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download index
+        uses: actions/download-artifact@v3
+        with:
+          name: constellation-index
+      
+      - name: Run formula validation
+        run: |
+          python3 tools/validate_formulas.py
+      
+      - name: Check validation results
+        run: |
+          FAILED=$(python3 -c "import pandas as pd; df = pd.read_csv('validation_report.csv'); print((~df['passed']).sum())")
+          echo "Failed formulas: $FAILED"
+          if [ "$FAILED" -gt 3 ]; then
+            echo "Error: Too many formula validation failures"
+            exit 1
+          fi
+      
+      - name: Upload validation report
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-report
+          path: validation_report.csv
+  
+  benchmark-token-savings:
+    needs: build-index
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download index
+        uses: actions/download-artifact@v3
+        with:
+          name: constellation-index
+      
+      - name: Run token benchmark
+        run: |
+          python3 tools/benchmark_tokens.py > token_benchmark.txt
+      
+      - name: Check token savings
+        run: |
+          SAVINGS=$(grep "Average savings:" token_benchmark.txt | awk '{print $3}' | tr -d '%')
+          echo "Token savings: $SAVINGS%"
+          if (( $(echo "$SAVINGS < 85" | bc -l) )); then
+            echo "Error: Token savings below 85% threshold"
+            exit 1
+          fi
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const benchmark = fs.readFileSync('token_benchmark.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Token Savings Benchmark\n\n```\n' + benchmark + '\n```'
+            });
