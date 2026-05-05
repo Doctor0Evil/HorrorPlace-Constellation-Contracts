@@ -1,0 +1,44 @@
+name: Constellation Health
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-all-manifests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        repo:
+          - "Doctor0Evil/Rotting-Visuals-BCI"
+          - "Doctor0Evil/HorrorPlace-Dead-Ledger-Network"
+          - "Doctor0Evil/HorrorPlace-RotCave"
+          - "Doctor0Evil/HorrorPlace-Spectral-Foundry"
+          - "Doctor0Evil/HorrorPlace-Neural-Resonance-Lab"
+
+    steps:
+      - name: Checkout Constellation-Contracts
+        uses: actions/checkout@v4
+        with:
+          path: contracts
+
+      - name: Install jq and jsonschema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq python3-pip
+          pip3 install --user jsonschema
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          path: target
+
+      - name: Validate target manifest
+        working-directory: target
+        env:
+          SCHEMA_PATH: "../contracts/schemas/metadata/hpc-constellation-manifest-v1.json"
+          MANIFEST_PATH: "horror_place_constellation_manifest.json"
+        run: |
+          ../contracts/scripts/check-constellation-manifest.sh
