@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BCI Geometry Compression Dictionary v1",
+  "description": "Canonical mapping from verbose field names to compressed keys for BCI geometry parameters.",
+  "compressionMappings": {
+    "visual": {
+      "maskRadius": "mR",
+      "maskFeather": "mF",
+      "decayGrain": "dG",
+      "colorDesat": "cD",
+      "veinOverlay": "vO",
+      "motionSmear": "mS"
+    },
+    "audio": {
+      "infectedChannelGain": "iG",
+      "squadMuffle": "sM",
+      "heartbeatGain": "hG",
+      "breathGain": "bG",
+      "ringingLevel": "rL",
+      "direct": "d"
+    },
+    "gates": {
+      "CIC": "CIC",
+      "AOS": "AOS",
+      "DET": "DET",
+      "LSG": "LSG",
+      "UEC": "UEC",
+      "EMD": "EMD",
+      "STCI": "STCI",
+      "CDL": "CDL",
+      "ARR": "ARR"
+    }
+  }
+}
