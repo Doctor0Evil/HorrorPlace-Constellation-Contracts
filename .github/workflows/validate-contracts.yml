@@ -1,0 +1,22 @@
+name: Validate BCI Contracts
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate contract schema
+        run: |
+          python tools/validate_contract_schema.py \
+            schemas/bci/bci-computation-contract-v1.json
+      
+      - name: Check formula consistency
+        run: |
+          python tools/verify_formula_implementations.py
+      
+      - name: Block PR if violations detected
+        if: failure()
+        run: exit 1
