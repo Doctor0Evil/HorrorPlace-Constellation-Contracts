@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horror.place/schemas/metadata/hpc-constellation-manifest-v1.json",
+  "title": "HorrorPlace Constellation Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repository",
+    "experience",
+    "dependencies",
+    "contracts",
+    "aiMetadata",
+    "bci",
+    "sqlIndexHints",
+    "versioning"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "hpc-constellation-manifest-v1",
+      "description": "Identifier for this manifest schema version."
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "shortName", "role", "description", "defaultBranch"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full GitHub repo name, e.g. Doctor0Evil/Rotting-Visuals-BCI."
+        },
+        "shortName": {
+          "type": "string",
+          "description": "Short handle for this repository."
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "schema-registry",
+            "bci-core",
+            "ledger-core",
+            "runtime-node",
+            "tooling",
+            "other"
+          ],
+          "description": "Primary role in the HorrorPlace constellation."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "defaultBranch": {
+          "type": "string"
+        }
+      }
+    },
+    "experience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["types", "styles"],
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Supported experienceType values, e.g. monster-mode."
+        },
+        "styles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Supported style packs, e.g. Rotting-Visuals."
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repos"],
+      "properties": {
+        "repos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "shortName", "role", "required", "commit"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Full GitHub repo name this repo depends on."
+              },
+              "shortName": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "schema-registry",
+                  "bci-core",
+                  "ledger-core",
+                  "runtime-node",
+                  "tooling",
+                  "other"
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this dependency is required for normal operation."
+              },
+              "commit": {
+                "type": "string",
+                "description": "Pinned git commit hash for this dependency.",
+                "pattern": "^[0-9a-f]{7,40}$"
+              },
+              "schemaRoots": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Relative directories containing shared schemas.",
+                "default": []
+              },
+              "interfaces": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Key contract files in the dependency (schemas, SQL, etc.).",
+                "default": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localSchemas", "sqlSchemas", "pipelineIndexSchemas"],
+      "properties": {
+        "localSchemas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "JSON Schemas stored in this repo (or vendored) that define its contracts."
+        },
+        "sqlSchemas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Core SQL DDL files for this repo."
+        },
+        "pipelineIndexSchemas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "SQL DDL files for cross-repo pipeline and ontology indices."
+        }
+      }
+    },
+    "aiMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "version", "validated"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to this repo's ai-metadata JSON file."
+        },
+        "version": {
+          "type": "string",
+          "description": "ai-metadata schema version used by this repo."
+        },
+        "validated": {
+          "type": "boolean",
+          "description": "True if ai-metadata.json is checked in CI."
+        }
+      }
+    },
+    "bci": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summaryFields",
+        "invariants",
+        "stylePack",
+        "experienceType"
+      ],
+      "properties": {
+        "summaryFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stressScore",
+              "stressBand",
+              "attentionBand",
+              "visualOverloadIndex",
+              "startleSpike",
+              "signalQuality"
+            ]
+          },
+          "minItems": 1,
+          "description": "BciSummary fields this repo uses."
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CIC",
+              "AOS",
+              "DET",
+              "LSG",
+              "UEC",
+              "EMD",
+              "STCI",
+              "CDL",
+              "ARR"
+            ]
+          },
+          "minItems": 1
+        },
+        "stylePack": {
+          "type": "string"
+        },
+        "experienceType": {
+          "type": "string"
+        }
+      }
+    },
+    "sqlIndexHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pipelineTables", "fieldUsageTable", "paletteOntologyView"],
+      "properties": {
+        "pipelineTables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Names of bcipipelinestage / bcipipelineedge tables or equivalents."
+        },
+        "fieldUsageTable": {
+          "type": "string",
+          "description": "Table that maps logical field paths to usage sites (e.g. fieldusage)."
+        },
+        "paletteOntologyView": {
+          "type": "string",
+          "description": "View for swatch index / palette ontology (e.g. swatchindexontology)."
+        }
+      }
+    },
+    "versioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mappingVersionTable",
+        "canRegistrySchemas",
+        "supportsMultiMappingVersions"
+      ],
+      "properties": {
+        "mappingVersionTable": {
+          "type": "string",
+          "description": "Table that tracks mappingVersion history (e.g. mappingversionlog)."
+        },
+        "canRegistrySchemas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "CAN token registry JSON schemas relevant to this repo."
+        },
+        "supportsMultiMappingVersions": {
+          "type": "boolean",
+          "description": "True if this repo can serve multiple mapping logic versions at once."
+        }
+      }
+    }
+  }
+}
