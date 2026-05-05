@@ -1,0 +1,51 @@
+{
+  "$schema": "https://horror.place/schemas/user-profile-v1.json",
+  "version": "1.0.0",
+  "user_id": "user_12345",
+  "last_updated": "2026-05-05T09:25:00Z",
+  
+  "adaptation_tracking": {
+    "total_sessions": 47,
+    "last_session_date": "2026-05-03T14:20:00Z",
+    "days_since_last_session": 2,
+    
+    "adaptation_coefficients": {
+      "global": {
+        "current_value": 1.34,
+        "base_rate": 0.02,
+        "decay_rate": 0.01
+      },
+      
+      "by_pattern": {
+        "zombie-vomit": {
+          "exposure_count": 142,
+          "adaptation": 1.45,
+          "notes": "High tolerance, increase intensity by 45%"
+        },
+        "toxic-smear": {
+          "exposure_count": 98,
+          "adaptation": 1.28
+        }
+      },
+      
+      "by_palette": {
+        "gangrenegreen": {
+          "exposure_count": 215,
+          "adaptation": 1.52,
+          "notes": "Most exposed, highest tolerance"
+        }
+      }
+    },
+    
+    "uec_baseline_history": [
+      {"date": "2025-11-15", "mean_uec": 0.72, "target": 0.70},
+      {"date": "2026-05-03", "mean_uec": 0.69, "target": 0.70}
+    ],
+    
+    "calibration_schedule": {
+      "next_recalibration_due": "2026-05-15T00:00:00Z",
+      "recalibration_frequency_days": 14,
+      "auto_adjust_enabled": true
+    }
+  }
+}
