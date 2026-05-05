@@ -63,3 +63,40 @@ print(f"Formula: {formula}")
 print(f"R² = {r2:.4f}")
 # Output: Formula: 0.95 - 0.55*S - 0.35*V
 #         R² = 0.9998
+
+def synthesize_nonlinear_formula(examples: list[tuple[dict, float]]) -> str:
+    """Synthesize formula with quadratic and interaction terms."""
+    X = []
+    y = []
+    for inputs, output in examples:
+        s = inputs["S"]
+        v = inputs["V"]
+        sp = inputs.get("Sp", 0.0)
+        # Feature vector: [1, S, V, Sp, S², V², Sp², S*V, S*Sp, V*Sp]
+        X.append([1.0, s, v, sp, s**2, v**2, sp**2, s*v, s*sp, v*sp])
+        y.append(output)
+    
+    X = np.array(X)
+    y = np.array(y)
+    
+    # Fit with L1 regularization to encourage sparsity
+    from sklearn.linear_model import Lasso
+    model = Lasso(alpha=0.01, max_iter=10000)
+    model.fit(X, y)
+    
+    coeffs = model.coef_
+    intercept = model.intercept_
+    
+    # Build formula (only non-zero terms)
+    feature_names = ["1", "S", "V", "Sp", "S²", "V²", "Sp²", "S*V", "S*Sp", "V*Sp"]
+    terms = []
+    
+    if abs(intercept) > 0.01:
+        terms.append(f"{intercept:.2f}")
+    
+    for i, (coeff, name) in enumerate(zip(coeffs, feature_names[1:])):
+        if abs(coeff) > 0.01:
+            sign = "+" if coeff > 0 else "-"
+            terms.append(f"{sign} {abs(coeff):.2f}*{name}")
+    
+    return " ".join(terms)
