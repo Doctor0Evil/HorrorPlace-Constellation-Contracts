@@ -1,0 +1,4 @@
+"Objection","Mitigation","Impact"
+"OI168: Stale Signal","300 ms absolute hold-off max with forced re-check","Max stale period: unbounded → 300 ms"
+"OI169: Muddy Colors","Oklab perceptual color space for interpolation","Vibrant gradients, no muddy mid-tones"
+"OI170: Habituation","Long-term adaptation factor with periodic recalibration","Target UEC maintained across 40+ sessions"
