@@ -1,0 +1,6 @@
+[constellation]
+version = "1.0.0"
+
+[endpoints]
+primary_ledger_url = "https://ledger.horror.place/api"
+schema_registry_url = "https://schemas.horror.place"
