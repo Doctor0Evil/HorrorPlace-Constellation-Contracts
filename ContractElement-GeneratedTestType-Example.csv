@@ -1,0 +1,5 @@
+"Contract Element","Generated Test Type","Example"
+"edge_cases[]","#[test] fn test_X()","Exact input-output match"
+"invariants.monotonicity","QuickCheck prop_monotonic()","f(x₁) ≤ f(x₂) when x₁ < x₂"
+"invariants.boundedness","QuickCheck prop_bounded()","∀x: f(x) < upper_bound"
+"performance.max_execution_time_us","Criterion benchmark","Assert avg < 5µs"
