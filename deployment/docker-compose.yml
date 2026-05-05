@@ -1,0 +1,57 @@
+# File: deployment/docker-compose.yml
+# Target repo: Doctor0Evil/HorrorPlace-Constellation-Contracts
+
+version: '3.8'
+
+services:
+  constellation-index:
+    image: constellation-index:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./constellation_index.db:/data/constellation_index.db:ro
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=/data/constellation_index.db
+    ports:
+      - "8080:8080"  # HTTP API
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          cpus: '1.0'
+          memory: 256M
+  
+  formula-synthesizer:
+    image: formula-synthesizer:latest
+    build:
+      context: ./tools
+      dockerfile: Dockerfile.synthesis
+    volumes:
+      - ./benchmarks:/data/benchmarks
+      - ./constellation_index.db:/data/constellation_index.db
+    command: ["python3", "formula_synthesis_advanced.py"]
+    deploy:
+      mode: replicated
+      replicas: 0  # Run on-demand via docker-compose run
+  
+  doc-generator:
+    image: doc-generator:latest
+    build:
+      context: ./tools
+      dockerfile: Dockerfile.docs
+    volumes:
+      - ./constellation_index.db:/data/constellation_index.db:ro
+      - ./docs:/output/docs
+    command: ["python3", "generate_docs.py", "--output", "/output/docs"]
+    deploy:
+      mode: replicated
+      replicas: 0  # Run on-demand
