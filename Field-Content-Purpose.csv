@@ -1,0 +1,5 @@
+"Field","Content","Purpose"
+"documents","Metadata per file (path, title, tags, summary)","High-level lookup"
+"chunks","Paragraph-level content with parent doc","Granular retrieval"
+"tfidf_index","Term → doc scores (TF-IDF)","Ranking for keyword search"
+"embeddings (future)","Vector embeddings for semantic search","""Find similar concepts"""
