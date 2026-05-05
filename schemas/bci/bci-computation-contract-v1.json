@@ -1,0 +1,89 @@
+{
+  "$schema": "https://horror.place/schemas/bci/bci-computation-contract-v1.json",
+  "version": "1.0.0",
+  "namespace": "rotting_visuals.monster_mode",
+  
+  "types": {
+    "BciState": {
+      "kind": "struct",
+      "fields": {
+        "stressScore": {"type": "f32", "domain": "[0.0, 1.0]"},
+        "visualOverloadIndex": {"type": "f32", "domain": "[0.0, 1.0]"},
+        "signalQuality": {"type": "f32", "domain": "[0.0, 1.0]"}
+      }
+    },
+    "Invariants": {
+      "kind": "struct",
+      "fields": {
+        "CIC": {"type": "u8", "domain": "[0, 9]"},
+        "LSG": {"type": "f32", "domain": "[0.0, 1.0]"}
+      }
+    }
+  },
+  
+  "functions": [{
+    "name": "compute_swatch_index",
+    "signature": "fn(BciState, Invariants, palette_size: u8) -> SwatchIndex",
+    
+    "formula": {
+      "symbolic": "i_base = 0.35 + 0.45*S + 0.30*V - 0.15*LSG + 0.10*(CIC/9)",
+      "variables": {
+        "S": "bci.stressScore",
+        "V": "bci.visualOverloadIndex",
+        "LSG": "invariants.LSG",
+        "CIC": "invariants.CIC as f32"
+      },
+      "coefficients": {
+        "base": 0.35,
+        "stress": 0.45,
+        "overload": 0.30,
+        "liminal": -0.15,
+        "identity": 0.10
+      }
+    },
+    
+    "edge_cases": [
+      {
+        "name": "all_zeros",
+        "input": {
+          "bci": {"stressScore": 0.0, "visualOverloadIndex": 0.0},
+          "invariants": {"CIC": 0, "LSG": 0.0},
+          "palette_size": 8
+        },
+        "expected_output": {"index": 2, "intensity": 0.35},
+        "rationale": "Base intensity 0.35 maps to index 2 in 8-swatch palette"
+      },
+      {
+        "name": "max_stress_overload",
+        "input": {
+          "bci": {"stressScore": 1.0, "visualOverloadIndex": 1.0},
+          "invariants": {"CIC": 9, "LSG": 0.0},
+          "palette_size": 8
+        },
+        "expected_output": {"index": 7, "intensity": 1.0},
+        "rationale": "0.35 + 0.45 + 0.30 + 0.10 = 1.20, clamped to 1.0 → index 7"
+      },
+      {
+        "name": "poor_signal_quality",
+        "input": {
+          "bci": {"stressScore": 0.8, "signalQuality": 0.2},
+          "invariants": {"CIC": 7, "LSG": 0.3},
+          "palette_size": 8
+        },
+        "expected_output": {"index": 0, "intensity": 0.5},
+        "rationale": "Signal quality < 0.3 triggers baseline fallback"
+      }
+    ],
+    
+    "invariants": {
+      "monotonicity": "index increases with stressScore when all else constant",
+      "boundedness": "index always < palette_size",
+      "signal_quality_gate": "if signalQuality < 0.3, return baseline (0, 0.5)"
+    },
+    
+    "performance": {
+      "time_complexity": "O(1)",
+      "max_execution_time_us": 5
+    }
+  }]
+}
