@@ -1,0 +1,6 @@
+"#","Question","Recommended answer"
+"1","How to compute decay_transition ttt","Use a normalized blend of stress slope and attention shift; document under computeswatchindex in the color ontology / BCI geometry docs."
+"2","Semantics of role_resolution_mode","snap_low/snap_high pick discrete indices; interpolate blends in the current palette group; never interpolate using old group colors after a group switch."
+"3","Perceptual impact of γ\gammaγ (HDR/SDR)","γ<1\gamma < 1γ<1 biases toward high index; γ>1\gamma > 1γ>1 stays near low index longer; default γ≈1.3\gamma \approx 1.3γ≈1.3 for SDR, ≈0.9\approx 0.9≈0.9 for HDR in styleconfig.toml."
+"4","transition_weight and luminance safety","Yes, it can break luminance/contrast if unchecked; enforce luminance clamps or perceptual‑space interpolation with min/max Y ranges, especially in accessibility modes."
+"5","Log interpolated hex vs indices + weight","Log palette group, base index, and transition_weight (and mode/gamma if needed); reconstruct hex using palette ontology, saving tokens and keeping audits deterministic."
