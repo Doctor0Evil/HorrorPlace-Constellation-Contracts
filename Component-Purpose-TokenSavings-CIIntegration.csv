@@ -1,0 +1,5 @@
+"Component","Purpose","Token Savings","CI Integration"
+"DF160: BCI Contract","Formal spec for functions (formulas, edge cases, invariants)","87% (200 vs. 1500 tokens)","Schema validation on commit"
+"RQ161: Auto-Gen Tests","QuickCheck + edge case tests from contract","100% (zero manual test authoring)","Regenerate on contract change"
+"DQ162: Config Verifier","Detect unused/missing config keys","N/A (prevents bugs)","Fail PR if drift detected"
+"RQ163: Search Index","Full-text + TF-IDF for markdown docs","92% (150 vs. 2000 tokens)","Rebuild on doc changes"
