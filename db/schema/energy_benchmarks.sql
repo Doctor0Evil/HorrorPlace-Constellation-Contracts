@@ -20,3 +20,13 @@ SELECT
     AVG(energy_joules) AS avg_energy
 FROM energy_benchmarks
 GROUP BY pattern_id;
+
+-- Find cheapest pattern that meets visual intensity requirements
+SELECT pattern_id, avg_energy
+FROM energy_cost_summary
+WHERE pattern_id IN (
+    SELECT pattern_id FROM pattern_catalog 
+    WHERE experience_type = 'monster-mode'
+)
+ORDER BY avg_energy ASC
+LIMIT 1;
