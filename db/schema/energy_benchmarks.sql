@@ -30,3 +30,10 @@ WHERE pattern_id IN (
 )
 ORDER BY avg_energy ASC
 LIMIT 1;
+
+-- Add simplified_formula column
+ALTER TABLE formula_catalog ADD COLUMN formula_simplified TEXT;
+
+-- Update with simplified versions
+UPDATE formula_catalog
+SET formula_simplified = simplify_formula(formula_symbolic);
