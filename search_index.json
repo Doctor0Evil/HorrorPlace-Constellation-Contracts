@@ -1,0 +1,32 @@
+{
+  "$schema": "https://horror.place/schemas/search-index-v1.json",
+  "version": "1.0.0",
+  "generated_at": "2026-05-05T08:59:00Z",
+  
+  "documents": [
+    {
+      "id": "doc:0",
+      "path": "docs/invariants/CIC.md",
+      "title": "Constellation Identity Code (CIC)",
+      "word_count": 2847,
+      "tags": ["invariant", "CIC", "identity"],
+      "summary": "Defines CIC invariant (0-9) encoding local historical identity"
+    }
+  ],
+  
+  "chunks": [
+    {
+      "id": "chunk:0",
+      "doc_id": "doc:0",
+      "section": "## Definition",
+      "start_line": 12,
+      "content": "The CIC is an integer [0-9] encoding regional historical identity",
+      "terms": ["cic", "integer", "historical", "identity", "region"]
+    }
+  ],
+  
+  "tfidf_index": {
+    "cic": {"doc:0": 0.82, "doc:3": 0.15},
+    "bci": {"doc:1": 0.76, "doc:5": 0.34}
+  }
+}
