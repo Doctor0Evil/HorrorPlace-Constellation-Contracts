@@ -1,0 +1,4 @@
+"Task","Without Index","With Index","Savings"
+"Find function definition","1200 tokens (read 3 files)","80 tokens (1 query)","93%"
+"List all callees","2500 tokens (parse AST)","120 tokens (JOIN query)","95%"
+"Cross-repo trace","5000+ tokens (traverse repos)","200 tokens (1 complex query)","96%"
