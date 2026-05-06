@@ -1,0 +1,6 @@
+"#","Topic","Recommended answer"
+"11","Gate gains calibration and CMF bypass","Gains live in config with bounds; CMF always caps final index, so gate cannot bypass it. Validate gains at load and log policies."
+"12","Empirical distribution of G(e)G(e)G(e) and clamp","Log gate_raw vs gate_clamped, compute per‑session truncation fraction to see if [−0.3,0.3][-0.3, 0.3][−0.3,0.3] discards meaningful signal."
+"13","Round vs floor for index_delta_from_gate","Keep round (current code) for symmetric, low‑jitter quantization of the gate into integer deltas."
+"14","Interaction with CMF and logging semantics","Log indexbase, indexdelta (requested), and indexcapped; derive applied delta as indexcapped - indexbase in analytics."
+"15","Storing delta_i for UEC correlation","Store indexdelta per binding in bcibindinggeometry; join with UEC in bcirequestframe and aggregate per frame/session for correlation."
